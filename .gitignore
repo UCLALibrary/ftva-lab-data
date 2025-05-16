@@ -172,3 +172,12 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Local secrets
+*secret*
+# But allow Helm secrets
+!secrets.yaml
+!externalsecret.yaml
+
+# Local static files collected when testing gunicorn and whitenoise
+staticfiles/
