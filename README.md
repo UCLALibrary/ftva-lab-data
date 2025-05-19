@@ -15,6 +15,10 @@ This project comes with a basic dev container definition, in `.devcontainer/devc
 and may work with other IDEs like PyCharm.  For VS Code, it also installs the Python, Black (formatter), and Flake8 (linter)
 extensions.
 
+When prompted by VS Code, click "Reopen in container".  This will (re)build the Django container, `ftva-lab-data-django`. It will also
+(re)build a copy of that container, `vsc-ftva-lab-data-<long_hash>-uid`, install VS Code development tools & extensions within that container,
+and start the `docker compose` system.  VS Code will be connected to the Django container, with all code available for editing in that context.
+
 The project's directory is available within the container at `/home/django/ftva-lab-data`.
 
 #### PostgreSQL container
