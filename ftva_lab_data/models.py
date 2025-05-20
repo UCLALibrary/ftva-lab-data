@@ -57,4 +57,4 @@ class SheetImport(models.Model):
     date_job_started = models.CharField(max_length=50, blank=True)
     date_job_completed = models.CharField(max_length=50, blank=True)
     general_entry_cataloged_by = models.CharField(max_length=50, blank=True)
-    notes = models.CharField(max_length=50, blank=True)
+    notes = models.CharField(max_length=500, blank=True)
