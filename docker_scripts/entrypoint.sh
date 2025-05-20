@@ -25,7 +25,7 @@ if [ "$DJANGO_RUN_ENV" = "dev" ]; then
   python manage.py createsuperuser --no-input
 
   # Load fixtures, only in dev environment.
-  # python manage.py loaddata sample_data.json
+  python manage.py loaddata sample_data.json
 fi
 
 if [ "$DJANGO_RUN_ENV" = "dev" ]; then
