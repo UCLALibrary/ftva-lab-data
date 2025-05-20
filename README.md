@@ -89,6 +89,22 @@ The container runs via `docker_scripts/entrypoint.sh`, which
 
    ```$ docker compose down```
 
+### Loading data
+
+1. Get a copy of the [Digital Lab Hard Drives Google sheet](https://docs.google.com/spreadsheets/d/1UcytVzczTxxFHhfxQzhr7pUKjL9bcIzoqIhLC0vRc6g/edit?gid=1871334680#gid=1871334680) (access required) as an Excel file, called `ftva_dl_sheet.xlsx` for this example.
+
+2. Convert it to a JSON fixture suitable for loading into Django. This will create `sheet_data.json` in the current directory:
+
+   ```python manage.py convert_dl_sheet_data -f ftva_dl_sheet.xlsx -s LTO-Backup```
+
+3. Load into Django:
+
+   ```python manage.py loaddata sheet_data.json```
+
+4. Output should look like this:
+
+   ```Installed 26653 object(s) from 1 fixture(s)```
+
 ### Logging
 
 Basic logging is available, with logs captured in `logs/application.log`.  At present, logs from both the custom application code and Django itself are captured.
