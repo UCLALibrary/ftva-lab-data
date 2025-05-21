@@ -16,11 +16,19 @@ def add_item(request):
         else:
             # Handle form errors, if needed
             messages.error(request, "Please correct the errors below.")
-            return render(request, "add_item.html", {"form": form})
+            return render(
+                request,
+                "add_edit_item.html",
+                {"form": form, "title": "Add Item", "button_text": "Add Item"},
+            )
     else:
         # For GET requests, display the empty form
         form = ItemForm()
-        return render(request, "add_item.html", {"form": form})
+        return render(
+            request,
+            "add_edit_item.html",
+            {"form": form, "title": "Add Item", "button_text": "Add Item"},
+        )
 
 
 def edit_item(request, item_id):
@@ -35,11 +43,29 @@ def edit_item(request, item_id):
             return render(request, "view_item.html", {"item": item})
         else:
             messages.error(request, "Please correct the errors below.")
-            return render(request, "edit_item.html", {"form": form, "item": item})
+            return render(
+                request,
+                "add_edit_item.html",
+                {
+                    "form": form,
+                    "item": item,
+                    "title": "Edit Item",
+                    "button_text": "Save Changes",
+                },
+            )
     else:
         form = ItemForm(instance=item)
 
-    return render(request, "edit_item.html", {"form": form, "item": item})
+    return render(
+        request,
+        "add_edit_item.html",
+        {
+            "form": form,
+            "item": item,
+            "title": "Edit Item",
+            "button_text": "Save Changes",
+        },
+    )
 
 
 def view_item(request, item_id):

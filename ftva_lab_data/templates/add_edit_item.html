@@ -13,7 +13,7 @@
 {% endif %}
 
 <div class="container">
-    <h1>Add Item</h1>
+    <h1>{{ title }}</h1>
     <form name = "item_form" id = "item_form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div id = "basic-fields">
@@ -67,12 +67,11 @@
             {% bootstrap_field form.date_job_completed %}
             {% bootstrap_field form.general_entry_cataloged_by %}
             {% bootstrap_field form.notes %}
-
         </div>
-        {% bootstrap_button "Add Item" button_type="submit" %}
-    </form>
-</div>
-
+        {% bootstrap_button button_text button_type="submit" %}
+    </form> 
+</div> 
 
 {% endblock %}
+
 
