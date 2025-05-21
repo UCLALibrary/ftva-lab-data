@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+{% if messages %}
+    <div class="alert alert-success">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="container">
+    <h1>Edit Item</h1>
+    <form name = "item_form" id = "item_form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div id = "basic-fields">
+            {% bootstrap_field form.hard_drive_name %}
+            {% bootstrap_field form.dml_lto_tape_id %}
+            {% bootstrap_field form.arsc_lto_tape_id %}
+            {% bootstrap_field form.hard_drive_barcode_id %}
+            {% bootstrap_field form.file_folder_name %}
+            {% bootstrap_field form.sub_folder_name %}
+            {% bootstrap_field form.file_name %}
+            {% bootstrap_field form.inventory_number %}
+            {% bootstrap_field form.source_inventory_number %}
+            {% bootstrap_field form.source_barcode %}
+            {% bootstrap_field form.title %}
+        </div>
+        <button type="button" id="toggle-advanced-fields" class="btn btn-secondary mt-3">Show Advanced Fields</button>
+        <div id="advanced-fields" style="display: none;" class="mt-3">
+            {% bootstrap_field form.source_type %}
+            {% bootstrap_field form.resolution %}
+            {% bootstrap_field form.compression %}
+            {% bootstrap_field form.file_format %}
+            {% bootstrap_field form.file_size %}
+            {% bootstrap_field form.frame_rate %}
+            {% bootstrap_field form.total_running_time %}
+            {% bootstrap_field form.source_frame_rate %}
+            {% bootstrap_field form.aspect_ratio %}
+            {% bootstrap_field form.color_bit_depth %}
+            {% bootstrap_field form.color_type %}
+            {% bootstrap_field form.frame_layout %}
+            {% bootstrap_field form.sample_structure %}
+            {% bootstrap_field form.sample_rate %}
+            {% bootstrap_field form.capture_device_make_and_model %}
+            {% bootstrap_field form.capture_device_settings %}
+            {% bootstrap_field form.date_capture_completed %}
+            {% bootstrap_field form.video_edit_software_and_settings %}
+            {% bootstrap_field form.date_edit_completed %}
+            {% bootstrap_field form.color_grading_software %}
+            {% bootstrap_field form.color_grading_settings %}
+            {% bootstrap_field form.audio_file_format %}
+            {% bootstrap_field form.date_audio_edit_completed %}
+            {% bootstrap_field form.remaster_platform %}
+            {% bootstrap_field form.remaster_software %}
+            {% bootstrap_field form.remaster_settings %}
+            {% bootstrap_field form.date_remaster_completed %}
+            {% bootstrap_field form.subtitles %}
+            {% bootstrap_field form.watermark_type %}
+            {% bootstrap_field form.security_data_encrypted %}
+            {% bootstrap_field form.migration_or_preservation_record %}
+            {% bootstrap_field form.hard_drive_location %}
+            {% bootstrap_field form.date_job_started %}
+            {% bootstrap_field form.date_job_completed %}
+            {% bootstrap_field form.general_entry_cataloged_by %}
+            {% bootstrap_field form.notes %}
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+    </form> 
+</div> 
+
+{% endblock %}
+
+
