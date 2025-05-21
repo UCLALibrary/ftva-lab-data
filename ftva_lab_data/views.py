@@ -4,15 +4,12 @@ from .forms import ItemForm
 from .models import SheetImport
 
 
-# Create your views here.
 def add_item(request):
     if request.method == "POST":
         # save a new SheetImport object
         form = ItemForm(request.POST)
         if form.is_valid():
-            # Save the form data to the database
             form.save()
-            # Redirect to a success page or render a success message
             messages.success(request, "Item added successfully!")
             return redirect("view_item", item_id=form.instance.id)
 
@@ -38,6 +35,7 @@ def edit_item(request, item_id):
             return render(request, "view_item.html", {"item": item})
         else:
             messages.error(request, "Please correct the errors below.")
+            return render(request, "edit_item.html", {"form": form, "item": item})
     else:
         form = ItemForm(instance=item)
 
