@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+
+{% block content %}
+
+{% if messages %}
+    <div class="alert alert-success">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+{% endif %}
+<div class="container">
+    <h1>Item details
+    </h1>
+    <p></p>{% if item.file_name %} File: {{ item.file_name }} {% endif %} 
+        {% if item.title %} (Title: {{ item.title }}) {% endif %}</p>
+    <a href="{% url 'edit_item' item.id %}" class="btn btn-primary mb-3">Edit This Record</a>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Storage Information </h5>
+            <p class="card-text"><strong>Hard Drive Name:</strong> {{ item.hard_drive_name }}</p>
+            <p class="card-text"><strong>DML LTO Tape ID:</strong> {{ item.dml_lto_tape_id }}</p>
+            <p class="card-text"><strong>ARSC LTO Tape ID:</strong> {{ item.arsc_lto_tape_id }}</p>
+            <p class="card-text"><strong>Hard Drive Barcode ID:</strong> {{ item.hard_drive_barcode_id }}</p> 
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">File Information</h5>
+            <p class="card-text"><strong>File Folder Name:</strong> {{ item.file_folder_name }}</p>
+            <p class="card-text"><strong>Sub Folder Name:</strong> {{ item.sub_folder_name }}</p>
+            <p class="card-text"><strong>File Name:</strong> {{ item.file_name }}</p>
+        </div> 
+        <div class="card-body">
+            <h5 class="card-title">Inventory Information</h5>
+            <p class="card-text"><strong>Inventory Number:</strong> {{ item.inventory_number }}</p>
+            <p class="card-text"><strong>Source Inventory Number:</strong> {{ item.source_inventory_number }}</p>
+            <p class="card-text"><strong>Source Barcode:</strong> {{ item.source_barcode }}</p>
+            <p class="card-text"><strong>Title:</strong> {{ item.title }}</p>
+        </div>
+        {% bootstrap_button "Show Advanced Fields" button_type="button" id="toggle-advanced-fields" button_class="btn-secondary" %}
+        <div class="card-body" id="advanced-fields" style="display: none;">
+            <h5 class="card-title">Advanced Information</h5>
+            <p class="card-text"><strong>Source Type:</strong> {{ item.source_type }}</p>
+            <p class="card-text"><strong>Resolution:</strong> {{ item.resolution }}</p>
+            <p class="card-text"><strong>Compression:</strong> {{ item.compression }}</p>
+            <p class="card-text"><strong>File Format:</strong> {{ item.file_format }}</p>
+            <p class="card-text"><strong>File Size:</strong> {{ item.file_size }}</p>
+            <p class="card-text"><strong>Frame Rate:</strong> {{ item.frame_rate }}</p>
+            <p class="card-text"><strong>Total Running Time:</strong> {{ item.total_running_time }}</p>
+            <p class="card-text"><strong>Source Frame Rate:</strong> {{ item.source_frame_rate }}</p>
+            <p class="card-text"><strong>Aspect Ratio:</strong> {{ item.aspect_ratio }}</p>
+            <p class="card-text"><strong>Color Bit Depth:</strong> {{ item.color_bit_depth }}</p>
+            <p class="card-text"><strong>Color Type:</strong> {{ item.color_type }}</p>
+            <p class="card-text"><strong>Frame Layout:</strong> {{ item.frame_layout }}</p>
+            <p class="card-text"><strong>Sample Structure:</strong> {{ item.sample_structure }}</p>
+            <p class="card-text"><strong>Sample Rate:</strong> {{ item.sample_rate }}</p>
+            <p class="card-text"><strong>Capture Device Make and Model:</strong> {{ item.capture_device_make_and_model }}</p>
+            <p class="card-text"><strong>Capture Device Settings:</strong> {{ item.capture_device_settings }}</p>
+            <p class="card-text"><strong>Date Capture Completed:</strong> {{ item.date_capture_completed }}</p>
+            <p class="card-text"><strong>Video Edit Software and Settings:</strong> {{ item.video_edit_software_and_settings }}</p>
+            <p class="card-text"><strong>Date Edit Completed:</strong> {{ item.date_edit_completed }}</p>
+            <p class="card-text"><strong>Color Grading Software:</strong> {{ item.color_grading_software }}</p>
+            <p class="card-text"><strong>Color Grading Settings:</strong> {{ item.color_grading_settings }}</p>
+            <p class="card-text"><strong>Audio File Format:</strong> {{ item.audio_file_format }}</p>
+            <p class="card-text"><strong>Date Audio Edit Completed:</strong> {{ item.date_audio_edit_completed }}</p>
+            <p class="card-text"><strong>Remaster Platform:</strong> {{ item.remaster_platform }}</p>
+            <p class="card-text"><strong>Remaster Software:</strong> {{ item.remaster_software }}</p>
+            <p class="card-text"><strong>Remaster Settings:</strong> {{ item.remaster_settings }}</p>
+            <p class="card-text"><strong>Date Remaster Completed:</strong> {{ item.date_remaster_completed }}</p>
+            <p class="card-text"><strong>Subtitles:</strong> {{ item.subtitles }}</p>
+            <p class="card-text"><strong>Watermark Type:</strong> {{ item.watermark_type }}</p>
+            <p class="card-text"><strong>Security Data/Encrypted:</strong> {{ item.security_data_encrypted }}</p>
+            <p class="card-text"><strong>Migration or Preservation Record:</strong> {{ item.migration_or_preservation_record }}</p>
+            <p class="card-text"><strong>Hard Drive Location:</strong> {{ item.hard_drive_location }}</p>
+            <p class="card-text"><strong>Date Job Started:</strong> {{ item.date_job_started }}</p>
+            <p class="card-text"><strong>Date Job Completed:</strong> {{ item.date_job_completed }}</p>
+            <p class="card-text"><strong>General Entry Cataloged By:</strong> {{ item.general_entry_cataloged_by }}</p>
+            <p class="card-text"><strong>Notes:</strong> {{ item.notes }}</p>
+        </div>  
+
+{% endblock %}
