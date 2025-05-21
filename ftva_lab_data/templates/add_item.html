@@ -29,7 +29,7 @@
             {% bootstrap_field form.source_barcode %}
             {% bootstrap_field form.title %}
         </div>
-        <button type="button" id="toggle-advanced-fields" class="btn btn-secondary mt-3">Show Advanced Fields</button>
+        {% bootstrap_button "Show Advanced Fields" button_type="button" id="toggle-advanced-fields" button_class="btn-secondary" %}
         <div id="advanced-fields" style="display: none;" class="mt-3">
             {% bootstrap_field form.source_type %}
             {% bootstrap_field form.resolution %}
@@ -69,8 +69,7 @@
             {% bootstrap_field form.notes %}
 
         </div>
-        <br>
-        {% bootstrap_button button_type="submit" content="Add Item" %}
+        {% bootstrap_button "Add Item" button_type="submit" %}
     </form>
 </div>
 

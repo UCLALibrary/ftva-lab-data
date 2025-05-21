@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load django_bootstrap5 %}
 
 
 {% block content %}
@@ -38,7 +38,7 @@
             <p class="card-text"><strong>Source Barcode:</strong> {{ item.source_barcode }}</p>
             <p class="card-text"><strong>Title:</strong> {{ item.title }}</p>
         </div>
-        <button type="button" id="toggle-advanced-fields" class="btn btn-secondary">Show Advanced Fields</button>
+        {% bootstrap_button "Show Advanced Fields" button_type="button" id="toggle-advanced-fields" button_class="btn-secondary" %}
         <div class="card-body" id="advanced-fields" style="display: none;">
             <h5 class="card-title">Advanced Information</h5>
             <p class="card-text"><strong>Source Type:</strong> {{ item.source_type }}</p>
