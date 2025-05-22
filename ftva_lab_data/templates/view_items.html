@@ -4,12 +4,11 @@
 
 <h1>Items</h1>
 
-<!-- On keyup, with delay of 500ms, 
-HTMX will trigger GET request to 'render_table' URL
+<!-- HTMX will listen for triggers from enclosed controls,
+then issue GET requests to 'render_table' URL
 and replace content of #table-container with result -->
 <form class="d-flex justify-content-end" hx-get="{% url 'render_table' %}" hx-target="#table-container"
     hx-trigger="change from:find select, keyup changed delay:300ms from:find input">
-    <!-- <label for="column" class="h6 form-label">Search</label> -->
     <div class="d-flex w-50 gap-2">
         <select name="column" class="form-select">
             <option value="">All columns</option>
