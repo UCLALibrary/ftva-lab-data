@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse
 
 from .forms import ItemForm
 from .models import SheetImport
+from .table_config import COLUMNS
 
 
 def add_item(request):
@@ -64,25 +65,51 @@ def view_item(request, item_id):
 
 
 def view_items(request: HttpRequest) -> HttpResponse:
-    return render(request, "view_items.html")
+    return render(request, "view_items.html", context={"columns": COLUMNS})
 
 
 def render_table(request: HttpRequest) -> HttpResponse:
-    """Handles search and pagination of table"""
+    """Handles search and pagination of table
+
+    Search can either be column-specific, determined by dropdown,
+    or broad, CTRL-F-style across all fields
+    """
+    display_fields = [field for field, _ in COLUMNS]
+
     search = request.GET.get("search", "")
+    column = request.GET.get("column", "")
     page = request.GET.get("page", 1)
 
-    records = SheetImport.objects.all().order_by("id")
+    # Only need display fields, plus ID for creating links
+    items = SheetImport.objects.only(*display_fields, "id").order_by("id")
     if search:
-        records = records.filter(
-            Q(hard_drive_name__icontains=search) | Q(file_name__icontains=search)
-        )
+        if column and column in display_fields:
+            # Scoped search to selected column
+            items = items.filter(**{f"{column}__icontains": search})
+        else:
+            # General CTRL-F-style search across all configured fields
+            query = Q()  # start with empty Q() object, always True
+            for field in display_fields:  # then add queries for all valid fields
+                query |= Q(**{f"{field}__icontains": search})
+            items = items.filter(query)
 
-    paginator = Paginator(records, 10)  # TODO: make configurable
+    paginator = Paginator(items, 10)  # TODO: make configurable
     page_obj = paginator.get_page(page)
+
+    # Construct of list of dicts to use as table rows instead of QuerySets
+    # allowing row[field] to be accessed, rather than specifying each field literal.
+    # Set ID as a seperate property so it is not displayed as column header,
+    # but can still be accessed for links.
+    rows = [
+        {
+            "data": {field: getattr(item, field, "") for field in display_fields},
+            "id": item.id,
+        }
+        for item in page_obj.object_list
+    ]
 
     return render(
         request,
         "partials/table.html",
-        {"page_obj": page_obj, "search": search},
+        {"page_obj": page_obj, "search": search, "columns": COLUMNS, "rows": rows},
     )

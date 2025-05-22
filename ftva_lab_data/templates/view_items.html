@@ -7,9 +7,22 @@
 <!-- On keyup, with delay of 500ms, 
 HTMX will trigger GET request to 'render_table' URL
 and replace content of #table-container with result -->
-<input id="search-input" class="form-control" type="text" name="search" placeholder="Enter search term..."
-    hx-get="{% url 'render_table' %}" hx-target="#table-container" hx-trigger="keyup changed delay:500ms"
-    hx-include="[name='search']">
+<form class="d-flex justify-content-end" hx-get="{% url 'render_table' %}" hx-target="#table-container"
+    hx-trigger="change from:find select, keyup changed delay:300ms from:find input">
+    <!-- <label for="column" class="h6 form-label">Search</label> -->
+    <div class="d-flex w-50 gap-2">
+        <select name="column" class="form-select">
+            <option value="">All columns</option>
+            {% for field, label in columns %}
+            <option value="{{ field }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <input id="search-input" class="form-control" type="text" name="search" placeholder="Enter search term...">
+    </div>
+</form>
+
+
 
 <!-- On page load, HTMX triggers GET request to 'render_table'
 and inserts it within div -->
