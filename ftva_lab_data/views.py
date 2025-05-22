@@ -1,5 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.db.models import Q
+from django.core.paginator import Paginator
+from django.http import HttpRequest, HttpResponse
+
 from .forms import ItemForm
 from .models import SheetImport
 
@@ -57,3 +61,28 @@ def view_item(request, item_id):
     item = SheetImport.objects.get(id=item_id)
 
     return render(request, "view_item.html", {"item": item})
+
+
+def view_items(request: HttpRequest) -> HttpResponse:
+    return render(request, "view_items.html")
+
+
+def render_table(request: HttpRequest) -> HttpResponse:
+    """Handles search and pagination of table"""
+    search = request.GET.get("search", "")
+    page = request.GET.get("page", 1)
+
+    records = SheetImport.objects.all().order_by("id")
+    if search:
+        records = records.filter(
+            Q(hard_drive_name__icontains=search) | Q(file_name__icontains=search)
+        )
+
+    paginator = Paginator(records, 10)  # TODO: make configurable
+    page_obj = paginator.get_page(page)
+
+    return render(
+        request,
+        "partials/table.html",
+        {"page_obj": page_obj, "search": search},
+    )

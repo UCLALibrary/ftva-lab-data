@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Items</h1>
+
+<!-- On keyup, with delay of 500ms, 
+HTMX will trigger GET request to 'render_table' URL
+and replace content of #table-container with result -->
+<input id="search-input" class="form-control" type="text" name="search" placeholder="Enter search term..."
+    hx-get="{% url 'render_table' %}" hx-target="#table-container" hx-trigger="keyup changed delay:500ms"
+    hx-include="[name='search']">
+
+<!-- On page load, HTMX triggers GET request to 'render_table'
+and inserts it within div -->
+<div id="table-container" class="p-2" hx-get="{% url 'render_table' %}" hx-trigger="load"></div>
+
+{% endblock %}
