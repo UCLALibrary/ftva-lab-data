@@ -11,3 +11,12 @@ if (toggleAdvancedFields) {
     }
   });
 }
+
+function clearSearchInput() {
+  let input = document.getElementById('search-input');
+  input.value = '';
+  input.focus();
+  // make sure `hx-get` is triggered after clearing input
+  // as opposed to `keyup` event, `clear` triggers immediately
+  htmx.trigger(input, 'clear');
+}

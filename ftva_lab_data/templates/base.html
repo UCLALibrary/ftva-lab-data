@@ -3,19 +3,28 @@
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UCLA FTVA - Digital Lab</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}" />
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}" defer></script>
+    <!-- HTMX -->
+    <script src="{% static 'js/htmx-v1.9.12.min.js' %}" defer></script>
 </head>
 
-<body>
-    <div class="container">
-        {% block content %}
-        {% endblock %}
-    </div>
+<body class="container-md h-100 d-flex flex-column gap-2">
+    <header class="flex-shrink-0">
+        <!-- TODO: add navbar -->
+    </header>
 
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
 </body>
 
 </html>
