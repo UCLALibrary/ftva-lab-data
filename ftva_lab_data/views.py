@@ -64,11 +64,11 @@ def view_item(request, item_id):
     return render(request, "view_item.html", {"item": item})
 
 
-def view_items(request: HttpRequest) -> HttpResponse:
-    return render(request, "view_items.html", context={"columns": COLUMNS})
+def search_results(request: HttpRequest) -> HttpResponse:
+    return render(request, "search_results.html", context={"columns": COLUMNS})
 
 
-def render_table(request: HttpRequest) -> HttpResponse:
+def render_search_results_table(request: HttpRequest) -> HttpResponse:
     """Handles search and pagination of table
 
     Search can either be column-specific, determined by dropdown,
@@ -93,7 +93,7 @@ def render_table(request: HttpRequest) -> HttpResponse:
                 query |= Q(**{f"{field}__icontains": search})
             items = items.filter(query)
 
-    paginator = Paginator(items, 10)  # TODO: make configurable
+    paginator = Paginator(items, 10)
     page_obj = paginator.get_page(page)
 
     # Construct of list of dicts to use as table rows instead of QuerySets
@@ -110,6 +110,6 @@ def render_table(request: HttpRequest) -> HttpResponse:
 
     return render(
         request,
-        "partials/table.html",
+        "partials/search_results_table.html",
         {"page_obj": page_obj, "search": search, "columns": COLUMNS, "rows": rows},
     )

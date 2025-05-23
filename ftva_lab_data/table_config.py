@@ -2,8 +2,9 @@
 # Tuples added here will determine columns displayed in table.
 # Field names must be valid from SheetImport model.
 COLUMNS = [
-    ("hard_drive_name", "Hard drive name"),
-    ("file_folder_name", "File folder name"),
-    ("sub_folder_name", "Sub-folder name"),
-    ("file_name", "File name"),
+    ("hard_drive_name", "Hard drive"),
+    ("file_folder_name", "File folder"),
+    ("sub_folder_name", "Sub-folder"),
+    ("file_name", "Filename"),
+    ("source_inventory_number", "Source inv no."),
 ]

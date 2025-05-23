@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Items</h1>
+
+<!-- HTMX will listen for triggers from enclosed controls,
+then issue GET requests to 'render_table' URL
+and replace content of #table-container with result -->
+<form class="d-flex justify-content-end" hx-get="{% url 'render_table' %}" hx-target="#table-container"
+    hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
+    <div class="d-flex w-50 gap-2">
+        <select name="column" class="form-select">
+            <option value="">All columns</option>
+            {% for field, label in columns %}
+            <option value="{{ field }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="input-group">
+            <input id="search-input" class="form-control" type="text" name="search" placeholder="Enter search term...">
+            <span class="input-group-text">
+                <button class="btn p-0 border-0" type="button" hx-on:click="clearSearchInput()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-x-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                        <path
+                            d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                    </svg>
+                </button>
+            </span>
+        </div>
+    </div>
+</form>
+
+
+
+<!-- On page load, HTMX triggers GET request to 'render_table'
+and inserts it within div -->
+<div id="table-container" class="p-2" hx-get="{% url 'render_table' %}" hx-trigger="load"></div>
+{% endblock %}
