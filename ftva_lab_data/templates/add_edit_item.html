@@ -15,10 +15,14 @@
 <div class="container">
     <h1>{{ title }}</h1>
     <!-- Buttons -->
-    <div class="d-flex justify-content-start gap-2 mb-3">
-        <button id="toggle-advanced-fields" class="btn btn-secondary" type="button"
-            hx-on:click="toggleAdvancedFields(this)">Show Advanced Fields</button>
-        <button class="btn btn-primary" type="submit" form="item_form">{{ button_text }}</button>
+    <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex gap-2">
+            <button id="toggle-advanced-fields" class="btn btn-secondary" type="button"
+                hx-on:click="toggleAdvancedFields(this)">Show Advanced Fields</button>
+            <button class="btn btn-primary" type="submit" form="item_form">{{ button_text }}</button>
+        </div>
+
+        <a class="btn btn-outline-danger" href="{% url 'view_item' item.id %}">Cancel</a>
     </div>
 
     <form name="item_form" id="item_form" method="post" enctype="multipart/form-data">
