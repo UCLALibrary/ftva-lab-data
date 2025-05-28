@@ -1,15 +1,7 @@
-let toggleAdvancedFields = document.getElementById("toggle-advanced-fields");
-if (toggleAdvancedFields) {
-  toggleAdvancedFields.addEventListener("click", function () {
-    const advancedFields = document.getElementById("advanced-fields");
-    if (advancedFields.style.display === "none") {
-      advancedFields.style.display = "block";
-      this.textContent = "Hide Advanced Fields";
-    } else {
-      advancedFields.style.display = "none";
-      this.textContent = "Show Advanced Fields";
-    }
-  });
+function toggleAdvancedFields(el) {
+  const advancedFields = document.getElementById("advanced-fields");
+  const isHidden = advancedFields.hidden = !advancedFields.hidden;
+  el.textContent = isHidden ? "Show Advanced Fields" : "Hide Advanced Fields";
 }
 
 function clearSearchInput() {
