@@ -7,4 +7,5 @@ COLUMNS = [
     ("sub_folder_name", "Sub-folder"),
     ("file_name", "Filename"),
     ("source_inventory_number", "Source inv no."),
+    ("assigned_user__username", "Assigned user"),
 ]

@@ -2,6 +2,10 @@
 
 {% block content %}
 
+<div id="messages">
+    {% include "partials/messages.html" %}
+</div>
+
 <h1>Items</h1>
 
 <!-- HTMX will listen for triggers from enclosed controls,
@@ -16,7 +20,6 @@ and replace content of #table-container with result -->
             <option value="{{ field }}">{{ label }}</option>
             {% endfor %}
         </select>
-
         <div class="input-group">
             <input id="search-input" class="form-control" type="text" name="search" placeholder="Enter search term...">
             <span class="input-group-text">
@@ -33,9 +36,25 @@ and replace content of #table-container with result -->
     </div>
 </form>
 
+<form id="assigned-users-form" method="post" hx-post="{% url 'assign_to_user' %}" hx-target="#table-container" class="d-flex justify-content-end">
+    {% csrf_token %}
+    <div class="d-flex w-50 gap-2 input-group">
+        <select name="user_id" class="form-select" required>
+            <option value="">Assign to...</option>
+            {% for user in users %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+            {% endfor %}
+        </select>
+    <button type="submit" class="btn btn-primary">Assign Selected</button>
+
+    </div>
+</form>
+
 
 
 <!-- On page load, HTMX triggers GET request to 'render_table'
 and inserts it within div -->
 <div id="table-container" class="p-2" hx-get="{% url 'render_table' %}" hx-trigger="load"></div>
+
+
 {% endblock %}

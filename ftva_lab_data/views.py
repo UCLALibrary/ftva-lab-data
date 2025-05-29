@@ -3,10 +3,14 @@ from django.contrib import messages
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
+from django.contrib.auth import get_user_model
+from django.template.loader import render_to_string
+
 
 from .forms import ItemForm
 from .models import SheetImport
 from .table_config import COLUMNS
+from .views_utils import get_field_value
 
 
 def add_item(request):
@@ -65,7 +69,10 @@ def view_item(request, item_id):
 
 
 def search_results(request: HttpRequest) -> HttpResponse:
-    return render(request, "search_results.html", context={"columns": COLUMNS})
+    users = get_user_model().objects.all().order_by("username")
+    return render(
+        request, "search_results.html", context={"columns": COLUMNS, "users": users}
+    )
 
 
 def render_search_results_table(request: HttpRequest) -> HttpResponse:
@@ -102,14 +109,55 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     # but can still be accessed for links.
     rows = [
         {
-            "data": {field: getattr(item, field, "") for field in display_fields},
+            "data": {field: get_field_value(item, field) for field in display_fields},
             "id": item.id,
         }
         for item in page_obj.object_list
     ]
 
+    # Get all users for the dropdown in the table
+    users = get_user_model().objects.all().order_by("username")
+
     return render(
         request,
         "partials/search_results_table.html",
-        {"page_obj": page_obj, "search": search, "columns": COLUMNS, "rows": rows},
+        {
+            "page_obj": page_obj,
+            "search": search,
+            "columns": COLUMNS,
+            "rows": rows,
+            "users": users,
+        },
     )
+
+
+def assign_to_user(request: HttpRequest) -> HttpResponse:
+    """Assigns a SheetImport item to a user."""
+    ids = request.POST.get("ids", "").split(",")
+    user_id = request.POST.get("user_id")
+    if ids and user_id:
+        user = get_user_model().objects.get(id=user_id)
+        SheetImport.objects.filter(id__in=ids).update(assigned_user=user)
+        messages.success(request, "Items assigned successfully!")
+    # If this is an HTMX request, return only the updated table partial
+    if request.headers.get("HX-Request"):
+        # Preserve filters and pagination by copying POST data to GET
+        mutable_get = request.GET.copy()
+        for param in ["search", "column", "page"]:
+            value = request.POST.get(param)
+            if value is not None:
+                mutable_get[param] = value
+        request.GET = mutable_get
+        # In order to display messages, we need to render the messages template
+        # separately and combine it with the table HTML.
+        messages_html = render_to_string(
+            "partials/messages.html",
+            {"messages": messages.get_messages(request)},
+            request=request,
+        )
+        table_html = render_search_results_table(request).content.decode()
+        combined_html = f"{messages_html}{table_html}"
+        return HttpResponse(combined_html)
+
+    # Otherwise, do a normal redirect
+    return redirect("search_results")
