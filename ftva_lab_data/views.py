@@ -136,9 +136,13 @@ def assign_to_user(request: HttpRequest) -> HttpResponse:
     ids = request.POST.get("ids", "").split(",")
     user_id = request.POST.get("user_id")
     if ids and user_id:
-        user = get_user_model().objects.get(id=user_id)
-        SheetImport.objects.filter(id__in=ids).update(assigned_user=user)
-        messages.success(request, "Items assigned successfully!")
+        if user_id == "__unassign__":
+            SheetImport.objects.filter(id__in=ids).update(assigned_user=None)
+            messages.success(request, "Items unassigned successfully!")
+        else:
+            user = get_user_model().objects.get(id=user_id)
+            SheetImport.objects.filter(id__in=ids).update(assigned_user=user)
+            messages.success(request, "Items assigned successfully!")
     # If this is an HTMX request, return only the updated table partial
     if request.headers.get("HX-Request"):
         # Preserve filters and pagination by copying POST data to GET

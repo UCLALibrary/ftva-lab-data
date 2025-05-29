@@ -41,6 +41,7 @@ and replace content of #table-container with result -->
     <div class="d-flex w-50 gap-2 input-group">
         <select name="user_id" class="form-select" required>
             <option value="">Assign to...</option>
+            <option value="__unassign__">Unassign</option>
             {% for user in users %}
             <option value="{{ user.id }}">{{ user.username }}</option>
             {% endfor %}

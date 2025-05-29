@@ -5,11 +5,11 @@
             <th>{{ label }}</th>
             {% endfor %}
             <th></th>
-            <th>
+            <th class="text-center">
+
                 Assign
-                <div class="form-check m-0">
+                <div class="form-check justify-content-center m-0" style="display: flex;" title="Select all items on this page">
                     <input type="checkbox" class="form-check-input" id="select-all-checkbox">
-                    <label class="form-check-label visually-hidden" for="select-all-checkbox">Select all</label>
                 </div>
             </th>
         </tr>
@@ -23,8 +23,8 @@
             <td>
                 <a class="btn btn-link btn-sm" href="{% url 'view_item' row.id %}">View</a>
             </td>
-            <td>
-                <div class="form-check m-0">
+            <td class="align-middle">
+                <div class="form-check justify-content-center m-0" style="display: flex;">
                     <input type="checkbox" class="form-check-input row-checkbox" name="selected_ids" value="{{ row.id }}">
                 </div>
             </td>

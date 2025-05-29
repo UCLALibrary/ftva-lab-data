@@ -10,5 +10,5 @@ def get_field_value(obj: models.Model, field_name: str) -> Any:
     for part in field_name.split("__"):
         obj = getattr(obj, part, None)
         if obj is None:
-            return None
-    return obj
+            return ""
+    return obj if obj is not None else ""
