@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -14,6 +14,7 @@ from .table_config import COLUMNS
 from .views_utils import get_field_value
 
 
+@login_required
 @permission_required(
     "ftva_lab_data.add_sheetimport",
     raise_exception=True,
@@ -42,6 +43,7 @@ def add_item(request):
         return render(request, "add_edit_item.html", add_item_context)
 
 
+@login_required
 @permission_required(
     "ftva_lab_data.change_sheetimport",
     raise_exception=True,
@@ -70,6 +72,7 @@ def edit_item(request, item_id):
         return render(request, "add_edit_item.html", edit_item_context)
 
 
+@login_required
 def view_item(request, item_id):
     # Retrieve the item to view
     item = SheetImport.objects.get(id=item_id)
@@ -77,6 +80,7 @@ def view_item(request, item_id):
     return render(request, "view_item.html", {"item": item})
 
 
+@login_required
 def search_results(request: HttpRequest) -> HttpResponse:
     users = get_user_model().objects.all().order_by("username")
     return render(
@@ -84,6 +88,7 @@ def search_results(request: HttpRequest) -> HttpResponse:
     )
 
 
+@login_required
 def render_search_results_table(request: HttpRequest) -> HttpResponse:
     """Handles search and pagination of table
 

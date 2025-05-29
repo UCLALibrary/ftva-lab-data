@@ -37,8 +37,8 @@ class GetFieldValueTests(TestCase):
         self.assertEqual(value, "")
 
 
-class AddEditItemTestCase(TestCase):
-    """Tests for the `add_item` and `edit_item` views."""
+class UserAccessTestCase(TestCase):
+    """Tests expected behavior for different users requesting various views."""
 
     fixtures = ["sample_data.json"]
 
@@ -132,3 +132,14 @@ class AddEditItemTestCase(TestCase):
         # POST request
         response = self.client.post(url, self.test_form_data)
         self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_user_is_redirected_to_login_page(self):
+        """Asserts that an anonymous user (i.e. not logged in)
+        is redirected to login page when trying to GET the base path.
+        """
+        url = "/"
+
+        # GET request
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response.url)
