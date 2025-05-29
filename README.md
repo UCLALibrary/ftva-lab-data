@@ -105,6 +105,12 @@ The container runs via `docker_scripts/entrypoint.sh`, which
 
    ```Installed 26653 object(s) from 1 fixture(s)```
 
+#### Loading group and permission definitions
+
+Certain views within the application are restricted to users with appropriate permissions. Corresponding group and permission definitions are included in the `groups_and_permissions.json` fixture.  This can be loaded using:
+
+```python manage.py loaddata groups_and_permissions.json```
+
 ### Logging
 
 Basic logging is available, with logs captured in `logs/application.log`.  At present, logs from both the custom application code and Django itself are captured.
