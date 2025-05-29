@@ -18,7 +18,9 @@
             <button class="btn btn-primary" type="submit" form="item_form">{{ button_text }}</button>
         </div>
 
-        <a class="btn btn-outline-danger" href="{% url 'view_item' item.id %}">Cancel</a>
+        <a class="btn btn-outline-danger"
+            href="{% if item %}{% url 'view_item' item.id %}{% else %}{% url 'search_results' %}{% endif %}">
+            Cancel</a>
     </div>
 
     <form name="item_form" id="item_form" method="post" enctype="multipart/form-data">
