@@ -29,7 +29,7 @@ document.getElementById("assigned-users-form").onsubmit = function (e) {
   // Add current filters as hidden inputs
   const search = document.querySelector('input[name="search"]');
   const column = document.querySelector('select[name="column"]');
-  const page = document.querySelector("#table-container [data-page-current]");
+  const page = document.querySelector("#current-page")?.value;
 
   function setOrUpdate(name, value) {
     let el = this.querySelector(`input[name="${name}"]`);
@@ -43,7 +43,7 @@ document.getElementById("assigned-users-form").onsubmit = function (e) {
   }
   setOrUpdate.call(this, "search", search ? search.value : "");
   setOrUpdate.call(this, "column", column ? column.value : "");
-  setOrUpdate.call(this, "page", page ? page.value : "");
+  setOrUpdate.call(this, "page", page || "");
 };
 
 document.addEventListener("htmx:afterSwap", function (e) {
