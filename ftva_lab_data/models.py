@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+from django.conf import settings
 
 
 class SheetImport(models.Model):
@@ -60,7 +60,7 @@ class SheetImport(models.Model):
     general_entry_cataloged_by = models.CharField(max_length=50, blank=True)
     notes = models.CharField(max_length=500, blank=True)
     assigned_user = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
