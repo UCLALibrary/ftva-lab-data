@@ -5,6 +5,13 @@
             <th>{{ label }}</th>
             {% endfor %}
             <th></th>
+            <th class="text-center">
+
+                Assign
+                <div class="form-check justify-content-center m-0" style="display: flex;" title="Select all items on this page">
+                    <input type="checkbox" class="form-check-input checkbox-bold" id="select-all-checkbox">
+                </div>
+            </th>
         </tr>
     </thead>
     <tbody>
@@ -15,6 +22,11 @@
             {% endfor %}
             <td>
                 <a class="btn btn-link btn-sm" href="{% url 'view_item' row.id %}">View</a>
+            </td>
+            <td class="align-middle">
+                <div class="form-check justify-content-center m-0" style="display: flex;">
+                    <input type="checkbox" class="form-check-input row-checkbox checkbox-bold" name="selected_ids" value="{{ row.id }}">
+                </div>
             </td>
         </tr>
         {% empty %}
@@ -37,3 +49,7 @@
         hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}"
         hx-target="#table-container" {% else %} disabled {% endif %}>Next</button>
 </div>
+
+<!-- Hidden input to store the current page number for HTMX requests -->
+<!-- Used to maintain state after POST requests to assign items to users -->
+<input type="hidden" id="current-page" value="{{ page_obj.number }}">

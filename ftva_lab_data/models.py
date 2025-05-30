@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class SheetImport(models.Model):
@@ -58,3 +59,10 @@ class SheetImport(models.Model):
     date_job_completed = models.CharField(max_length=50, blank=True)
     general_entry_cataloged_by = models.CharField(max_length=50, blank=True)
     notes = models.CharField(max_length=500, blank=True)
+    assigned_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sheet_imports",
+    )
