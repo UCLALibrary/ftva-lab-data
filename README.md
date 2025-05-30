@@ -105,6 +105,24 @@ The container runs via `docker_scripts/entrypoint.sh`, which
 
    ```Installed 26653 object(s) from 1 fixture(s)```
 
+#### Loading group and permission definitions
+
+Certain views within the application are restricted to users with appropriate permissions. Corresponding group and permission definitions are included in the `groups_and_permissions.json` fixture.  This can be loaded using:
+
+```python manage.py loaddata groups_and_permissions.json```
+
+#### Loading users
+
+FTVA staff provided a list of users in a Google Sheet. Ask a teammate for the sheet, if need be. Users can be loaded from the sheet using the following management command:
+
+```python manage.py create_users_from_sheet -f {SPREADSHEET_PATH}.xlsx```
+
+The script accepts two command line arguments:
+
+- `-f` (or `--file_name`) _required_: path to an Excel (XLSX) export of the FTVA Google Sheet containing user data
+- `--email_users`: whether to email users with a link to set their passwords
+  - NOTE: the emailing logic is not currently implemented. This feature will be added later.
+
 ### Logging
 
 Basic logging is available, with logs captured in `logs/application.log`.  At present, logs from both the custom application code and Django itself are captured.
