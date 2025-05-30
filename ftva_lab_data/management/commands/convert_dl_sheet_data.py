@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+import re
 from django.core.management.base import BaseCommand
 from ftva_lab_data.models import SheetImport
 
@@ -51,15 +52,20 @@ class Command(BaseCommand):
             if row_number % 1000 == 0:
                 self.stdout.write(f"Processed {row_number} rows")
             # Always ignore pseudo-header rows, which are repeated in the source document
-            # and are inconsistent.  These can be identified by their first value, which is
-            # always the same.
-            if row[0] == "Hard Drive Name":
+            # and are inconsistent.  These can be identified by a specific value in column D,
+            # which is always the same. (Column A header is not completely consistent....)
+            if row[3] == "File Folder Name":
                 continue
 
+            # Copy all of the fields as-is, to start
             fields = {
                 field_name: row[field_number]
                 for field_number, field_name in enumerate(field_names, start=0)
             }
+            # Make changes as needed
+            # re.match("Digital[ ]?Lab [0-9]"
+
+            # Finally, put it in the format needed for a fixture to load later.
             record = {
                 "model": "ftva_lab_data.sheetimport",
                 "pk": row_number,
@@ -67,6 +73,7 @@ class Command(BaseCommand):
             }
             records.append(record)
 
-        # with open("ftva_lab_data/fixtures/sheet_data.json", "w") as f:
+        self.stdout.write(f"Finished: processed {len(records)} records")
+
         with open("sheet_data.json", "w") as f:
             json.dump(records, f, indent=2)

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from simple_history.models import HistoricalRecords
 
 
 class SheetImport(models.Model):
@@ -66,3 +67,4 @@ class SheetImport(models.Model):
         blank=True,
         related_name="sheet_imports",
     )
+    history = HistoricalRecords()
