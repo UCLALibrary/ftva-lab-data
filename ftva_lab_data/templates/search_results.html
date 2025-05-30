@@ -14,7 +14,7 @@ and replace content of #table-container with result -->
 <form class="d-flex justify-content-end" hx-get="{% url 'render_table' %}" hx-target="#table-container"
     hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
     <div class="d-flex w-50 gap-2">
-        <select name="column" class="form-select">
+        <select name="search_column" class="form-select">
             <option value="">All columns</option>
             {% for field, label in columns %}
             <option value="{{ field }}">{{ label }}</option>
