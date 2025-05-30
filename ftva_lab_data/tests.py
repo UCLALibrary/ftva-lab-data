@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from ftva_lab_data.models import SheetImport
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from ftva_lab_data.views_utils import get_field_value
 
@@ -40,7 +40,7 @@ class GetFieldValueTests(TestCase):
 class UserAccessTestCase(TestCase):
     """Tests expected behavior for different users requesting various views."""
 
-    fixtures = ["sample_data.json"]
+    fixtures = ["sample_data.json", "groups_and_permissions.json"]
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -57,15 +57,10 @@ class UserAccessTestCase(TestCase):
             username="authorized", password="testpassword"
         )
 
-        # Create editors group and add permissions to add and edit SheetImport
-        cls.editors_group, _ = Group.objects.get_or_create(name="editors")
-        cls.edit_permissions = Permission.objects.filter(
-            codename__in=["add_sheetimport", "change_sheetimport"]
-        )
-        cls.editors_group.permissions.add(*cls.edit_permissions)
-
-        # Add authorized user to the editors group
-        cls.authorized_user.groups.add(cls.editors_group)
+        # Add authorized user to the editors group created in fixture
+        # which has necessary permissions for `add_item` and `edit_item` views
+        editors_group = Group.objects.get(name="editors")
+        cls.authorized_user.groups.add(editors_group)
 
     def test_authorized_user_can_add(self):
         """Asserts that user added to `editors` group in setup
