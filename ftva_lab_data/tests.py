@@ -138,3 +138,60 @@ class UserAccessTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
+
+
+class TablePaginationTestCase(TestCase):
+    """Tests pagination functionality in the search results table."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="authorized", password="testpassword"
+        )
+        self.client.login(username="authorized", password="testpassword")
+
+        # Clear any existing SheetImport objects to avoid id conflicts
+        SheetImport.objects.all().delete()
+
+        # Create enough SheetImport objects to require pagination
+        # (i.e. more than the default page size of 10)
+        for i in range(15):
+            SheetImport.objects.create(file_name=f"test_file_{i}", id=i)
+        # Create SheetImport objects with different filenames
+        SheetImport.objects.create(
+            file_name="unique_file_1", hard_drive_name="test_drive_1", id=100
+        )
+
+    def test_search_column_persists_across_pagination(self):
+        """
+        Ensure that the search_column filter is maintained when navigating
+        through paginated results in the search results table.
+        """
+        # This search should match the 15 "test_file_" objects created in setUp,
+        # but not the "unique_file_1" object.
+        search_term = "test"
+        search_column = "file_name"
+
+        # Get page 1 of filtered results
+        response_page_1 = self.client.get(
+            reverse("render_table"),
+            {"search": search_term, "search_column": search_column, "page": 1},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response_page_1.status_code, 200)
+        # Check that only results matching the search_column are present
+        page_1_content = response_page_1.content.decode()
+        # Results are ordered by id, so we expect the first 10 results we created
+        self.assertIn("test_file_0", page_1_content)
+        self.assertNotIn("unique_file_1", page_1_content)
+
+        # Get page 2 of filtered results
+        response_page_2 = self.client.get(
+            reverse("render_table"),
+            {"search": search_term, "search_column": search_column, "page": 2},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response_page_2.status_code, 200)
+        page_2_content = response_page_2.content.decode()
+        self.assertIn("test_file_10", page_2_content)
+        self.assertNotIn("unique_file_1", page_2_content)
