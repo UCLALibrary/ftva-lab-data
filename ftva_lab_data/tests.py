@@ -162,11 +162,7 @@ class TablePaginationTestCase(TestCase):
             file_name="unique_file_1", hard_drive_name="test_drive_1", id=100
         )
 
-    def test_search_column_persists_across_pagination(self):
-        """
-        Ensure that the search_column filter is maintained when navigating
-        through paginated results in the search results table.
-        """
+    def test_search_results_with_pagination(self):
         # This search should match the 15 "test_file_" objects created in setUp,
         # but not the "unique_file_1" object.
         search_term = "test"
