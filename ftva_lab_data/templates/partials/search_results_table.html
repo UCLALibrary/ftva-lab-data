@@ -40,13 +40,13 @@
 <div class="d-flex justify-content-center align-items-center gap-2">
 
     <button class="btn btn-primary" {% if page_obj.has_previous %}
-        hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}"
+        hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}&search_column={{ search_column }}"
         hx-target="#table-container" {% else %} disabled {% endif %}>Previous</button>
 
     <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
     <button class="btn btn-primary" {% if page_obj.has_next %}
-        hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}"
+        hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}&search_column={{ search_column }}"
         hx-target="#table-container" {% else %} disabled {% endif %}>Next</button>
 </div>
 

@@ -28,7 +28,7 @@ document.getElementById("assigned-users-form").onsubmit = function (e) {
 
   // Add current filters as hidden inputs
   const search = document.querySelector('input[name="search"]');
-  const column = document.querySelector('select[name="column"]');
+  const search_column = document.querySelector('select[name="search_column"]');
   const page = document.querySelector("#current-page")?.value;
 
   function setOrUpdate(name, value) {
@@ -42,7 +42,11 @@ document.getElementById("assigned-users-form").onsubmit = function (e) {
     el.value = value || "";
   }
   setOrUpdate.call(this, "search", search ? search.value : "");
-  setOrUpdate.call(this, "column", column ? column.value : "");
+  setOrUpdate.call(
+    this,
+    "search_column",
+    search_column ? search_column.value : ""
+  );
   setOrUpdate.call(this, "page", page || "");
 };
 

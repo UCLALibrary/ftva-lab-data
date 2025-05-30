@@ -98,15 +98,15 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     display_fields = [field for field, _ in COLUMNS]
 
     search = request.GET.get("search", "")
-    column = request.GET.get("column", "")
+    search_column = request.GET.get("search_column", "")
     page = request.GET.get("page", 1)
 
     # Only need display fields, plus ID for creating links
     items = SheetImport.objects.only(*display_fields, "id").order_by("id")
     if search:
-        if column and column in display_fields:
+        if search_column and search_column in display_fields:
             # Scoped search to selected column
-            items = items.filter(**{f"{column}__icontains": search})
+            items = items.filter(**{f"{search_column}__icontains": search})
         else:
             # General CTRL-F-style search across all configured fields
             query = Q()  # start with empty Q() object, always True
@@ -138,6 +138,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
         {
             "page_obj": page_obj,
             "search": search,
+            "search_column": search_column,
             "columns": COLUMNS,
             "rows": rows,
             "users": users,
@@ -161,7 +162,7 @@ def assign_to_user(request: HttpRequest) -> HttpResponse:
     if request.headers.get("HX-Request"):
         # Preserve filters and pagination by copying POST data to GET
         mutable_get = request.GET.copy()
-        for param in ["search", "column", "page"]:
+        for param in ["search", "search_column", "page"]:
             value = request.POST.get(param)
             if value is not None:
                 mutable_get[param] = value
