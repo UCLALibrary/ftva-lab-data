@@ -27,7 +27,7 @@ class Command(BaseCommand):
         # `sheet_name=None` means read all sheets into a dict of DataFrames
         sheet_dict = pd.read_excel(file_name, sheet_name=None)
         for sheet_name in sheet_dict.keys():
-            group, _ = Group.objects.get_or_create(name=sheet_name)
+            editors_group, _ = Group.objects.get_or_create(name="editors")
             df = sheet_dict[sheet_name]
             for index, row in df.iterrows():
                 # Avoid resetting passwords for existing users
@@ -38,8 +38,9 @@ class Command(BaseCommand):
                         first_name=row["first_name"],
                         last_name=row["last_name"],
                     )
-                    # Group comes from name of sheet in input spreadsheet
-                    user.groups.add(group)
+                    # Editors group is the only useful one for now
+                    if sheet_name.lower() == "editors":
+                        user.groups.add(editors_group)
                     user.set_unusable_password()
                     user.save()
                     print(f"Created {user.username}")
