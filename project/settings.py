@@ -33,12 +33,12 @@ if DEBUG in ["false", "False"]:
 # Define the list of allowed hosts to connect to this application
 # This is passed in via the environment variable DJANGO_ALLOWED_HOSTS
 # which is a string - but ALLOWED_HOSTS requires a list
-ALLOWED_HOSTS = list(os.getenv("DJANGO_ALLOWED_HOSTS").split(","))
+ALLOWED_HOSTS = list(os.getenv("DJANGO_ALLOWED_HOSTS", "").split(","))
 
 # Django 4 may require this, at least in our deployment environment.
 # TODO: Confirm this is still needed; can't tell just from
 # https://docs.djangoproject.com/en/5.2/ref/settings/#csrf-trusted-origins
-CSRF_TRUSTED_ORIGINS = list(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS").split(","))
+CSRF_TRUSTED_ORIGINS = list(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(","))
 
 # Application definition
 INSTALLED_APPS = [
