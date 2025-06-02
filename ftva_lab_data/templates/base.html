@@ -16,12 +16,14 @@
     <!-- HTMX -->
     <script src="{% static 'js/htmx-v1.9.12.min.js' %}" defer></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
 </head>
 
 <body class="container-md h-100 d-flex flex-column gap-2">
     <header class="flex-shrink-0">
-        <!-- TODO: add navbar -->
+        {% if not request.resolver_match.view_name == 'login' %}
+        {% include 'partials/navbar.html' %}
+        {% endif %}
     </header>
 
     <main class="flex-grow-1">
