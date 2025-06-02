@@ -191,3 +191,25 @@ class TablePaginationTestCase(TestCase):
         page_2_content = response_page_2.content.decode()
         self.assertIn("test_file_10", page_2_content)
         self.assertNotIn("unique_file_1", page_2_content)
+
+
+class HistoryModelTestCase(TestCase):
+    """Tests usage of Django simple history."""
+
+    fixtures = ["sample_data.json"]
+
+    def test_field_changes_are_captured(self):
+        obj = SheetImport.objects.get(pk=2)
+        # Re-save it to create first history reference, which does not exist
+        # automatically in the transient test database.
+        obj.save()
+        self.assertEqual(obj.history.count(), 1)
+        # Grab a copy of the title, change it and save the object.
+        old_value = obj.title
+        new_value = "MY NEW TITLE"
+        obj.title = new_value
+        obj.save()
+        self.assertEqual(obj.title, new_value)
+        # Get the earliest version and confirm its title is the original value.
+        previous_obj = obj.history.earliest()
+        self.assertEqual(previous_obj.title, old_value)

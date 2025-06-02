@@ -13,6 +13,10 @@
 					"settings": {
 							"editor.formatOnSave": true,
 							"python.analysis.typeCheckingMode": "standard",
+							"python.analysis.diagnosticSeverityOverrides": {
+								// Disable errors for Django's dynamic "id" model attributes
+								"reportAttributeAccessIssue": "information"
+							},
 							"python.editor.defaultFormatter": "ms-python.black-formatter",
 					"flake8.args": [
 									"--max-line-length=100",
