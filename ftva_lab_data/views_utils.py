@@ -28,6 +28,7 @@ def get_field_value(obj: models.Model, field: str) -> Any:
         remaining_fields = "__".join(fields[1:])
         return get_field_value(getattr(obj, first_field), remaining_fields)
 
+
 def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     """Returns a dictionary of dictionaries. Each top-level dict represents a display section for
     the view_item.html template."""

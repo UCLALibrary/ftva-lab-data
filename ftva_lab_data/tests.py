@@ -214,6 +214,7 @@ class HistoryModelTestCase(TestCase):
         previous_obj = obj.history.earliest()
         self.assertEqual(previous_obj.title, old_value)
 
+
 class ItemDisplayTestCase(TestCase):
     """Tests the get_item_display_dicts function."""
 
