@@ -20,6 +20,13 @@ done
 python manage.py migrate
 
 if [ "$DJANGO_RUN_ENV" = "dev" ]; then
+  # Auto-populate history records; may not be needed, but does no harm in dev environment.
+  # Logs will show this message, which is OK:
+  # Existing history found, skipping model <class 'ftva_lab_data.models.SheetImport'>
+  python manage.py populate_history --auto
+fi
+
+if [ "$DJANGO_RUN_ENV" = "dev" ]; then
   # Create default superuser for dev environment, using django env vars.
   # Logs will show error if this exists, which is OK.
   python manage.py createsuperuser --no-input
