@@ -68,3 +68,6 @@ class SheetImport(models.Model):
         related_name="sheet_imports",
     )
     history = HistoricalRecords()
+
+    def __str__(self):
+        return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
