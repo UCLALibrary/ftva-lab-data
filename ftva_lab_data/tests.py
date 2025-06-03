@@ -3,7 +3,7 @@ from ftva_lab_data.models import SheetImport
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
-from ftva_lab_data.views_utils import get_field_value
+from ftva_lab_data.views_utils import get_field_value, get_item_display_dicts
 
 
 class GetFieldValueTests(TestCase):
@@ -213,3 +213,34 @@ class HistoryModelTestCase(TestCase):
         # Get the earliest version and confirm its title is the original value.
         previous_obj = obj.history.earliest()
         self.assertEqual(previous_obj.title, old_value)
+
+class ItemDisplayTestCase(TestCase):
+    """Tests the get_item_display_dicts function."""
+
+    def setUp(self):
+        # Create a test SheetImport object
+        self.item = SheetImport.objects.create(
+            file_name="test_file",
+            hard_drive_name="test_drive",
+            file_folder_name="test_folder",
+            inventory_number="INV001",
+            resolution="1920x1080",
+        )
+
+    def test_get_item_display_dicts(self):
+        display_dicts = get_item_display_dicts(self.item)
+        # Check that the returned dictionary has the expected structure
+        self.assertIn("header_info", display_dicts)
+        self.assertIn("storage_info", display_dicts)
+        self.assertIn("file_info", display_dicts)
+        self.assertIn("inventory_info", display_dicts)
+        self.assertIn("advanced_info", display_dicts)
+        # Check that the values in the dictionaries match the item attributes
+        self.assertEqual(display_dicts["header_info"]["File Name"], "test_file")
+        self.assertEqual(display_dicts["storage_info"]["Hard Drive Name"], "test_drive")
+        self.assertEqual(display_dicts["file_info"]["File/Folder Name"], "test_folder")
+        self.assertEqual(display_dicts["inventory_info"]["Inventory Number"], "INV001")
+        self.assertEqual(display_dicts["advanced_info"]["Resolution"], "1920x1080")
+        # Check that empty fields are handled correctly (i.e. are in the dict as empty strings)
+        self.assertEqual(display_dicts["storage_info"].get("DML LTO Tape ID"), "")
+        
