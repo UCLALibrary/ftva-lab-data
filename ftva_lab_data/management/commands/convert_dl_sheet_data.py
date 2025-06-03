@@ -14,10 +14,11 @@ class Command(BaseCommand):
         """
         # Ignore model _state, id (part of model but not in source data), and hard_drive_barcode_id
         # (which will be handled as a special case when reading the data).
+        # Also ignore new field assigned_user_id.
         field_names = [
             key
             for key in SheetImport().__dict__
-            if key not in ["_state", "id", "hard_drive_barcode_id"]
+            if key not in ["_state", "id", "hard_drive_barcode_id", "assigned_user_id"]
         ]
         return field_names
 
