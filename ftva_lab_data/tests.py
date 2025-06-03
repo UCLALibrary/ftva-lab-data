@@ -243,4 +243,3 @@ class ItemDisplayTestCase(TestCase):
         self.assertEqual(display_dicts["advanced_info"]["Resolution"], "1920x1080")
         # Check that empty fields are handled correctly (i.e. are in the dict as empty strings)
         self.assertEqual(display_dicts["storage_info"].get("DML LTO Tape ID"), "")
-        
