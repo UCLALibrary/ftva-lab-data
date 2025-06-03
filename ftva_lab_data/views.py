@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from .forms import ItemForm
 from .models import SheetImport
 from .table_config import COLUMNS
-from .views_utils import get_field_value
+from .views_utils import get_field_value, get_item_display_dicts
 
 
 @login_required
@@ -64,7 +64,7 @@ def edit_item(request, item_id):
         if form.is_valid():
             form.save()
             messages.success(request, "Item updated successfully!")
-            return render(request, "view_item.html", {"item": item})
+            return render(request, "view_item.html", get_item_display_dicts(item))
         else:
             messages.error(request, "Please correct the errors below.")
             return render(request, "add_edit_item.html", edit_item_context)
@@ -76,8 +76,14 @@ def edit_item(request, item_id):
 def view_item(request, item_id):
     # Retrieve the item to view
     item = SheetImport.objects.get(id=item_id)
+    # For easier parsing in the template, separate attributes into dictionaries
+    display_dicts = get_item_display_dicts(item)
 
-    return render(request, "view_item.html", {"item": item})
+    return render(
+        request,
+        "view_item.html",
+        display_dicts 
+    )
 
 
 @login_required

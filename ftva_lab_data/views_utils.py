@@ -1,5 +1,6 @@
 from typing import Any
 from django.db import models
+from .models import SheetImport
 
 
 # Recursive implementation adapted from:
@@ -26,3 +27,75 @@ def get_field_value(obj: models.Model, field: str) -> Any:
         first_field = fields[0]
         remaining_fields = "__".join(fields[1:])
         return get_field_value(getattr(obj, first_field), remaining_fields)
+
+def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
+    """Returns a dictionary of dictionaries. Each top-level dict represents a display section for
+    the view_item.html template."""
+    header_info = {
+        "File Name": item.file_name,
+        "Title": item.title,
+        "id": item.id,
+    }
+    storage_info = {
+        "Hard Drive Name": item.hard_drive_name,
+        "DML LTO Tape ID": item.dml_lto_tape_id,
+        "ARSC LTO Tape ID": item.arsc_lto_tape_id,
+        "Hard Drive Barcode ID": item.hard_drive_barcode_id,
+    }
+    file_info = {
+        "File/Folder Name": item.file_folder_name,
+        "Sub-Folder Name": item.sub_folder_name,
+        "File Name": item.file_name,
+    }
+    inventory_info = {
+        "Inventory Number": item.inventory_number,
+        "Source Inventory Number": item.source_inventory_number,
+        "Source Barcode": item.source_barcode,
+        "Title": item.title,
+    }
+    advanced_info = {
+        "Job Number": item.job_number,
+        "Source Type": item.source_type,
+        "Resolution": item.resolution,
+        "Compression": item.compression,
+        "File Format": item.file_format,
+        "File Size": item.file_size,
+        "Frame Rate": item.frame_rate,
+        "Total Running Time": item.total_running_time,
+        "Source Frame Rate": item.source_frame_rate,
+        "Aspect Ratio": item.aspect_ratio,
+        "Color Bit Depth": item.color_bit_depth,
+        "Color Type": item.color_type,
+        "Frame Layout": item.frame_layout,
+        "Sample Structure": item.sample_structure,
+        "Sample Rate": item.sample_rate,
+        "Capture Device Make and Model": item.capture_device_make_and_model,
+        "Capture Device Settings": item.capture_device_settings,
+        "Date Capture Completed": item.date_capture_completed,
+        "Video Edit Software and Settings": item.video_edit_software_and_settings,
+        "Date Edit Completed": item.date_edit_completed,
+        "Color Grading Software": item.color_grading_software,
+        "Color Grading Settings": item.color_grading_settings,
+        "Audio File Format": item.audio_file_format,
+        "Date Audio Edit Completed": item.date_audio_edit_completed,
+        "Remaster Platform": item.remaster_platform,
+        "Remaster Software": item.remaster_software,
+        "Remaster Settings": item.remaster_settings,
+        "Date Remaster Completed": item.date_remaster_completed,
+        "Subtitles": item.subtitles,
+        "Watermark Type": item.watermark_type,
+        "Security Data Encrypted": item.security_data_encrypted,
+        "Migration or Preservation Record": item.migration_or_preservation_record,
+        "Hard Drive Location": item.hard_drive_location,
+        "Date Job Started": item.date_job_started,
+        "Date Job Completed": item.date_job_completed,
+        "General Entry Cataloged By": item.general_entry_cataloged_by,
+        "Notes": item.notes,
+    }
+    return {
+        "header_info": header_info,
+        "storage_info": storage_info,
+        "file_info": file_info,
+        "inventory_info": inventory_info,
+        "advanced_info": advanced_info,
+    }
