@@ -1,6 +1,5 @@
 import json
 import pandas as pd
-import re
 from django.core.management.base import BaseCommand
 from ftva_lab_data.models import SheetImport
 
@@ -62,8 +61,6 @@ class Command(BaseCommand):
                 field_name: row[field_number]
                 for field_number, field_name in enumerate(field_names, start=0)
             }
-            # Make changes as needed
-            # re.match("Digital[ ]?Lab [0-9]"
 
             # Finally, put it in the format needed for a fixture to load later.
             record = {
