@@ -82,12 +82,12 @@ class ItemStatus(models.Model):
     status = models.CharField(
         max_length=50,
         choices=[
-            ("filename_inv_no_incorrect", "Inventory number in filename is incorrect"),
+            ("filename_inv_no_incorrect", "Incorrect inv no in filename"),
             ("source_data_duplicate", "Duplicated in source data"),
             ("invalid_vault", "Invalid vault"),
-            ("invalid_inv_no", "Invalid inventory number"),
-            ("multiple_inv_nos", "Multiple inventory numbers"),
-            ("multiple_PD_inv_no_matches", "Multiple corresponding inventory_no in PD"),
+            ("invalid_inv_no", "Invalid inv no"),
+            ("multiple_inv_nos", "Multiple inv nos"),
+            ("multiple_PD_inv_no_matches", "Multiple matching inv no in PD"),
         ],
         unique=True,
     )
