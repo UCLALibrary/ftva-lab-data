@@ -28,6 +28,7 @@
         <fieldset id="basic-fields" class="row" name="basic-fields" form="item_form">
             <legend>Basic Fields</legend>
             <div class="col">
+                {% bootstrap_field form.status %}
                 {% bootstrap_field form.hard_drive_name %}
                 {% bootstrap_field form.dml_lto_tape_id %}
                 {% bootstrap_field form.arsc_lto_tape_id %}

@@ -6,6 +6,7 @@ class ItemForm(forms.ModelForm):
     class Meta:
         model = SheetImport
         fields = [
+            "status",
             "hard_drive_name",
             "dml_lto_tape_id",
             "arsc_lto_tape_id",
@@ -62,3 +63,5 @@ class ItemForm(forms.ModelForm):
             "arsc_lto_tape_id": "ARSC LTO Tape ID",
             "hard_drive_barcode_id": "Hard drive barcode ID",
         }
+
+        widgets = {"status": forms.CheckboxSelectMultiple}

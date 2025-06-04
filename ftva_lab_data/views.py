@@ -78,12 +78,7 @@ def view_item(request, item_id):
     item = SheetImport.objects.get(id=item_id)
     # For easier parsing in the template, separate attributes into dictionaries
     display_dicts = get_item_display_dicts(item)
-
-    return render(
-        request,
-        "view_item.html",
-        display_dicts 
-    )
+    return render(request, "view_item.html", display_dicts)
 
 
 @login_required
@@ -111,13 +106,22 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     items = SheetImport.objects.only(*display_fields, "id").order_by("id")
     if search:
         if search_column and search_column in display_fields:
-            # Scoped search to selected column
-            items = items.filter(**{f"{search_column}__icontains": search})
+            # Status is a ManyToMany field, so we need to handle it differently
+            if search_column == "status":
+                # Filter by status using a ManyToMany relationship
+                items = items.filter(status__status__icontains=search)
+            else:
+                # Scoped search to selected column
+                items = items.filter(**{f"{search_column}__icontains": search})
         else:
             # General CTRL-F-style search across all configured fields
             query = Q()  # start with empty Q() object, always True
             for field in display_fields:  # then add queries for all valid fields
-                query |= Q(**{f"{field}__icontains": search})
+                # Handle status field separately since it is a ManyToMany field
+                if field == "status":
+                    query |= Q(status__status__icontains=search)
+                else:
+                    query |= Q(**{f"{field}__icontains": search})
             items = items.filter(query)
 
     paginator = Paginator(items, 10)

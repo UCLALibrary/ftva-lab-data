@@ -60,6 +60,9 @@ class SheetImport(models.Model):
     date_job_completed = models.CharField(max_length=50, blank=True)
     general_entry_cataloged_by = models.CharField(max_length=50, blank=True)
     notes = models.CharField(max_length=500, blank=True)
+    status = models.ManyToManyField(
+        "ItemStatus", blank=True, related_name="sheet_imports"
+    )
     assigned_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -71,3 +74,26 @@ class SheetImport(models.Model):
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
+
+
+class ItemStatus(models.Model):
+    """Represents the status of an item in the SheetImport model."""
+
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ("filename_inv_no_incorrect", "Inventory number in filename is incorrect"),
+            ("source_data_duplicate", "Duplicated in source data"),
+            ("invalid_vault", "Invalid vault"),
+            ("invalid_inv_no", "Invalid inventory number"),
+            ("multiple_inv_nos", "Multiple inventory numbers"),
+            ("multiple_PD_inv_no_matches", "Multiple corresponding inventory_no in PD"),
+        ],
+        unique=True,
+    )
+
+    def __str__(self):
+        return self.get_status_display()
+
+    class Meta:
+        verbose_name_plural = "Item Statuses"

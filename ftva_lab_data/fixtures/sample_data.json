@@ -316,5 +316,47 @@
       "general_entry_cataloged_by": "",
       "notes": ""
     }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 5,
+    "fields": {
+      "status": "filename_inv_no_incorrect"
+    }
+},
+{
+  "model": "ftva_lab_data.itemstatus",
+  "pk": 6,
+  "fields": {
+    "status": "source_data_duplicate"
   }
+},
+{
+  "model": "ftva_lab_data.itemstatus",
+  "pk": 7,
+  "fields": {
+    "status": "invalid_vault"
+  }
+},
+{
+  "model": "ftva_lab_data.itemstatus",
+  "pk": 8,
+  "fields": {
+    "status": "invalid_inv_no"
+  }
+},
+{
+  "model": "ftva_lab_data.itemstatus",
+  "pk": 9,
+  "fields": {
+    "status": "multiple_inv_nos"
+  }
+},
+{
+  "model": "ftva_lab_data.itemstatus",
+  "pk": 10,
+  "fields": {
+    "status": "multiple_PD_inv_no_matches"
+  }
+}
 ]
