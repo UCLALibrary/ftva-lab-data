@@ -244,7 +244,7 @@ class ItemDisplayTestCase(TestCase):
         self.assertEqual(display_dicts["header_info"]["file_name"], "test_file")
         self.assertEqual(
             display_dicts["header_info"]["status"],
-            ["Inventory number in filename is incorrect"],
+            ["Incorrect inv no in filename"],
         )
         self.assertEqual(display_dicts["storage_info"]["Hard Drive Name"], "test_drive")
         self.assertEqual(display_dicts["file_info"]["File/Folder Name"], "test_folder")
