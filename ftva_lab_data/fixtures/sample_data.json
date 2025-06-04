@@ -321,42 +321,42 @@
     "model": "ftva_lab_data.itemstatus",
     "pk": 1,
     "fields": {
-      "status": "filename_inv_no_incorrect"
+      "status": "Incorrect inv no in filename"
     }
   },
   {
     "model": "ftva_lab_data.itemstatus",
     "pk": 2,
     "fields": {
-      "status": "source_data_duplicate"
+      "status": "Duplicated in source data"
     }
   },
   {
     "model": "ftva_lab_data.itemstatus",
     "pk": 3,
     "fields": {
-      "status": "invalid_vault"
+      "status": "Invalid vault"
     }
   },
   {
     "model": "ftva_lab_data.itemstatus",
     "pk": 4,
     "fields": {
-      "status": "invalid_inv_no"
+      "status": "Invalid inv no"
     }
   },
   {
     "model": "ftva_lab_data.itemstatus",
     "pk": 5,
     "fields": {
-      "status": "multiple_inv_nos"
+      "status": "Multiple inv nos"
     }
   },
   {
     "model": "ftva_lab_data.itemstatus",
     "pk": 6,
     "fields": {
-      "status": "multiple_PD_inv_no_matches"
+      "status": "Multiple matching inv no in PD"
     }
   }
 ]

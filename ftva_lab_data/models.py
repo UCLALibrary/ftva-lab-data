@@ -79,21 +79,10 @@ class SheetImport(models.Model):
 class ItemStatus(models.Model):
     """Represents the status of an item in the SheetImport model."""
 
-    status = models.CharField(
-        max_length=50,
-        choices=[
-            ("filename_inv_no_incorrect", "Incorrect inv no in filename"),
-            ("source_data_duplicate", "Duplicated in source data"),
-            ("invalid_vault", "Invalid vault"),
-            ("invalid_inv_no", "Invalid inv no"),
-            ("multiple_inv_nos", "Multiple inv nos"),
-            ("multiple_PD_inv_no_matches", "Multiple matching inv no in PD"),
-        ],
-        unique=True,
-    )
+    status = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.get_status_display()
+        return self.status
 
     class Meta:
-        verbose_name_plural = "Item Statuses"
+        verbose_name_plural = "Item statuses"
