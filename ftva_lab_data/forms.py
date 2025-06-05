@@ -1,5 +1,5 @@
 from django import forms
-from .models import SheetImport
+from .models import SheetImport, ItemStatus
 
 
 class ItemForm(forms.ModelForm):
@@ -65,3 +65,8 @@ class ItemForm(forms.ModelForm):
         }
 
         widgets = {"status": forms.CheckboxSelectMultiple}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Order Status choices alphabetically, instead of default ID sort
+        self.fields["status"].queryset = ItemStatus.objects.all().order_by("status")
