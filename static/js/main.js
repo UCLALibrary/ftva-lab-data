@@ -59,3 +59,12 @@ document.addEventListener("htmx:afterSwap", function (e) {
     });
   }
 });
+
+document.addEventListener("DOMContentLoaded", function() {
+    const searchForm = document.querySelector('form[hx-get]');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent form submission on Enter
+        });
+    }
+});
