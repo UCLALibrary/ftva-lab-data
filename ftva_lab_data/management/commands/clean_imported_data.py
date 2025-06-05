@@ -37,7 +37,7 @@ def set_hard_drive_names() -> int:
     """Sets the hard drive name for rows which can be associated with hard drives,
     based on the presence of a specific header row value.
     """
-    records_deleted = 0
+    records_changed = 0
     current_drive_name = None
     for record in SheetImport.objects.all().order_by("id"):
         # Check for value indicating this is a hard drive name.
@@ -53,9 +53,9 @@ def set_hard_drive_names() -> int:
                 if current_drive_name:
                     record.hard_drive_name = current_drive_name
                     record.save()
-                    records_deleted += 1
+                    records_changed += 1
 
-    return records_deleted
+    return records_changed
 
 
 def delete_header_records() -> int:
