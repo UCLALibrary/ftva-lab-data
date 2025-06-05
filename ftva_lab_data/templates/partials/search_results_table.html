@@ -25,9 +25,9 @@
         <!--Source inv no.-->
         <col style="width: 10%;">
         <!--Status-->
-        <col style="width: 15%;">
+        <col style="width: 16%;">
         <!--Assigned user-->
-        <col style="width: 10%;">
+        <col style="width: 9%;">
         <!--View link-->
         <col style="width: 5%;">
         <!--Checkbox for assigning-->
@@ -51,18 +51,16 @@
     <tbody>
         {% for row in rows %}
         <tr>
-            {% for field, value in row.data.items %}     
-                {% if field == "status" %}
+            {% for field, value in row.data.items %}
                 <td>
-                    {% for status in value %}
-                        <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
-                    {% endfor %}
-                </td>
-                {% else %}
-                <td class="nowrap">
-                    {{ value }}
-                </td>
-                {% endif %}              
+                    {% if field == "status" %}
+                        {% for status in value %}
+                            <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
+                        {% endfor %}
+                    {% else %}
+                        {{ value }}
+                    {% endif %}     
+                </td>         
             {% endfor %}
             <td>
                 <a class="btn btn-link btn-sm" href="{% url 'view_item' row.id %}">View</a>
