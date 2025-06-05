@@ -8,6 +8,22 @@ def _is_header_record(record: SheetImport) -> bool:
     return record.file_folder_name == "File Folder Name"
 
 
+def _get_combined_field_data(record: SheetImport) -> str:
+    # All SheetImport fields are string (CharField) except the system-assigned id
+    # and the foreign key relations to assigned_user and status (which does not matter
+    # at this stage for imported, empty records).
+    # Combine all of these string fields into one big string.
+    combined_field_data = "".join(
+        [
+            getattr(record, field.name)
+            for field in record._meta.get_fields()
+            if field.name not in ("id", "assigned_user", "status")
+        ]
+    )
+    # Remove any leading/trailing spaces and return the result.
+    return combined_field_data.strip()
+
+
 def delete_empty_records() -> int:
     """Deletes SheetImport records which contain no data other than
     the system-assigned id.
@@ -15,18 +31,12 @@ def delete_empty_records() -> int:
     records_changed = 0
     for record in SheetImport.objects.all().order_by("id"):
         # All SheetImport fields are string (CharField) except the system-assigned id
-        # and the foreign key relation to assigned_user (which does not matter at this stage
-        # for imported, empty records).
+        # and the foreign key relations to assigned_user and status (which does not matter
+        # at this stage for imported, empty records).
         # Combine all of these string fields into one big string.
-        combined_field_data = "".join(
-            [
-                getattr(record, field.name)
-                for field in record._meta.get_fields()
-                if field.name not in ("id", "assigned_user")
-            ]
-        )
-        # If the resulting string is empty (or just spaces), delete the record.
-        if combined_field_data.strip() == "":
+        combined_field_data = _get_combined_field_data(record)
+        # If the resulting string is empty, delete the record.
+        if combined_field_data == "":
             record.delete()
             records_changed += 1
 
@@ -68,6 +78,17 @@ def delete_header_records() -> int:
     return records_deleted
 
 
+def delete_hard_drive_only_records() -> int:
+    """Deletes records which only have a value in the hard_drive_name field."""
+    records_deleted = 0
+    for record in SheetImport.objects.all().order_by("id"):
+        combined_field_data = _get_combined_field_data(record)
+        if combined_field_data == record.hard_drive_name:
+            record.delete()
+            records_deleted += 1
+    return records_deleted
+
+
 class Command(BaseCommand):
     help = "Clean up imported Digital Labs Google Sheet data"
 
@@ -93,3 +114,6 @@ class Command(BaseCommand):
         # This must be done after set_hard_drive_names(), which uses header info.
         records_deleted = delete_header_records()
         self.stdout.write(f"Header records deleted: {records_deleted}")
+
+        records_deleted = delete_hard_drive_only_records()
+        self.stdout.write(f"Hard drive only records deleted: {records_deleted}")
