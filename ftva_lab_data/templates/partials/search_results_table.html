@@ -17,8 +17,16 @@
     <tbody>
         {% for row in rows %}
         <tr>
-            {% for _, value in row.data.items %}
-            <td>{{ value }}</td>
+            {% for field, value in row.data.items %}
+                <td>
+                    {% if field == "status" %}
+                        {% for status in value %}
+                            <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
+                        {% endfor %}
+                    {% else %}
+                        {{ value }}
+                    {% endif %}
+                </td>
             {% endfor %}
             <td>
                 <a class="btn btn-link btn-sm" href="{% url 'view_item' row.id %}">View</a>

@@ -20,6 +20,9 @@ def get_field_value(obj: models.Model, field: str) -> Any:
     Returns the value of the field, or an empty string if the field does not exist
     or is None.
     """
+    # Special case for status field, which is a ManyToMany field
+    if field == "status":
+        return [str(status) for status in obj.status.all()]
     fields = field.split("__")
     if len(fields) == 1:
         return getattr(obj, fields[0], "")
@@ -33,8 +36,9 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     """Returns a dictionary of dictionaries. Each top-level dict represents a display section for
     the view_item.html template."""
     header_info = {
-        "File Name": item.file_name,
-        "Title": item.title,
+        "file_name": item.file_name,
+        "title": item.title,
+        "status": [str(status) for status in item.status.all()],
         "id": item.id,
     }
     storage_info = {

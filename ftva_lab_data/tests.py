@@ -218,6 +218,8 @@ class HistoryModelTestCase(TestCase):
 class ItemDisplayTestCase(TestCase):
     """Tests the get_item_display_dicts function."""
 
+    fixtures = ["item_statuses.json"]
+
     def setUp(self):
         # Create a test SheetImport object
         self.item = SheetImport.objects.create(
@@ -227,6 +229,8 @@ class ItemDisplayTestCase(TestCase):
             inventory_number="INV001",
             resolution="1920x1080",
         )
+        # Use status value from item_statuses.json fixture
+        self.item.status.add(1)
 
     def test_get_item_display_dicts(self):
         display_dicts = get_item_display_dicts(self.item)
@@ -237,10 +241,15 @@ class ItemDisplayTestCase(TestCase):
         self.assertIn("inventory_info", display_dicts)
         self.assertIn("advanced_info", display_dicts)
         # Check that the values in the dictionaries match the item attributes
-        self.assertEqual(display_dicts["header_info"]["File Name"], "test_file")
+        self.assertEqual(display_dicts["header_info"]["file_name"], "test_file")
+        self.assertEqual(
+            display_dicts["header_info"]["status"],
+            ["Incorrect inv no in filename"],
+        )
         self.assertEqual(display_dicts["storage_info"]["Hard Drive Name"], "test_drive")
         self.assertEqual(display_dicts["file_info"]["File/Folder Name"], "test_folder")
         self.assertEqual(display_dicts["inventory_info"]["Inventory Number"], "INV001")
         self.assertEqual(display_dicts["advanced_info"]["Resolution"], "1920x1080")
         # Check that empty fields are handled correctly (i.e. are in the dict as empty strings)
         self.assertEqual(display_dicts["storage_info"].get("DML LTO Tape ID"), "")
+        #

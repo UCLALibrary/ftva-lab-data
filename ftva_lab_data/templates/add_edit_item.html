@@ -28,16 +28,18 @@
         <fieldset id="basic-fields" class="row" name="basic-fields" form="item_form">
             <legend>Basic Fields</legend>
             <div class="col">
+                {% bootstrap_field form.status %}
+            </div>
+            <div class="col">
                 {% bootstrap_field form.hard_drive_name %}
                 {% bootstrap_field form.dml_lto_tape_id %}
                 {% bootstrap_field form.arsc_lto_tape_id %}
+                {% bootstrap_field form.hard_drive_barcode_id %}
+                {% bootstrap_field form.title %}
             </div>
             <div class="col">
-                {% bootstrap_field form.hard_drive_barcode_id %}
                 {% bootstrap_field form.file_folder_name %}
                 {% bootstrap_field form.sub_folder_name %}
-            </div>
-            <div class="col">
                 {% bootstrap_field form.file_name %}
                 {% bootstrap_field form.inventory_number %}
                 {% bootstrap_field form.source_inventory_number %}
@@ -48,7 +50,6 @@
             <legend>Advanced Fields</legend>
             <div class="col">
                 {% bootstrap_field form.source_barcode %}
-                {% bootstrap_field form.title %}
                 {% bootstrap_field form.source_type %}
                 {% bootstrap_field form.resolution %}
                 {% bootstrap_field form.compression %}

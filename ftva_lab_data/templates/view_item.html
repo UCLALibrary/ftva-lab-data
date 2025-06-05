@@ -13,6 +13,11 @@
 
     <p class="fs-5">{% if header_info.file_name %} File: {{ header_info.file_name }} {% endif %}</p>
     <p class="fs-5">{% if header_info.title %} (Title: {{ header_info.title }}) {% endif %}</p>
+    <p class="fs-5">{% if header_info.status %} Status: 
+        {% for status in header_info.status %}
+            <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
+        {% endfor %}
+    {% endif %}</p>
 
     <!-- Buttons -->
     <div class="d-flex justify-content-between mb-3">
