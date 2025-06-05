@@ -218,7 +218,7 @@ class HistoryModelTestCase(TestCase):
 class ItemDisplayTestCase(TestCase):
     """Tests the get_item_display_dicts function."""
 
-    fixtures = ["sample_data.json"]
+    fixtures = ["item_statuses.json"]
 
     def setUp(self):
         # Create a test SheetImport object
@@ -229,7 +229,7 @@ class ItemDisplayTestCase(TestCase):
             inventory_number="INV001",
             resolution="1920x1080",
         )
-        # Use status value from sample_data.json fixture
+        # Use status value from item_statuses.json fixture
         self.item.status.add(1)
 
     def test_get_item_display_dicts(self):

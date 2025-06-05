@@ -109,7 +109,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             # Status is a ManyToMany field, so we need to handle it differently
             if search_column == "status":
                 # Filter by status using a ManyToMany relationship
-                items = items.filter(status__status__icontains=search)
+                items = items.filter(status__status__icontains=search).distinct()
             else:
                 # Scoped search to selected column
                 items = items.filter(**{f"{search_column}__icontains": search})
@@ -122,7 +122,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
                     query |= Q(status__status__icontains=search)
                 else:
                     query |= Q(**{f"{field}__icontains": search})
-            items = items.filter(query)
+            items = items.filter(query).distinct()
 
     paginator = Paginator(items, 10)
     page_obj = paginator.get_page(page)
