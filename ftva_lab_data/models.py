@@ -86,3 +86,4 @@ class ItemStatus(models.Model):
 
     class Meta:
         verbose_name_plural = "Item statuses"
+        ordering = ["status"]
