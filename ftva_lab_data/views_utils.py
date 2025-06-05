@@ -22,7 +22,6 @@ def get_field_value(obj: models.Model, field: str) -> Any:
     """
     # Special case for status field, which is a ManyToMany field
     if field == "status":
-        # Order statuses alphabetically
         return [str(status) for status in obj.status.all()]
     fields = field.split("__")
     if len(fields) == 1:

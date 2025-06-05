@@ -1,5 +1,5 @@
 from django import forms
-from .models import SheetImport, ItemStatus
+from .models import SheetImport
 
 
 class ItemForm(forms.ModelForm):
