@@ -5,23 +5,25 @@
 <div id="messages">
     {% include "partials/messages.html" %}
 </div>
+<div class="w-75 mx-auto">
+    <h1>Items</h1>
+</div>
 
-<h1>Items</h1>
+<div class="d-flex align-items-stretch gap-2 mb-3 w-75 mx-auto">
 
-<!-- HTMX will listen for triggers from enclosed controls,
-then issue GET requests to 'render_table' URL
-and replace content of #table-container with result -->
-<form class="d-flex justify-content-end" hx-get="{% url 'render_table' %}" hx-target="#table-container"
-    hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
-    <div class="d-flex w-50 gap-2">
-        <select name="search_column" class="form-select">
+    <!-- HTMX will listen for triggers from enclosed controls,
+    then issue GET requests to 'render_table' URL
+    and replace content of #table-container with result -->
+    <form class="d-flex gap-2 align-items-stretch w-50" hx-get="{% url 'render_table' %}" hx-target="#table-container"
+        hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
+        <select name="search_column" class="form-select form-select-sm">
             <option value="">All columns</option>
             {% for field, label in columns %}
             <option value="{{ field }}">{{ label }}</option>
             {% endfor %}
         </select>
-        <div class="input-group">
-            <input id="search-input" class="form-control" type="text" name="search" placeholder="Enter search term...">
+        <div class="input-group input-group-sm">
+            <input id="search-input" class="form-control form-control-sm" type="text" name="search" placeholder="Enter search term...">
             <span class="input-group-text">
                 <button class="btn p-0 border-0" type="button" hx-on:click="clearSearchInput()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -33,29 +35,25 @@ and replace content of #table-container with result -->
                 </button>
             </span>
         </div>
-    </div>
-</form>
+    </form>
 
-<form id="assigned-users-form" method="post" hx-post="{% url 'assign_to_user' %}" hx-target="#table-container" class="d-flex justify-content-end">
-    {% csrf_token %}
-    <div class="d-flex w-50 gap-2 input-group">
-        <select name="user_id" class="form-select" required>
+    <form id="assigned-users-form" method="post" hx-post="{% url 'assign_to_user' %}" hx-target="#table-container" class="d-flex gap-2 align-items-stretch w-50">
+        {% csrf_token %}
+        <select name="user_id" class="form-select form-select-sm" required>
             <option value="">Assign to...</option>
             <option value="__unassign__">Unassign</option>
             {% for user in users %}
             <option value="{{ user.id }}">{{ user.username }}</option>
             {% endfor %}
         </select>
-    <button type="submit" class="btn btn-primary">Assign Selected</button>
-
-    </div>
-</form>
-
+        <button type="submit" class="btn btn-sm btn-primary">Assign Selected</button>
+    </form>
+</div> 
 
 
 <!-- On page load, HTMX triggers GET request to 'render_table'
 and inserts it within div -->
-<div id="table-container" class="p-2" hx-get="{% url 'render_table' %}" hx-trigger="load"></div>
+<div id="table-container" class="table-responsive container-fluid p-4" hx-get="{% url 'render_table' %}" hx-trigger="load"></div>
 
 
 {% endblock %}

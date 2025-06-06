@@ -1,12 +1,46 @@
-<table class="table table-hover">
+<div class="d-flex justify-content-center align-items-center gap-2">
+
+    <button class="btn btn-primary" {% if page_obj.has_previous %}
+        hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}&search_column={{ search_column }}"
+        hx-target="#table-container" {% else %} disabled {% endif %}>Previous</button>
+
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    <button class="btn btn-primary" {% if page_obj.has_next %}
+        hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}&search_column={{ search_column }}"
+        hx-target="#table-container" {% else %} disabled {% endif %}>Next</button>
+</div>
+
+
+<table class="table table-hover" style="table-layout: fixed;">
+    <colgroup>
+        <!--Hard drive-->
+        <col style="width: 10%;">
+        <!--File folder-->
+        <col style="width: 10%;">
+        <!--Sub-folder-->
+        <col style="width: 10%;">
+        <!--Filename-->
+        <col style="width: 25%;">
+        <!--Source inv no.-->
+        <col style="width: 10%;">
+        <!--Status-->
+        <col style="width: 16%;">
+        <!--Assigned user-->
+        <col style="width: 9%;">
+        <!--View link-->
+        <col style="width: 5%;">
+        <!--Checkbox for assigning-->
+        <col style="width: 5%;">
+    </colgroup>
     <thead>
         <tr>
             {% for _, label in columns %}
             <th>{{ label }}</th>
             {% endfor %}
+            <!--Empty <th> for View link-->
             <th></th>
-            <th class="text-center">
-
+            <th class ="text-center">
                 Assign
                 <div class="form-check justify-content-center m-0" style="display: flex;" title="Select all items on this page">
                     <input type="checkbox" class="form-check-input checkbox-bold" id="select-all-checkbox">
@@ -25,8 +59,8 @@
                         {% endfor %}
                     {% else %}
                         {{ value }}
-                    {% endif %}
-                </td>
+                    {% endif %}     
+                </td>         
             {% endfor %}
             <td>
                 <a class="btn btn-link btn-sm" href="{% url 'view_item' row.id %}">View</a>
@@ -39,7 +73,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td class="text-center" colspan="{{ columns|length|add:1 }}">No results found.</td>
+            <td class="text-left" colspan="{{ columns|length|add:1 }}">No results found.</td>
         </tr>
         {% endfor %}
     </tbody>

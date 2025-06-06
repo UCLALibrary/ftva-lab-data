@@ -1,3 +1,7 @@
 .checkbox-bold {
   border: 2px solid var(--bs-gray-600);
 }
+
+#table-container td {
+    word-break: break-all;
+}
