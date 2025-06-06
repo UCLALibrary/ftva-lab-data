@@ -75,6 +75,9 @@ class SheetImport(models.Model):
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
 
+    class Meta:
+        permissions = [("assign_user", "Can assign user to SheetImport")]
+
 
 class ItemStatus(models.Model):
     """Represents the status of an item in the SheetImport model."""
