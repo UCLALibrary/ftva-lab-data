@@ -156,6 +156,11 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     )
 
 
+@login_required
+@permission_required(
+    "ftva_lab_data.assign_user",
+    raise_exception=True,
+)
 def assign_to_user(request: HttpRequest) -> HttpResponse:
     """Assigns a SheetImport item to a user."""
     ids = request.POST.get("ids", "").split(",")

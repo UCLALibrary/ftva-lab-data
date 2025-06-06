@@ -16,14 +16,14 @@
     and replace content of #table-container with result -->
     <form class="d-flex gap-2 align-items-stretch w-50" hx-get="{% url 'render_table' %}" hx-target="#table-container"
         hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
-        <select name="search_column" class="form-select form-select-sm">
+        <select name="search_column" class="form-select form-select-md">
             <option value="">All columns</option>
             {% for field, label in columns %}
             <option value="{{ field }}">{{ label }}</option>
             {% endfor %}
         </select>
-        <div class="input-group input-group-sm">
-            <input id="search-input" class="form-control form-control-sm" type="text" name="search" placeholder="Enter search term...">
+        <div class="input-group input-group-md">
+            <input id="search-input" class="form-control form-control-md" type="text" name="search" placeholder="Enter search term...">
             <span class="input-group-text">
                 <button class="btn p-0 border-0" type="button" hx-on:click="clearSearchInput()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -37,9 +37,10 @@
         </div>
     </form>
 
+    {% if perms.ftva_lab_data.assign_user %}
     <form id="assigned-users-form" method="post" hx-post="{% url 'assign_to_user' %}" hx-target="#table-container" class="d-flex gap-2 align-items-stretch w-50">
         {% csrf_token %}
-        <select name="user_id" class="form-select form-select-sm" required>
+        <select name="user_id" class="form-select form-select-md" required>
             <option value="">Assign to...</option>
             <option value="__unassign__">Unassign</option>
             {% for user in users %}
@@ -48,6 +49,7 @@
         </select>
         <button type="submit" class="btn btn-sm btn-primary">Assign Selected</button>
     </form>
+    {% endif %}    
 </div> 
 
 
