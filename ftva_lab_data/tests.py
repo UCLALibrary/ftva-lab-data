@@ -61,6 +61,9 @@ class UserAccessTestCase(TestCase):
         # which has necessary permissions for `add_item` and `edit_item` views
         editors_group = Group.objects.get(name="editors")
         cls.authorized_user.groups.add(editors_group)
+        # Add authorized user to super-editors group to add permissions for `assign_to_user` view
+        super_editors_group = Group.objects.get(name="super-editors")
+        cls.authorized_user.groups.add(super_editors_group)
 
     def test_authorized_user_can_add(self):
         """Asserts that user added to `editors` group in setup
@@ -138,6 +141,31 @@ class UserAccessTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
+
+    def test_unauthorized_user_cannot_assign_user(self):
+        """Asserts that unauthorized user with no group receives 403
+        when trying to POST to the `assign_user` view.
+        """
+        self.client.login(username="unauthorized", password="testpassword")
+        url = reverse("assign_to_user")
+        # POST request
+        response = self.client.post(
+            url, {"ids": [self.test_object.id], "user_id": self.authorized_user.id}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def authorized_user_can_assign_user(self):
+        """Asserts that authorized user can POST to the `assign_user` view."""
+        self.client.login(username="authorized", password="testpassword")
+        url = reverse("assign_to_user")
+        # POST request
+        response = self.client.post(
+            url, {"ids": [self.test_object.id], "user_id": self.authorized_user.id}
+        )
+        self.assertEqual(response.status_code, 200)
+        # Confirm item successfully assigned to user
+        self.test_object.refresh_from_db()
+        self.assertEqual(self.test_object.assigned_user, self.authorized_user)
 
 
 class TablePaginationTestCase(TestCase):
@@ -252,4 +280,3 @@ class ItemDisplayTestCase(TestCase):
         self.assertEqual(display_dicts["advanced_info"]["Resolution"], "1920x1080")
         # Check that empty fields are handled correctly (i.e. are in the dict as empty strings)
         self.assertEqual(display_dicts["storage_info"].get("DML LTO Tape ID"), "")
-        #
