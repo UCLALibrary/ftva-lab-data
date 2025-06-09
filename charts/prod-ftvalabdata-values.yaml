@@ -1,0 +1,74 @@
+# Values for ftva-lab-data prod.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: uclalibrary/ftva-lab-data
+  tag: v1.0.0
+  pullPolicy: Always
+
+nameOverride: ""
+
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  
+ingress:
+  enabled: "true"
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    cert-manager.io/cluster-issuer: sectigo-acme-clusterissuer
+    kubernetes.io/tls-acme: "true"
+
+  hosts:
+    - host: 'digital-data.cinema.ucla.edu'
+      paths:
+        - "/"
+  tls:
+  - secretName: ftva-lab-data-tls
+    hosts:
+      - digital-data.cinema.ucla.edu
+
+django:
+  env:
+    run_env: "prod"
+    debug: "false"
+    allowed_hosts:
+      - digital-data.cinema.ucla.edu
+    csrf_trusted_origins:
+      - https://digital-data.cinema.ucla.edu
+    log_level: "INFO"
+    db_backend: "django.db.backends.postgresql"
+    db_name: "ftva-digital-data"
+    db_user: "ftva-digital-data"
+    db_host: "p-d-postgres.library.ucla.edu"
+    db_port: 5432
+
+  externalSecrets:
+    enabled: "true"
+    annotations: 
+      argocd.argoproj.io/sync-wave: "-1"
+    env:
+      # Application database used by django
+      db_password: "/systems/prodrke01/ftva-lab-data/db_password"
+      django_secret_key: "/systems/prodrke01/ftva-lab-data/django_secret_key"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 500Mi
+  requests:
+    cpu: 250m
+    memory: 100Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
