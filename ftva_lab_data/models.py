@@ -17,7 +17,7 @@ class SheetImport(models.Model):
     hard_drive_barcode_id = models.CharField(max_length=100, blank=True)
     file_folder_name = models.CharField(max_length=200, blank=True)
     sub_folder_name = models.CharField(max_length=200, blank=True)
-    file_name = models.CharField(max_length=200, blank=True)
+    file_name = models.CharField(max_length=200, blank=False)
     inventory_number = models.CharField(max_length=100, blank=True)
     source_inventory_number = models.CharField(max_length=50, blank=True)
     source_barcode = models.CharField(max_length=50, blank=True)

@@ -6,7 +6,7 @@ COLUMNS = [
     ("file_folder_name", "File folder"),
     ("sub_folder_name", "Sub-folder"),
     ("file_name", "Filename"),
-    ("source_inventory_number", "Source inv no."),
+    ("inventory_number", "Inventory number"),
     ("status", "Status"),
     ("assigned_user__username", "Assigned user"),
 ]

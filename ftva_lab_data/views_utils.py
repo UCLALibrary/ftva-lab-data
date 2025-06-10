@@ -1,6 +1,7 @@
 from typing import Any
 from django.db import models
 from .models import SheetImport
+from .forms import ItemForm
 
 
 # Recursive implementation adapted from:
@@ -54,11 +55,12 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     }
     inventory_info = {
         "Inventory Number": item.inventory_number,
-        "Source Inventory Number": item.source_inventory_number,
         "Source Barcode": item.source_barcode,
         "Title": item.title,
+        "Notes": item.notes,
     }
     advanced_info = {
+        "Source Inventory Number": item.source_inventory_number,
         "Job Number": item.job_number,
         "Source Type": item.source_type,
         "Resolution": item.resolution,
@@ -95,7 +97,6 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "Date Job Started": item.date_job_started,
         "Date Job Completed": item.date_job_completed,
         "General Entry Cataloged By": item.general_entry_cataloged_by,
-        "Notes": item.notes,
     }
     return {
         "header_info": header_info,
@@ -104,3 +105,24 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "inventory_info": inventory_info,
         "advanced_info": advanced_info,
     }
+
+
+def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
+    """Returns a dict with keys "basic_fields" and "advanced_fields",
+    each containing a list of field names to be used in the add/edit item form."""
+    basic_fields = [
+        "status",
+        "hard_drive_name",
+        "dml_lto_tape_id",
+        "arsc_lto_tape_id",
+        "hard_drive_barcode_id",
+        "title",
+        "file_folder_name",
+        "sub_folder_name",
+        "file_name",
+        "inventory_number",
+        "notes",
+    ]
+    advanced_fields = [f for f in form.fields if f not in basic_fields]
+
+    return {"basic_fields": basic_fields, "advanced_fields": advanced_fields}
