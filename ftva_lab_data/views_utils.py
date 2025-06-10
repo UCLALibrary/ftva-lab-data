@@ -97,7 +97,6 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "Date Job Started": item.date_job_started,
         "Date Job Completed": item.date_job_completed,
         "General Entry Cataloged By": item.general_entry_cataloged_by,
-        "Notes": item.notes,
     }
     return {
         "header_info": header_info,
@@ -109,7 +108,8 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
 
 
 def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
-    """Returns a list of field names to be used in the add/edit item form."""
+    """Returns a dict with keys "basic_fields" and "advanced_fields",
+    each containing a list of field names to be used in the add/edit item form."""
     basic_fields = [
         "status",
         "hard_drive_name",
