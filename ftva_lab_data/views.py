@@ -11,7 +11,11 @@ from django.template.loader import render_to_string
 from .forms import ItemForm
 from .models import SheetImport
 from .table_config import COLUMNS
-from .views_utils import get_field_value, get_item_display_dicts
+from .views_utils import (
+    get_field_value,
+    get_item_display_dicts,
+    get_add_edit_item_fields,
+)
 
 
 @login_required
@@ -26,6 +30,10 @@ def add_item(request):
         "title": "Add Item",
         "button_text": "Add Item",
     }
+    # Get form fields, divided into basic and advanced sections
+    fields = get_add_edit_item_fields(ItemForm())
+    # Add the fields to the context for rendering in the template
+    add_item_context.update(fields)
 
     if request.method == "POST":
         # save a new SheetImport object
@@ -58,6 +66,10 @@ def edit_item(request, item_id):
         "title": "Edit Item",
         "button_text": "Save Changes",
     }
+    # Get form fields, divided into basic and advanced sections
+    fields = get_add_edit_item_fields(ItemForm(instance=item))
+    # Add the fields to the context for rendering in the template
+    edit_item_context.update(fields)
 
     if request.method == "POST":
         form = ItemForm(request.POST, instance=item)
