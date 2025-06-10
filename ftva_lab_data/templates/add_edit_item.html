@@ -28,70 +28,28 @@
         <fieldset id="basic-fields" class="row" name="basic-fields" form="item_form">
             <legend>Basic Fields</legend>
             <div class="col">
-                {% bootstrap_field form.status %}
-            </div>
-            <div class="col">
-                {% bootstrap_field form.hard_drive_name %}
-                {% bootstrap_field form.dml_lto_tape_id %}
-                {% bootstrap_field form.arsc_lto_tape_id %}
-                {% bootstrap_field form.hard_drive_barcode_id %}
-                {% bootstrap_field form.title %}
-            </div>
-            <div class="col">
-                {% bootstrap_field form.file_folder_name %}
-                {% bootstrap_field form.sub_folder_name %}
-                {% bootstrap_field form.file_name %}
-                {% bootstrap_field form.inventory_number %}
-                {% bootstrap_field form.source_inventory_number %}
+            {% for field in form %}
+                {% if field.name in basic_fields %}
+                    {% bootstrap_field field %}
+                {% endif %}
+                {% if field.name == "notes"  or field.name == "hard_drive_barcode_id"%}
+                    </div><div class="col">
+                {% endif %}
+            {% endfor %}
             </div>
         </fieldset>
 
         <fieldset id="advanced-fields" class="row mt-3" name="advanced-fields" form="item_form" hidden>
             <legend>Advanced Fields</legend>
             <div class="col">
-                {% bootstrap_field form.source_barcode %}
-                {% bootstrap_field form.source_type %}
-                {% bootstrap_field form.resolution %}
-                {% bootstrap_field form.compression %}
-                {% bootstrap_field form.file_format %}
-                {% bootstrap_field form.file_size %}
-                {% bootstrap_field form.frame_rate %}
-                {% bootstrap_field form.total_running_time %}
-                {% bootstrap_field form.source_frame_rate %}
-            </div>
-            <div class="col">
-                {% bootstrap_field form.aspect_ratio %}
-                {% bootstrap_field form.color_bit_depth %}
-                {% bootstrap_field form.color_type %}
-                {% bootstrap_field form.frame_layout %}
-                {% bootstrap_field form.sample_structure %}
-                {% bootstrap_field form.sample_rate %}
-                {% bootstrap_field form.capture_device_make_and_model %}
-                {% bootstrap_field form.capture_device_settings %}
-                {% bootstrap_field form.date_capture_completed %}
-                {% bootstrap_field form.video_edit_software_and_settings %}
-            </div>
-            <div class="col">
-                {% bootstrap_field form.date_edit_completed %}
-                {% bootstrap_field form.color_grading_software %}
-                {% bootstrap_field form.color_grading_settings %}
-                {% bootstrap_field form.audio_file_format %}
-                {% bootstrap_field form.date_audio_edit_completed %}
-                {% bootstrap_field form.remaster_platform %}
-                {% bootstrap_field form.remaster_software %}
-                {% bootstrap_field form.remaster_settings %}
-                {% bootstrap_field form.date_remaster_completed %}
-                {% bootstrap_field form.subtitles %}
-            </div>
-            <div class="col">
-                {% bootstrap_field form.watermark_type %}
-                {% bootstrap_field form.security_data_encrypted %}
-                {% bootstrap_field form.migration_or_preservation_record %}
-                {% bootstrap_field form.hard_drive_location %}
-                {% bootstrap_field form.date_job_started %}
-                {% bootstrap_field form.date_job_completed %}
-                {% bootstrap_field form.general_entry_cataloged_by %}
-                {% bootstrap_field form.notes %}
+            {% for field in form %}
+                {% if field.name in advanced_fields %}
+                    {% bootstrap_field field %}
+                {% endif %}
+                {% if field.name == "color_bit_depth"  or field.name == "date_audio_edit_completed" %}
+                    </div><div class="col">
+                {% endif %}
+            {% endfor %}
             </div>
         </fieldset>
     </form>

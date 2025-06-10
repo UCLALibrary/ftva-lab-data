@@ -11,7 +11,11 @@ from django.template.loader import render_to_string
 from .forms import ItemForm
 from .models import SheetImport
 from .table_config import COLUMNS
-from .views_utils import get_field_value, get_item_display_dicts
+from .views_utils import (
+    get_field_value,
+    get_item_display_dicts,
+    get_add_edit_item_fields,
+)
 
 
 @login_required
@@ -26,6 +30,11 @@ def add_item(request):
         "title": "Add Item",
         "button_text": "Add Item",
     }
+    # Get form fields, divided into basic and advanced sections
+    fields = get_add_edit_item_fields(ItemForm())
+    # Add the fields to the context for rendering in the template
+    add_item_context.update(fields)
+    print("add_item_context:", add_item_context)
 
     if request.method == "POST":
         # save a new SheetImport object
@@ -58,6 +67,11 @@ def edit_item(request, item_id):
         "title": "Edit Item",
         "button_text": "Save Changes",
     }
+    # Get form fields, divided into basic and advanced sections
+    fields = get_add_edit_item_fields(ItemForm(instance=item))
+    # Add the fields to the context for rendering in the template
+    edit_item_context.update(fields)
+    print("edit_item_context:", edit_item_context)
 
     if request.method == "POST":
         form = ItemForm(request.POST, instance=item)
@@ -156,11 +170,6 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
-@permission_required(
-    "ftva_lab_data.assign_user",
-    raise_exception=True,
-)
 def assign_to_user(request: HttpRequest) -> HttpResponse:
     """Assigns a SheetImport item to a user."""
     ids = request.POST.get("ids", "").split(",")
