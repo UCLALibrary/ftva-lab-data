@@ -9,6 +9,7 @@ def _is_header_record(record: SheetImport) -> bool:
 
 
 def _get_combined_field_data(record: SheetImport) -> str:
+    """Combines all string fields into one big string for some checks elsewhere."""
     # All SheetImport fields are string (CharField) except the system-assigned id
     # and the foreign key relations to assigned_user and status (which does not matter
     # at this stage for imported, empty records).
@@ -50,11 +51,11 @@ def set_hard_drive_names() -> int:
     records_changed = 0
     current_drive_name = None
     for record in SheetImport.objects.all().order_by("id"):
-        # Check for value indicating this is a hard drive name.
+        # Check for value indicating this is a valid hard drive name:
+        # "Digital Lab " or "DigitalLab " followed by at least one digit.
         if re.match("Digital[ ]?Lab [0-9]", record.hard_drive_name):
             current_drive_name = record.hard_drive_name
         else:
-            # Is this a header row?
             if _is_header_record(record):
                 # Clear the value so we know to stop if appropriate.
                 current_drive_name = None
@@ -62,6 +63,29 @@ def set_hard_drive_names() -> int:
             else:
                 if current_drive_name:
                     record.hard_drive_name = current_drive_name
+                    record.save()
+                    records_changed += 1
+
+    return records_changed
+
+
+def set_file_folder_names() -> int:
+    """Sets the file folder name for rows which don't have one, but
+    do have file names."""
+    records_changed = 0
+    current_file_folder_name = None
+    for record in SheetImport.objects.all().order_by("id"):
+        if _is_header_record(record):
+            # Clear the value, to avoid copying folder names from a previous device.
+            # We also don't want the header value itself, "File Folder Name".
+            current_file_folder_name = None
+        else:
+            if record.file_folder_name:
+                # Use this later if needed, but change nothing in this record.
+                current_file_folder_name = record.file_folder_name
+            else:
+                if current_file_folder_name:
+                    record.file_folder_name = current_file_folder_name
                     record.save()
                     records_changed += 1
 
@@ -111,7 +135,10 @@ class Command(BaseCommand):
         records_changed = set_hard_drive_names()
         self.stdout.write(f"Hard drive names set: {records_changed}")
 
-        # This must be done after set_hard_drive_names(), which uses header info.
+        records_changed = set_file_folder_names()
+        self.stdout.write(f"Folder names set: {records_changed}")
+
+        # This must be done after some of the methods above, which rely on header info.
         records_deleted = delete_header_records()
         self.stdout.write(f"Header records deleted: {records_deleted}")
 
