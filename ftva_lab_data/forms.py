@@ -7,6 +7,7 @@ class ItemForm(forms.ModelForm):
         model = SheetImport
         fields = [
             "status",
+            "notes",
             "hard_drive_name",
             "dml_lto_tape_id",
             "arsc_lto_tape_id",
@@ -54,7 +55,6 @@ class ItemForm(forms.ModelForm):
             "date_job_started",
             "date_job_completed",
             "general_entry_cataloged_by",
-            "notes",
         ]
 
         labels = {
@@ -64,4 +64,7 @@ class ItemForm(forms.ModelForm):
             "hard_drive_barcode_id": "Hard drive barcode ID",
         }
 
-        widgets = {"status": forms.CheckboxSelectMultiple}
+        widgets = {
+            "status": forms.CheckboxSelectMultiple,
+            "notes": forms.Textarea(attrs={"rows": 4, "cols": 40}),
+        }
