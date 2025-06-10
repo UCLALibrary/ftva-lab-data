@@ -34,7 +34,6 @@ def add_item(request):
     fields = get_add_edit_item_fields(ItemForm())
     # Add the fields to the context for rendering in the template
     add_item_context.update(fields)
-    print("add_item_context:", add_item_context)
 
     if request.method == "POST":
         # save a new SheetImport object
@@ -71,7 +70,6 @@ def edit_item(request, item_id):
     fields = get_add_edit_item_fields(ItemForm(instance=item))
     # Add the fields to the context for rendering in the template
     edit_item_context.update(fields)
-    print("edit_item_context:", edit_item_context)
 
     if request.method == "POST":
         form = ItemForm(request.POST, instance=item)
