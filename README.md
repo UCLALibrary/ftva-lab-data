@@ -91,6 +91,8 @@ The container runs via `docker_scripts/entrypoint.sh`, which
 
 ### Loading data
 
+#### Converting data for import
+
 1. Get a copy of the [Digital Lab Hard Drives Google sheet](https://docs.google.com/spreadsheets/d/1UcytVzczTxxFHhfxQzhr7pUKjL9bcIzoqIhLC0vRc6g/edit?gid=1871334680#gid=1871334680) (access required) as an Excel file, called `ftva_dl_sheet.xlsx` for this example.
 
 2. Convert it to a JSON fixture suitable for loading into Django. This will create `sheet_data.json` in the current directory:
@@ -101,13 +103,19 @@ The container runs via `docker_scripts/entrypoint.sh`, which
 
    ```python manage.py loaddata sheet_data.json```
 
-4. Output should look like this:
+4. Output should look like this (count will vary):
 
-   ```Installed 26653 object(s) from 1 fixture(s)```
+   ```Installed 26760 object(s) from 1 fixture(s)```
+
+#### Cleaning up loaded data
+
+Some large-scale data cleanup is best done after loading the raw data, as in the previous step.  Once loaded, to run the cleanup:
+
+```python manage.py clean_imported_data```
 
 #### Loading group and permission definitions
 
-Certain views within the application are restricted to users with appropriate permissions. Corresponding group and permission definitions are included in the `groups_and_permissions.json` fixture.  This can be loaded using:
+Certain views within the application are restricted to users with appropriate permissions. Corresponding group and permission definitions are included in the `groups_and_permissions.json` fixture.  This is loaded automatically in the development environment, but also can be loaded manually:
 
 ```python manage.py loaddata groups_and_permissions.json```
 
@@ -122,6 +130,10 @@ The script accepts two command line arguments:
 - `-f` (or `--file_name`) _required_: path to an Excel (XLSX) export of the FTVA Google Sheet containing user data
 - `--email_users`: whether to email users with a link to set their passwords
   - NOTE: the emailing logic is not currently implemented. This feature will be added later.
+
+#### Convenience script
+
+In the **development environment only**, much of the above can be done by running `./process_data.sh`.
 
 ### Logging
 
