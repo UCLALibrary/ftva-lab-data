@@ -42,7 +42,6 @@ CSRF_TRUSTED_ORIGINS = list(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split("
 
 # Application definition
 INSTALLED_APPS = [
-    "ftva_lab_data",
     # Enable whitenoise in development per
     # https://whitenoise.readthedocs.io/en/stable/django.html#using-whitenoise-in-development
     "whitenoise.runserver_nostatic",
@@ -54,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_bootstrap5",
     "simple_history",
+    "ftva_lab_data",
 ]
 
 MIDDLEWARE = [
@@ -75,9 +75,8 @@ ROOT_URLCONF = "project.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        # TODO: Do we prefer this setting, copied from our older apps?
-        # "DIRS": [BASE_DIR / "templates"],
+        # DIRS = [BASE_DIR / "templates"] allows partial override of django.contrib.admin templates
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
