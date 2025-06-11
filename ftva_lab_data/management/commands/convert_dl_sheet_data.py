@@ -14,10 +14,11 @@ class Command(BaseCommand):
         """
         # Ignore model _state, id (part of model but not in source data), and hard_drive_barcode_id
         # (which will be handled as a special case when reading the data).
+        # Also ignore new field assigned_user_id.
         field_names = [
             key
             for key in SheetImport().__dict__
-            if key not in ["_state", "id", "hard_drive_barcode_id"]
+            if key not in ["_state", "id", "hard_drive_barcode_id", "assigned_user_id"]
         ]
         return field_names
 
@@ -48,13 +49,13 @@ class Command(BaseCommand):
         field_names = self._get_field_names()
         # Loop through the rows of data, creating an object for all of the relevant ones.
         for row_number, row in enumerate(rows, start=1):
-            if row_number % 1000 == 0:
-                self.stdout.write(f"Processed {row_number} rows")
-            # Always ignore pseudo-header rows, which are repeated in the source document
+            # Actually, *don't* ignore pseudo-header rows, which are repeated in the source document
             # and are inconsistent.  These can be identified by a specific value in column D,
-            # which is always the same. (Column A header is not completely consistent....)
-            if row[3] == "File Folder Name":
-                continue
+            # which is always the same. (Column A header is not completely consistent....).
+            # These will be used in a later cleanup process to identify where hard drives stop
+            # and tapes begin.
+            # if row[3] == "File Folder Name":
+            #     continue
 
             # Copy all of the fields as-is, to start
             fields = {

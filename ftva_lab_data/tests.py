@@ -3,6 +3,12 @@ from ftva_lab_data.models import SheetImport
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
+from ftva_lab_data.management.commands.clean_imported_data import (
+    delete_empty_records,
+    delete_header_records,
+    set_file_folder_names,
+    set_hard_drive_names,
+)
 from ftva_lab_data.views_utils import get_field_value, get_item_display_dicts
 
 
@@ -280,3 +286,35 @@ class ItemDisplayTestCase(TestCase):
         self.assertEqual(display_dicts["advanced_info"]["Resolution"], "1920x1080")
         # Check that empty fields are handled correctly (i.e. are in the dict as empty strings)
         self.assertEqual(display_dicts["storage_info"].get("DML LTO Tape ID"), "")
+
+
+class CleanImportedData(TestCase):
+    """Tests methods from the clean_imported_data management command."""
+
+    # Contains 10 rows total:
+    # 2 header rows, 2 hard-drive-only rows, 1 empty row, and 5 real data rows.
+    # All data is available during each test.
+    fixtures = ["test_clean_imported_data.json"]
+
+    def test_delete_empty_records(self):
+        before_deletion = SheetImport.objects.count()
+        records_deleted = delete_empty_records()
+        self.assertEqual(records_deleted, 1)
+        after_deletion = SheetImport.objects.count()
+        self.assertEqual((before_deletion - after_deletion), 1)
+
+    def test_set_hard_drive_names(self):
+        records_updated = set_hard_drive_names()
+        # Only the 5 real data rows should be updated, not the empty row
+        # or the 2 hard-drive-only rows or the 2 header rows.
+        self.assertEqual(records_updated, 5)
+
+    def test_set_file_folder_names(self):
+        records_updated = set_file_folder_names()
+        # Only 3 real data rows should be updated; 2 of the 5 already have folder names.
+        # The empty row, the 2 hard-drive-only rows and the 2 header rows should not be updated.
+        self.assertEqual(records_updated, 3)
+
+    def test_delete_header_records(self):
+        records_deleted = delete_header_records()
+        self.assertEqual(records_deleted, 2)
