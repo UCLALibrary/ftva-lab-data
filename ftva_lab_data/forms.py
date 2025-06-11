@@ -9,8 +9,8 @@ class ItemForm(forms.ModelForm):
             "status",
             "notes",
             "hard_drive_name",
-            "dml_lto_tape_id",
-            "arsc_lto_tape_id",
+            "carrier_a",
+            "carrier_b",
             "hard_drive_barcode_id",
             "file_folder_name",
             "sub_folder_name",
@@ -59,8 +59,6 @@ class ItemForm(forms.ModelForm):
 
         labels = {
             # for now, only adding custom labels for fields with initials (for capitalization)
-            "dml_lto_tape_id": "DML LTO Tape ID",
-            "arsc_lto_tape_id": "ARSC LTO Tape ID",
             "hard_drive_barcode_id": "Hard drive barcode ID",
         }
 

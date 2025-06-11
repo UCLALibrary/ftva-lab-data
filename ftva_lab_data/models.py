@@ -12,8 +12,9 @@ class SheetImport(models.Model):
     # By default, null=False and blank=False.
     hard_drive_name = models.CharField(max_length=100, blank=True)
     # These 3 "id" fields seem to often contain longer notes...
-    dml_lto_tape_id = models.CharField(max_length=100, blank=True)
-    arsc_lto_tape_id = models.CharField(max_length=100, blank=True)
+    # dml_lto_tape_id is now carrier_a; arsc_lto_tape_id is now carrier_b
+    carrier_a = models.CharField(max_length=100, blank=True)
+    carrier_b = models.CharField(max_length=100, blank=True)
     hard_drive_barcode_id = models.CharField(max_length=100, blank=True)
     file_folder_name = models.CharField(max_length=200, blank=True)
     sub_folder_name = models.CharField(max_length=200, blank=True)
@@ -71,6 +72,8 @@ class SheetImport(models.Model):
         related_name="sheet_imports",
     )
     history = HistoricalRecords()
+    carrier_a_location = models.CharField(max_length=25, blank=True)
+    carrier_b_location = models.CharField(max_length=25, blank=True)
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
