@@ -116,18 +116,7 @@ def delete_hard_drive_only_records() -> int:
 class Command(BaseCommand):
     help = "Clean up imported Digital Labs Google Sheet data"
 
-    def add_arguments(self, parser) -> None:
-        parser.add_argument(
-            "-d",
-            "--dry_run",
-            action="store_true",
-            help="Dry run only: show what would be changed",
-        )
-
     def handle(self, *args, **options) -> None:
-        dry_run = options["dry_run"]
-        if dry_run:
-            self.stdout.write("Performing dry run")
 
         records_deleted = delete_empty_records()
         self.stdout.write(f"Empty records deleted: {records_deleted}")
