@@ -45,7 +45,9 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     storage_info = {
         "Hard Drive Name": item.hard_drive_name,
         "Carrier A": item.carrier_a,
+        "Carrier A Location": item.carrier_a_location,
         "Carrier B": item.carrier_b,
+        "Carrier B Location": item.carrier_b_location,
         "Hard Drive Barcode ID": item.hard_drive_barcode_id,
     }
     file_info = {
@@ -114,7 +116,9 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
         "status",
         "hard_drive_name",
         "carrier_a",
+        "carrier_a_location",
         "carrier_b",
+        "carrier_b_location",
         "hard_drive_barcode_id",
         "title",
         "file_folder_name",
