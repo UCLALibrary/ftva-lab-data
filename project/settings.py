@@ -42,6 +42,7 @@ CSRF_TRUSTED_ORIGINS = list(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split("
 
 # Application definition
 INSTALLED_APPS = [
+    "ftva_lab_data",
     # Enable whitenoise in development per
     # https://whitenoise.readthedocs.io/en/stable/django.html#using-whitenoise-in-development
     "whitenoise.runserver_nostatic",
@@ -53,7 +54,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_bootstrap5",
     "simple_history",
-    "ftva_lab_data",
 ]
 
 MIDDLEWARE = [
