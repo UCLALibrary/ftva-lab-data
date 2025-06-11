@@ -25,19 +25,18 @@ def _get_combined_field_data(record: SheetImport) -> str:
     return combined_field_data.strip()
 
 
+def _is_empty_record(record: SheetImport) -> bool:
+    """Determines whether all string fields in a record are empty."""
+    return _get_combined_field_data(record) == ""
+
+
 def delete_empty_records() -> int:
     """Deletes SheetImport records which contain no data other than
     the system-assigned id.
     """
     records_changed = 0
     for record in SheetImport.objects.all().order_by("id"):
-        # All SheetImport fields are string (CharField) except the system-assigned id
-        # and the foreign key relations to assigned_user and status (which does not matter
-        # at this stage for imported, empty records).
-        # Combine all of these string fields into one big string.
-        combined_field_data = _get_combined_field_data(record)
-        # If the resulting string is empty, delete the record.
-        if combined_field_data == "":
+        if _is_empty_record(record):
             record.delete()
             records_changed += 1
 
@@ -51,6 +50,9 @@ def set_hard_drive_names() -> int:
     records_changed = 0
     current_drive_name = None
     for record in SheetImport.objects.all().order_by("id"):
+        # Ignore empty records.
+        if _is_empty_record(record):
+            continue
         # Check for value indicating this is a valid hard drive name:
         # "Digital Lab " or "DigitalLab " followed by at least one digit.
         if re.match("Digital[ ]?Lab [0-9]", record.hard_drive_name):
@@ -75,6 +77,10 @@ def set_file_folder_names() -> int:
     records_changed = 0
     current_file_folder_name = None
     for record in SheetImport.objects.all().order_by("id"):
+        # Ignore empty records.
+        if _is_empty_record(record):
+            continue
+
         if _is_header_record(record):
             # Clear the value, to avoid copying folder names from a previous device.
             # We also don't want the header value itself, "File Folder Name".
