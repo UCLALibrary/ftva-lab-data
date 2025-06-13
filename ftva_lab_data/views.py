@@ -151,9 +151,6 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
         for item in page_obj.object_list
     ]
 
-    # Get all users for the dropdown in the table
-    users = get_user_model().objects.all().order_by("username")
-
     return render(
         request,
         "partials/search_results_table.html",
@@ -163,7 +160,6 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             "search_column": search_column,
             "columns": COLUMNS,
             "rows": rows,
-            "users": users,
         },
     )
 
