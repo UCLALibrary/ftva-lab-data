@@ -98,7 +98,13 @@ def get_tape_info_parts(tape_info: str) -> tuple:
 def process_carrier_fields(
     carrier_field_name: str, update_records: bool, report_problems: bool
 ) -> int:
-    """TODO"""
+    """Processes carrier fields associated with carrier_field_name,
+    either updating or reporting on problems.
+    If update_records is True, the database will be updated when valid data is found.
+    If report_problems is True, info about invalid data will be written to stdout.
+
+    Returns the number of records updated.
+    """
     carrier_location_field_name = f"{carrier_field_name}_location"
     tape_id: str = ""
     vault_location: str = ""
