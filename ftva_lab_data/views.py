@@ -114,14 +114,19 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     search_column = request.GET.get("search_column", "")
     page = request.GET.get("page", 1)
 
-    # Only need display fields, plus ID for creating links
-    items = SheetImport.objects.only(*display_fields, "id").order_by("id")
+    # Use all() here instead of only(*display_fields, "id") to allow separation
+    # of search from display.
+    items = SheetImport.objects.all().order_by("id")
+    # TODO: Refactor this to minimize code duplication.
     if search:
         if search_column and search_column in display_fields:
             # Status is a ManyToMany field, so we need to handle it differently
             if search_column == "status":
                 # Filter by status using a ManyToMany relationship
                 items = items.filter(status__status__icontains=search).distinct()
+            elif search_column == "assigned_user_full_name":
+                # TODO: Implement this
+                pass
             else:
                 # Scoped search to selected column
                 items = items.filter(**{f"{search_column}__icontains": search})
@@ -129,9 +134,14 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             # General CTRL-F-style search across all configured fields
             query = Q()  # start with empty Q() object, always True
             for field in display_fields:  # then add queries for all valid fields
-                # Handle status field separately since it is a ManyToMany field
                 if field == "status":
+                    # Handle status field separately since it is a ManyToMany field
                     query |= Q(status__status__icontains=search)
+                elif field == "assigned_user_full_name":
+                    # Assigned user: allow search by first name, last name, and username
+                    query |= Q(assigned_user__last_name__icontains=search)
+                    query |= Q(assigned_user__first_name__icontains=search)
+                    query |= Q(assigned_user__username__icontains=search)
                 else:
                     query |= Q(**{f"{field}__icontains": search})
             items = items.filter(query).distinct()
