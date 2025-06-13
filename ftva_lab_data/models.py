@@ -78,6 +78,10 @@ class SheetImport(models.Model):
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
 
+    @property
+    def assigned_user_full_name(self):
+        return self.assigned_user.get_full_name()
+
     class Meta:
         permissions = [("assign_user", "Can assign user to SheetImport")]
 
