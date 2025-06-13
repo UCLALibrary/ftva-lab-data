@@ -113,6 +113,24 @@ Some large-scale data cleanup is best done after loading the raw data, as in the
 
 ```python manage.py clean_imported_data```
 
+This will:
+* Delete empty records
+* Set hard drive names (where available / relevant)
+* Set file folder names, by filling in blanks wherever possible
+* Delete header rows, which were imported to help figure out how to do some of the other cleanup
+* Delete rows which have only hard drive names in them
+
+#### Cleaning up tape / carrier information
+
+Two columns in the original data often combined tape "carrier" information (the ids of the tapes) with the locations of those tapes.
+To split these into the appropriate separate fields where possible, run:
+
+```python manage.py clean_tape_info [--update_records | --report_problems]```
+
+These are mutually exclusive, and one or the other must be provided.
+Use `--update_records` to update the database; use `--report_problems` to print information about records which have invalid data, needing
+manual review.
+
 #### Loading group and permission definitions
 
 Certain views within the application are restricted to users with appropriate permissions. Corresponding group and permission definitions are included in the `groups_and_permissions.json` fixture.  This is loaded automatically in the development environment, but also can be loaded manually:

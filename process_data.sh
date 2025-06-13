@@ -37,5 +37,10 @@ docker compose exec django python manage.py populate_history --auto --batchsize 
 
 # Clean the data
 echo ""
-echo "Cleaning the data..."
+echo "Cleaning the data (hard drives, folders, and unwanted rows)..."
 docker compose exec django python manage.py clean_imported_data
+
+# Update the tape info
+echo ""
+echo "Updating the tape carrier / location info..."
+docker compose exec django python manage.py clean_tape_info --update_records

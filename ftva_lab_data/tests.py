@@ -1,4 +1,8 @@
 from django.test import TestCase, Client
+from ftva_lab_data.management.commands.clean_tape_info import (
+    get_tape_info_parts,
+    process_carrier_fields,
+)
 from ftva_lab_data.models import SheetImport
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User, Group
@@ -285,7 +289,7 @@ class ItemDisplayTestCase(TestCase):
         self.assertEqual(display_dicts["inventory_info"]["Inventory Number"], "INV001")
         self.assertEqual(display_dicts["advanced_info"]["Resolution"], "1920x1080")
         # Check that empty fields are handled correctly (i.e. are in the dict as empty strings)
-        self.assertEqual(display_dicts["storage_info"].get("DML LTO Tape ID"), "")
+        self.assertEqual(display_dicts["storage_info"].get("Carrier A"), "")
 
 
 class CleanImportedData(TestCase):
@@ -318,3 +322,56 @@ class CleanImportedData(TestCase):
     def test_delete_header_records(self):
         records_deleted = delete_header_records()
         self.assertEqual(records_deleted, 2)
+
+
+class CleanTapeInfo(TestCase):
+    """Tests methods from the clean_tape_info management command."""
+
+    # Contains 5 rows total: 3 with valid tape info, 2 with invalid.
+    fixtures = ["test_clean_tape_info.json"]
+
+    def test_get_tape_info_parts_are_valid(self):
+        valid_values = [
+            "820001",
+            "AAB963",
+            "000027 (in vault) S217-01A 11C",
+            "CLNU00 (in vault) S217-01A 11A",
+            "M265154 (to vault) S217-01A-13D",
+        ]
+        for value in valid_values:
+            with self.subTest(value=value):
+                tape_info_parts = get_tape_info_parts(value)
+                self.assertIsNotNone(tape_info_parts)
+
+    def test_get_tape_info_parts_are_invalid(self):
+        invalid_values = [
+            "000028 & AAB967",
+            "AAC018- LTO Corrupted- Will not mount (4/25/2018)",
+            "CLNU02/AAC062 (in vault) S217-01A 11A",
+            "Not on LTO AAB969",
+            "M258145 Part 01 of 03 (to vault) S217-01A-13C",
+        ]
+        for value in invalid_values:
+            with self.subTest(value=value):
+                tape_info_parts = get_tape_info_parts(value)
+                self.assertEqual(tape_info_parts, (None, None))
+
+    def test_get_tape_info_parts_single(self):
+        tape_info = "AAB963"
+        tape_info_parts = get_tape_info_parts(tape_info)
+        self.assertEqual(tape_info_parts, (tape_info, None))
+
+    def test_get_tape_info_parts_combined(self):
+        tape_info = "CLNU00 (in vault) S217-01A 11A"
+        tape_id = "CLNU00"
+        vault_location = "S217-01A 11A"
+        tape_info_parts = get_tape_info_parts(tape_info)
+        self.assertEqual(tape_info_parts, (tape_id, vault_location))
+
+    def test_process_carrier_fields_update_records(self):
+        records_updated = process_carrier_fields(
+            "carrier_a", update_records=True, report_problems=False
+        )
+        # Test fixture has 5 rows total: 3 with valid tape info which should be updated,
+        # 2 with invalid which should not.
+        self.assertEqual(records_updated, 3)
