@@ -117,34 +117,28 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     # Use all() here instead of only(*display_fields, "id") to allow separation
     # of search from display.
     items = SheetImport.objects.all().order_by("id")
-    # TODO: Refactor this to minimize code duplication.
-    if search:
-        if search_column and search_column in display_fields:
-            # Status is a ManyToMany field, so we need to handle it differently
-            if search_column == "status":
-                # Filter by status using a ManyToMany relationship
-                items = items.filter(status__status__icontains=search).distinct()
-            elif search_column == "assigned_user_full_name":
-                # TODO: Implement this
-                pass
-            else:
-                # Scoped search to selected column
-                items = items.filter(**{f"{search_column}__icontains": search})
+    # If user specified a field to search, use it; otherwise, search all displayed fields.
+    if search_column:
+        search_fields = [search_column]
+    else:
+        search_fields = display_fields
+
+    # General CTRL-F-style search across all configured fields.
+    # Start with empty Q() object, then add queries for all requested fields.
+    query = Q()
+    for field in search_fields:
+        if field == "status":
+            # Handle status field separately since it is a ManyToMany field
+            query |= Q(status__status__icontains=search)
+        elif field == "assigned_user_full_name":
+            # Assigned user: allow search by first name, last name, and username
+            query |= Q(assigned_user__last_name__icontains=search)
+            query |= Q(assigned_user__first_name__icontains=search)
+            query |= Q(assigned_user__username__icontains=search)
         else:
-            # General CTRL-F-style search across all configured fields
-            query = Q()  # start with empty Q() object, always True
-            for field in display_fields:  # then add queries for all valid fields
-                if field == "status":
-                    # Handle status field separately since it is a ManyToMany field
-                    query |= Q(status__status__icontains=search)
-                elif field == "assigned_user_full_name":
-                    # Assigned user: allow search by first name, last name, and username
-                    query |= Q(assigned_user__last_name__icontains=search)
-                    query |= Q(assigned_user__first_name__icontains=search)
-                    query |= Q(assigned_user__username__icontains=search)
-                else:
-                    query |= Q(**{f"{field}__icontains": search})
-            items = items.filter(query).distinct()
+            query |= Q(**{f"{field}__icontains": search})
+    # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.
+    items = items.filter(query).distinct()
 
     paginator = Paginator(items, 10)
     page_obj = paginator.get_page(page)
