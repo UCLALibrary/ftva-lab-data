@@ -120,7 +120,6 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
         "carrier_b",
         "carrier_b_location",
         "hard_drive_barcode_id",
-        "title",
         "file_folder_name",
         "sub_folder_name",
         "file_name",
