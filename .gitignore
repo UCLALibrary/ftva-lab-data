@@ -181,3 +181,6 @@ cython_debug/
 
 # Local static files collected when testing gunicorn and whitenoise
 staticfiles/
+
+# Data files
+*.xlsx

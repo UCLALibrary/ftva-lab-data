@@ -8,5 +8,5 @@ COLUMNS = [
     ("file_name", "Filename"),
     ("inventory_number", "Inventory number"),
     ("status", "Status"),
-    ("assigned_user__username", "Assigned user"),
+    ("assigned_user_full_name", "Assigned user"),
 ]

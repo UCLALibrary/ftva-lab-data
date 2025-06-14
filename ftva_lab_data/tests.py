@@ -1,22 +1,27 @@
 from django.test import TestCase, Client
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User, Group
+from django.urls import reverse
 from ftva_lab_data.management.commands.clean_tape_info import (
     get_tape_info_parts,
     process_carrier_fields,
 )
-from ftva_lab_data.models import SheetImport
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User, Group
-from django.urls import reverse
 from ftva_lab_data.management.commands.clean_imported_data import (
     delete_empty_records,
     delete_header_records,
     set_file_folder_names,
     set_hard_drive_names,
 )
-from ftva_lab_data.views_utils import get_field_value, get_item_display_dicts
+from ftva_lab_data.models import ItemStatus, SheetImport
+from ftva_lab_data.views_utils import (
+    get_field_value,
+    get_item_display_dicts,
+    get_search_items,
+)
+from ftva_lab_data.table_config import COLUMNS
 
 
-class GetFieldValueTests(TestCase):
+class GetFieldValueTestCase(TestCase):
     def setUp(self):
         # Create a test SheetImport object with foreign key relations
         self.user = get_user_model().objects.create_user(username="testuser")
@@ -292,7 +297,7 @@ class ItemDisplayTestCase(TestCase):
         self.assertEqual(display_dicts["storage_info"].get("Carrier A"), "")
 
 
-class CleanImportedData(TestCase):
+class CleanImportedDataTestCase(TestCase):
     """Tests methods from the clean_imported_data management command."""
 
     # Contains 10 rows total:
@@ -324,7 +329,7 @@ class CleanImportedData(TestCase):
         self.assertEqual(records_deleted, 2)
 
 
-class CleanTapeInfo(TestCase):
+class CleanTapeInfoTestCase(TestCase):
     """Tests methods from the clean_tape_info management command."""
 
     # Contains 5 rows total: 3 with valid tape info, 2 with invalid.
@@ -375,3 +380,117 @@ class CleanTapeInfo(TestCase):
         # Test fixture has 5 rows total: 3 with valid tape info which should be updated,
         # 2 with invalid which should not.
         self.assertEqual(records_updated, 3)
+
+
+class SearchTestCase(TestCase):
+    """Tests the get_search_items search function."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        # Supporting objects
+        user = get_user_model().objects.create_user(username="testuser")
+        status = ItemStatus.objects.create(status="Test status")
+
+        # Basic item with fields for searching
+        cls.item_basic = SheetImport.objects.create(
+            hard_drive_name="HD1",
+            file_folder_name="FF1",
+            sub_folder_name="SF1",
+            file_name="F1",
+            inventory_number="Inv_No",
+        )
+
+        # Basic item with a user assigned
+        cls.item_with_user = SheetImport.objects.create(
+            hard_drive_name="HD_shared",
+            file_folder_name="FF2",
+            sub_folder_name="SF2",
+            file_name="F2_Inv_No_embedded",
+            inventory_number="I2",
+            assigned_user=user,
+        )
+
+        # Basic item with a status assigned
+        cls.item_with_status = SheetImport.objects.create(
+            hard_drive_name="HD_shared",
+            file_folder_name="FF3",
+            sub_folder_name="SF3",
+            file_name="F3",
+            inventory_number="I3",
+        )
+        cls.item_with_status.status.add(status)
+
+        # List of all fields used for searching
+        cls.search_fields = [field for field, _ in COLUMNS]
+
+    def test_search_is_case_insensitive(self):
+        items = get_search_items(
+            # Data is uppercase, search term is lowercase
+            search="ff1",
+            search_fields=["file_folder_name"],
+        )
+        self.assertEqual(items.all()[0], self.item_basic)
+
+    def test_search_finds_unique_record(self):
+        items = get_search_items(
+            search="FF1",
+            search_fields=["file_folder_name"],
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.all()[0], self.item_basic)
+
+    def test_search_finds_substring(self):
+        items = get_search_items(
+            # One record has file_name with 'embed' in the middle
+            search="embed",
+            search_fields=["file_name"],
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.all()[0], self.item_with_user)
+
+    def test_search_finds_term_in_different_fields(self):
+        items = get_search_items(
+            # Two records have 'Inv_No', each in a different field
+            search="Inv_No",
+            # No search column defined, so search all fields
+            search_fields=self.search_fields,
+        )
+        self.assertEqual(items.count(), 2)
+
+    def test_search_finds_status_in_all_fields(self):
+        items = get_search_items(
+            # One record has a status assigned
+            search="Test status",
+            # No search column defined, so search all fields
+            search_fields=self.search_fields,
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.all()[0], self.item_with_status)
+
+    def test_search_finds_status_in_status_field(self):
+        items = get_search_items(
+            # One record has a status assigned
+            search="Test status",
+            search_fields=["status"],
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.all()[0], self.item_with_status)
+
+    def test_search_finds_user_in_all_fields(self):
+        items = get_search_items(
+            # One record has a user assigned
+            search="testuser",
+            # No search column defined, so search all fields
+            search_fields=self.search_fields,
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.all()[0], self.item_with_user)
+
+    def test_search_finds_user_in_user_field(self):
+        items = get_search_items(
+            # One record has a user assigned
+            search="testuser",
+            search_fields=["assigned_user_full_name"],
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.all()[0], self.item_with_user)
