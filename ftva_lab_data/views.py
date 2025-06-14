@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth import get_user_model
@@ -15,6 +14,7 @@ from .views_utils import (
     get_field_value,
     get_item_display_dicts,
     get_add_edit_item_fields,
+    get_search_items,
 )
 
 
@@ -103,42 +103,21 @@ def search_results(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def render_search_results_table(request: HttpRequest) -> HttpResponse:
-    """Handles search and pagination of table
+    """Handles search and pagination of table.
 
     Search can either be column-specific, determined by dropdown,
     or broad, CTRL-F-style across all fields
     """
-    display_fields = [field for field, _ in COLUMNS]
-
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
     page = request.GET.get("page", 1)
+    display_fields = [field for field, _ in COLUMNS]
 
-    # Use all() here instead of only(*display_fields, "id") to allow separation
-    # of search from display.
-    items = SheetImport.objects.all().order_by("id")
-    # If user specified a field to search, use it; otherwise, search all displayed fields.
-    if search_column:
-        search_fields = [search_column]
-    else:
-        search_fields = display_fields
+    # If there's a specific search column, use it;
+    # otherwise, search in all display fields.
+    search_fields = [search_column] if search_column else display_fields
 
-    # General CTRL-F-style search across all configured fields.
-    # Start with empty Q() object, then add queries for all requested fields.
-    query = Q()
-    for field in search_fields:
-        if field == "status":
-            # Handle status field separately since it is a ManyToMany field
-            query |= Q(status__status__icontains=search)
-        elif field == "assigned_user_full_name":
-            # Assigned user: allow search by first name, last name, and username
-            query |= Q(assigned_user__last_name__icontains=search)
-            query |= Q(assigned_user__first_name__icontains=search)
-            query |= Q(assigned_user__username__icontains=search)
-        else:
-            query |= Q(**{f"{field}__icontains": search})
-    # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.
-    items = items.filter(query).distinct()
+    items = get_search_items(search, search_fields)
 
     paginator = Paginator(items, 10)
     page_obj = paginator.get_page(page)
