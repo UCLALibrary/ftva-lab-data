@@ -1,12 +1,13 @@
 from typing import Any
-from django.db import models
+from django.db.models import Model, Q
+from django.db.models.query import QuerySet
 from .models import SheetImport
 from .forms import ItemForm
 
 
 # Recursive implementation adapted from:
 # https://stackoverflow.com/a/74613925
-def get_field_value(obj: models.Model, field: str) -> Any:
+def get_field_value(obj: Model, field: str) -> Any:
     """Recursive getattr function to traverse foreign key relations.
     Default getattr only works for direct fields.
     This function allows you to access nested fields using the "__" notation.
@@ -58,11 +59,11 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     inventory_info = {
         "Inventory Number": item.inventory_number,
         "Source Barcode": item.source_barcode,
-        "Title": item.title,
         "Notes": item.notes,
     }
     advanced_info = {
         "Source Inventory Number": item.source_inventory_number,
+        "Title": item.title,
         "Job Number": item.job_number,
         "Source Type": item.source_type,
         "Resolution": item.resolution,
@@ -120,7 +121,6 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
         "carrier_b",
         "carrier_b_location",
         "hard_drive_barcode_id",
-        "title",
         "file_folder_name",
         "sub_folder_name",
         "file_name",
@@ -130,3 +130,34 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
     advanced_fields = [f for f in form.fields if f not in basic_fields]
 
     return {"basic_fields": basic_fields, "advanced_fields": advanced_fields}
+
+
+def get_search_items(search: str, search_fields: list[str]) -> QuerySet:
+    """Searches for `search` term in `search_fields`.  Field names must be present
+    in ftva_lab_data.table_config.
+
+    Returns a QuerySet of SheetImport objects matching the search.
+    """
+
+    # Use all() here instead of only(specific fields) to allow separation
+    # of search from display.
+    items = SheetImport.objects.all().order_by("id")
+
+    # General CTRL-F-style search across requested fields.
+    # Start with empty Q() object, then add queries for all requested fields.
+    query = Q()
+    for field in search_fields:
+        if field == "status":
+            # Handle status field separately since it is a ManyToMany field
+            query |= Q(status__status__icontains=search)
+        elif field == "assigned_user_full_name":
+            # Assigned user: allow search by first name, last name, and username
+            query |= Q(assigned_user__last_name__icontains=search)
+            query |= Q(assigned_user__first_name__icontains=search)
+            query |= Q(assigned_user__username__icontains=search)
+        else:
+            query |= Q(**{f"{field}__icontains": search})
+    # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.
+    items = items.filter(query).distinct()
+
+    return items

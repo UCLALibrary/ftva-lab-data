@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth import get_user_model
@@ -15,6 +14,7 @@ from .views_utils import (
     get_field_value,
     get_item_display_dicts,
     get_add_edit_item_fields,
+    get_search_items,
 )
 
 
@@ -103,38 +103,21 @@ def search_results(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def render_search_results_table(request: HttpRequest) -> HttpResponse:
-    """Handles search and pagination of table
+    """Handles search and pagination of table.
 
     Search can either be column-specific, determined by dropdown,
     or broad, CTRL-F-style across all fields
     """
-    display_fields = [field for field, _ in COLUMNS]
-
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
     page = request.GET.get("page", 1)
+    display_fields = [field for field, _ in COLUMNS]
 
-    # Only need display fields, plus ID for creating links
-    items = SheetImport.objects.only(*display_fields, "id").order_by("id")
-    if search:
-        if search_column and search_column in display_fields:
-            # Status is a ManyToMany field, so we need to handle it differently
-            if search_column == "status":
-                # Filter by status using a ManyToMany relationship
-                items = items.filter(status__status__icontains=search).distinct()
-            else:
-                # Scoped search to selected column
-                items = items.filter(**{f"{search_column}__icontains": search})
-        else:
-            # General CTRL-F-style search across all configured fields
-            query = Q()  # start with empty Q() object, always True
-            for field in display_fields:  # then add queries for all valid fields
-                # Handle status field separately since it is a ManyToMany field
-                if field == "status":
-                    query |= Q(status__status__icontains=search)
-                else:
-                    query |= Q(**{f"{field}__icontains": search})
-            items = items.filter(query).distinct()
+    # If there's a specific search column, use it;
+    # otherwise, search in all display fields.
+    search_fields = [search_column] if search_column else display_fields
+
+    items = get_search_items(search, search_fields)
 
     paginator = Paginator(items, 10)
     page_obj = paginator.get_page(page)
@@ -151,9 +134,6 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
         for item in page_obj.object_list
     ]
 
-    # Get all users for the dropdown in the table
-    users = get_user_model().objects.all().order_by("username")
-
     return render(
         request,
         "partials/search_results_table.html",
@@ -163,7 +143,6 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             "search_column": search_column,
             "columns": COLUMNS,
             "rows": rows,
-            "users": users,
         },
     )
 

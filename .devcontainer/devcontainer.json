@@ -14,8 +14,11 @@
 							"editor.formatOnSave": true,
 							"python.analysis.typeCheckingMode": "standard",
 							"python.analysis.diagnosticSeverityOverrides": {
-								// Disable errors for Django's dynamic "id" model attributes
-								"reportAttributeAccessIssue": "information"
+								// Downgrade errors for Django's dynamic "id" model attributes
+								"reportAttributeAccessIssue": "information",
+								// Downgrade errors when accessing methods on Django's 
+								// related model attributes, like obj.assigned_user.get_full_name()
+								"reportOptionalMemberAccess": "information"
 							},
 							"python.editor.defaultFormatter": "ms-python.black-formatter",
 					"flake8.args": [
