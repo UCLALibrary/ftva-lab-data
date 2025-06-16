@@ -57,8 +57,6 @@
                         {% for status in value %}
                             <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
                         {% endfor %}
-                    {% elif field == "assigned_user_full_name" %}
-                        {{ value }}
                     {% else %}
                         {{ value }}
                     {% endif %}     
