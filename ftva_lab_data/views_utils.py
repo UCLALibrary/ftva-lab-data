@@ -132,7 +132,7 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
     return {"basic_fields": basic_fields, "advanced_fields": advanced_fields}
 
 
-def get_search_items(search: str, search_fields: list[str]) -> QuerySet:
+def get_search_result_items(search: str, search_fields: list[str]) -> QuerySet:
     """Searches for `search` term in `search_fields`.  Field names must be present
     in ftva_lab_data.table_config.
 

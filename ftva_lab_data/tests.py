@@ -16,7 +16,7 @@ from ftva_lab_data.models import ItemStatus, SheetImport
 from ftva_lab_data.views_utils import (
     get_field_value,
     get_item_display_dicts,
-    get_search_items,
+    get_search_result_items,
 )
 from ftva_lab_data.table_config import COLUMNS
 
@@ -424,7 +424,7 @@ class SearchTestCase(TestCase):
         cls.search_fields = [field for field, _ in COLUMNS]
 
     def test_search_is_case_insensitive(self):
-        items = get_search_items(
+        items = get_search_result_items(
             # Data is uppercase, search term is lowercase
             search="ff1",
             search_fields=["file_folder_name"],
@@ -432,7 +432,7 @@ class SearchTestCase(TestCase):
         self.assertEqual(items.all()[0], self.item_basic)
 
     def test_search_finds_unique_record(self):
-        items = get_search_items(
+        items = get_search_result_items(
             search="FF1",
             search_fields=["file_folder_name"],
         )
@@ -440,7 +440,7 @@ class SearchTestCase(TestCase):
         self.assertEqual(items.all()[0], self.item_basic)
 
     def test_search_finds_substring(self):
-        items = get_search_items(
+        items = get_search_result_items(
             # One record has file_name with 'embed' in the middle
             search="embed",
             search_fields=["file_name"],
@@ -449,7 +449,7 @@ class SearchTestCase(TestCase):
         self.assertEqual(items.all()[0], self.item_with_user)
 
     def test_search_finds_term_in_different_fields(self):
-        items = get_search_items(
+        items = get_search_result_items(
             # Two records have 'Inv_No', each in a different field
             search="Inv_No",
             # No search column defined, so search all fields
@@ -458,7 +458,7 @@ class SearchTestCase(TestCase):
         self.assertEqual(items.count(), 2)
 
     def test_search_finds_status_in_all_fields(self):
-        items = get_search_items(
+        items = get_search_result_items(
             # One record has a status assigned
             search="Test status",
             # No search column defined, so search all fields
@@ -468,7 +468,7 @@ class SearchTestCase(TestCase):
         self.assertEqual(items.all()[0], self.item_with_status)
 
     def test_search_finds_status_in_status_field(self):
-        items = get_search_items(
+        items = get_search_result_items(
             # One record has a status assigned
             search="Test status",
             search_fields=["status"],
@@ -477,7 +477,7 @@ class SearchTestCase(TestCase):
         self.assertEqual(items.all()[0], self.item_with_status)
 
     def test_search_finds_user_in_all_fields(self):
-        items = get_search_items(
+        items = get_search_result_items(
             # One record has a user assigned
             search="testuser",
             # No search column defined, so search all fields
@@ -487,7 +487,7 @@ class SearchTestCase(TestCase):
         self.assertEqual(items.all()[0], self.item_with_user)
 
     def test_search_finds_user_in_user_field(self):
-        items = get_search_items(
+        items = get_search_result_items(
             # One record has a user assigned
             search="testuser",
             search_fields=["assigned_user_full_name"],

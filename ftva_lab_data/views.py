@@ -14,7 +14,7 @@ from .views_utils import (
     get_field_value,
     get_item_display_dicts,
     get_add_edit_item_fields,
-    get_search_items,
+    get_search_result_items,
 )
 
 
@@ -117,7 +117,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     # otherwise, search in all display fields.
     search_fields = [search_column] if search_column else display_fields
 
-    items = get_search_items(search, search_fields)
+    items = get_search_result_items(search, search_fields)
 
     paginator = Paginator(items, 10)
     page_obj = paginator.get_page(page)
