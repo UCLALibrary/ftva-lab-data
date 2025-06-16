@@ -190,4 +190,5 @@ def get_search_result_data(
         }
         for item in item_list
     ]
+
     return rows

@@ -398,6 +398,8 @@ class SearchTestCase(TestCase):
             sub_folder_name="SF1",
             file_name="F1",
             inventory_number="Inv_No",
+            carrier_a="ABC123",
+            carrier_a_location="VAULT-01",
         )
 
         # Basic item with a user assigned
@@ -494,3 +496,17 @@ class SearchTestCase(TestCase):
         )
         self.assertEqual(items.count(), 1)
         self.assertEqual(items.all()[0], self.item_with_user)
+
+    def test_search_finds_carrier_in_property_field(self):
+        items = get_search_result_items(
+            search="ABC123",
+            search_fields=["carrier_a_with_location"],
+        )
+        self.assertEqual(items.all()[0], self.item_basic)
+
+    def test_search_finds_carrier_location_in_property_field(self):
+        items = get_search_result_items(
+            search="VAULT-01",
+            search_fields=["carrier_a_with_location"],
+        )
+        self.assertEqual(items.all()[0], self.item_basic)
