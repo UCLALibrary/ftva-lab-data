@@ -524,7 +524,8 @@ class ItemStatusTestCase(TestCase):
 
         # This maps all the unique values
         # in Column A of the `Copy of DL Sheet_10_18_2024` Google Sheet
-        # to a tuple of corresponding `ItemStatus` IDs.
+        # to a tuple of corresponding `ItemStatus` IDs,
+        # as defined in `fixtures/item_statuses.json`
         cls.status_info_test_map = [
             ("YES: invalid vault Presence of multiple Inventory_nos", (3, 5)),
             ("YES: invalid vault", (3,)),
