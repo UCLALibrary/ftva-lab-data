@@ -59,11 +59,11 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     inventory_info = {
         "Inventory Number": item.inventory_number,
         "Source Barcode": item.source_barcode,
-        "Title": item.title,
         "Notes": item.notes,
     }
     advanced_info = {
         "Source Inventory Number": item.source_inventory_number,
+        "Title": item.title,
         "Job Number": item.job_number,
         "Source Type": item.source_type,
         "Resolution": item.resolution,
