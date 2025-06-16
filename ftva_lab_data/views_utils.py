@@ -143,7 +143,7 @@ def get_search_items(search: str, search_fields: list[str]) -> QuerySet:
     # of search from display.
     items = SheetImport.objects.all().order_by("id")
 
-    # General CTRL-F-style search across requested fields.
+    # General CTRL-F-style substring search across requested fields.
     # Start with empty Q() object, then add queries for all requested fields.
     query = Q()
     for field in search_fields:
@@ -155,6 +155,12 @@ def get_search_items(search: str, search_fields: list[str]) -> QuerySet:
             query |= Q(assigned_user__last_name__icontains=search)
             query |= Q(assigned_user__first_name__icontains=search)
             query |= Q(assigned_user__username__icontains=search)
+        elif field == "carrier_a":
+            query |= Q(carrier_a__icontains=search)
+            query |= Q(carrier_a_location__icontains=search)
+        elif field == "carrier_b":
+            query |= Q(carrier_b__icontains=search)
+            query |= Q(carrier_b_location__icontains=search)
         else:
             query |= Q(**{f"{field}__icontains": search})
     # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.
