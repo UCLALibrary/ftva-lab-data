@@ -11,9 +11,9 @@ from .forms import ItemForm
 from .models import SheetImport
 from .table_config import COLUMNS
 from .views_utils import (
-    get_field_value,
     get_item_display_dicts,
     get_add_edit_item_fields,
+    get_search_result_data,
     get_search_result_items,
 )
 
@@ -124,15 +124,9 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
 
     # Construct of list of dicts to use as table rows instead of QuerySets
     # allowing row[field] to be accessed, rather than specifying each field literal.
-    # Set ID as a seperate property so it is not displayed as column header,
-    # but can still be accessed for links.
-    rows = [
-        {
-            "data": {field: get_field_value(item, field) for field in display_fields},
-            "id": item.id,
-        }
-        for item in page_obj.object_list
-    ]
+    rows = get_search_result_data(
+        item_list=page_obj.object_list, display_fields=display_fields
+    )
 
     return render(
         request,

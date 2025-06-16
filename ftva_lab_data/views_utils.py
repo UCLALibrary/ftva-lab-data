@@ -34,6 +34,14 @@ def get_field_value(obj: Model, field: str) -> Any:
         return get_field_value(getattr(obj, first_field), remaining_fields)
 
 
+def get_carrier_with_location(item: SheetImport, carrier_field_name: str) -> str:
+    carrier_location_field_name = f"{carrier_field_name}_location"
+    carrier = getattr(item, carrier_field_name)
+    carrier_location = getattr(item, carrier_location_field_name)
+    carrier_info = f"{carrier} ({carrier_location})" if carrier_location else carrier
+    return carrier_info
+
+
 def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     """Returns a dictionary of dictionaries. Each top-level dict represents a display section for
     the view_item.html template."""
@@ -167,3 +175,31 @@ def get_search_result_items(search: str, search_fields: list[str]) -> QuerySet:
     items = items.filter(query).distinct()
 
     return items
+
+
+def get_search_result_data(
+    item_list: QuerySet[SheetImport], display_fields: list[str]
+) -> list[dict]:
+    """Constructs a list of dicts to use as table rows. Each dict contains two keys:
+    * data: a dictionary of field: value, for each field in display_fields.
+    * id: the record id.
+
+    `data` simplifies template output, allowing `row[field]` to be accessed instead of specifying
+    each field explicitly.
+    `id` is separate so it is not displayed as a column header or explicit value, but can be
+    accessed for links.
+    """
+
+    rows = []
+    for item in item_list:
+        data = {}
+        for field in display_fields:
+            if field in ["carrier_a", "carrier_b"]:
+                # For carriers, we need to combine fields for display.
+                value = get_carrier_with_location(item, field)
+            else:
+                value = get_field_value(item, field)
+            data[field] = value
+        rows.append({"id": item.id, "data": data})
+
+    return rows
