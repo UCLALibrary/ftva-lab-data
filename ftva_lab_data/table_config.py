@@ -3,6 +3,8 @@
 # Field names must be valid from SheetImport model.
 COLUMNS = [
     ("hard_drive_name", "Hard drive"),
+    ("carrier_a_with_location", "Carrier A"),
+    ("carrier_b_with_location", "Carrier B"),
     ("file_folder_name", "File folder"),
     ("sub_folder_name", "Sub-folder"),
     ("file_name", "Filename"),

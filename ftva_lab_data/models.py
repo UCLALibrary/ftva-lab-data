@@ -79,8 +79,24 @@ class SheetImport(models.Model):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
 
     @property
-    def assigned_user_full_name(self):
+    def assigned_user_full_name(self) -> str:
         return self.assigned_user.get_full_name()
+
+    @property
+    def carrier_a_with_location(self) -> str:
+        return (
+            f"{self.carrier_a} ({self.carrier_a_location})"
+            if self.carrier_a_location
+            else self.carrier_a
+        )
+
+    @property
+    def carrier_b_with_location(self) -> str:
+        return (
+            f"{self.carrier_b} ({self.carrier_b_location})"
+            if self.carrier_b_location
+            else self.carrier_b
+        )
 
     class Meta:
         permissions = [("assign_user", "Can assign user to SheetImport")]

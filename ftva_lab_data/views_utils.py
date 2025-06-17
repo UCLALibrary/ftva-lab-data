@@ -132,7 +132,7 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
     return {"basic_fields": basic_fields, "advanced_fields": advanced_fields}
 
 
-def get_search_items(search: str, search_fields: list[str]) -> QuerySet:
+def get_search_result_items(search: str, search_fields: list[str]) -> QuerySet:
     """Searches for `search` term in `search_fields`.  Field names must be present
     in ftva_lab_data.table_config.
 
@@ -143,7 +143,7 @@ def get_search_items(search: str, search_fields: list[str]) -> QuerySet:
     # of search from display.
     items = SheetImport.objects.all().order_by("id")
 
-    # General CTRL-F-style search across requested fields.
+    # General CTRL-F-style substring search across requested fields.
     # Start with empty Q() object, then add queries for all requested fields.
     query = Q()
     for field in search_fields:
@@ -155,9 +155,40 @@ def get_search_items(search: str, search_fields: list[str]) -> QuerySet:
             query |= Q(assigned_user__last_name__icontains=search)
             query |= Q(assigned_user__first_name__icontains=search)
             query |= Q(assigned_user__username__icontains=search)
+        elif field == "carrier_a_with_location":
+            query |= Q(carrier_a__icontains=search)
+            query |= Q(carrier_a_location__icontains=search)
+        elif field == "carrier_b_with_location":
+            query |= Q(carrier_b__icontains=search)
+            query |= Q(carrier_b_location__icontains=search)
         else:
             query |= Q(**{f"{field}__icontains": search})
     # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.
     items = items.filter(query).distinct()
 
     return items
+
+
+def get_search_result_data(
+    item_list: QuerySet[SheetImport], display_fields: list[str]
+) -> list[dict]:
+    """Constructs a list of dicts to use as table rows. Each dict contains two keys:
+    * id: the record id.
+    * data: a dictionary of field: value, for each field in display_fields.  `field` needs
+    to be a field, or property, on `SheetImport`.
+
+    `id` is separate so it is not displayed as a column header or explicit value, but can be
+    accessed for links.
+    `data` simplifies template output, allowing `row[field]` to be accessed instead of specifying
+    each field explicitly.
+    """
+
+    rows = [
+        {
+            "id": item.id,
+            "data": {field: get_field_value(item, field) for field in display_fields},
+        }
+        for item in item_list
+    ]
+
+    return rows
