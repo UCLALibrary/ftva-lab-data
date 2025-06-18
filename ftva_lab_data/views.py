@@ -90,14 +90,33 @@ def view_item(request, item_id):
     item = SheetImport.objects.get(id=item_id)
     # For easier parsing in the template, separate attributes into dictionaries
     display_dicts = get_item_display_dicts(item)
+    # Pass search params to template, so they can be preserved
+    # if using the "Back to Search" button
+    display_dicts.update(
+        {
+            "search": request.GET.get("search", ""),
+            "search_column": request.GET.get("search_column", ""),
+            "page": request.GET.get("page", ""),
+        }
+    )
     return render(request, "view_item.html", display_dicts)
 
 
 @login_required
 def search_results(request: HttpRequest) -> HttpResponse:
     users = get_user_model().objects.all().order_by("username")
+    # Pass search params from GET to template context,
+    # so we can consistently render the results table after navigation
     return render(
-        request, "search_results.html", context={"columns": COLUMNS, "users": users}
+        request,
+        "search_results.html",
+        context={
+            "columns": COLUMNS,
+            "users": users,
+            "search": request.GET.get("search", ""),
+            "search_column": request.GET.get("search_column", ""),
+            "page": request.GET.get("page", 1),
+        },
     )
 
 

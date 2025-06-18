@@ -29,7 +29,10 @@
             {% endif %}
         </div>
 
-        <a class="btn btn-outline-secondary" href="{% url 'search_results' %}">Back to Search</a>
+        <a class="btn btn-outline-secondary"
+        href="{% url 'search_results' %}?search={{ search }}&search_column={{ search_column }}&page={{ page }}">
+        Back to Search
+        </a>
     </div>
 
     <div class="row">
