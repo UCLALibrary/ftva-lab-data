@@ -30,11 +30,7 @@
             <div class="col">
             {% for field in form %}
                 {% if field.name in basic_fields %}
-                    {% if field.name == "file_name" %}
-                        {% bootstrap_field field required="True"%}
-                    {% else %}
-                        {% bootstrap_field field %}
-                    {% endif %}
+                    {% bootstrap_field field %}
                 {% endif %}
                 {% if field.name == "notes"  or field.name == "hard_drive_barcode_id"%}
                     </div><div class="col">

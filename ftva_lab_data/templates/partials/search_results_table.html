@@ -67,6 +67,7 @@
                 </td>         
             {% endfor %}
             <td>
+                <!--View link includes search parameters, for later use by "Back to Search" button-->
                 <a class="btn btn-link btn-sm" href="{% url 'view_item' row.id %}?search={{ search }}&search_column={{ search_column }}&page={{ page_obj.number }}">View</a>
             </td>
             <td class="align-top">
