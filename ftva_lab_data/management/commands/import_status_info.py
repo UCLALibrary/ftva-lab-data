@@ -40,42 +40,22 @@ def parse_status_info(status_info: str) -> tuple[int]:
     return tuple(status_id_list)
 
 
-def match_record(
-    file_name: str, sub_folder: str, file_folder_name: str
-) -> tuple[SheetImport | None, str]:
+def match_record(row: pd.Series):
     """Try to get a matching `SheetImport` object using data from the Google Sheet."""
 
-    # First try uses file name only
-    try:
-        record = SheetImport.objects.get(file_name=file_name)
-        return record, "unique match"
-    # Keep trying if these exceptions are raised
-    except (SheetImport.MultipleObjectsReturned, SheetImport.DoesNotExist):
-        pass
+    # These three fields alone uniquely match most (6460 out of 6741)
+    # of the unique rows with status info in the `Copy of DL` sheet.
+    # Using `filter()` over `get()` provides more flexibility to operate
+    # on the return value in the calling `handle` function.
+    file_folder = str(row["File Folder Name"]).strip()
+    sub_folder = str(row["Sub Folder"]).strip()
+    file_name = str(row["File Name"]).strip()
 
-    # Second try uses file name and sub-folder
-    try:
-        record = SheetImport.objects.get(
-            file_name=file_name, sub_folder_name=sub_folder
-        )
-        return record, "unique match"
-    except (SheetImport.MultipleObjectsReturned, SheetImport.DoesNotExist):
-        pass
-
-    # Third and final try uses file name, sub-folder, and folder name
-    try:
-        record = SheetImport.objects.get(
-            file_name=file_name,
-            sub_folder_name=sub_folder,
-            file_folder_name=file_folder_name,
-        )
-        return record, "unique match"
-    except SheetImport.MultipleObjectsReturned:
-        return None, "multiple matches"
-    except SheetImport.DoesNotExist:
-        pass
-
-    return None, "no matches"
+    return SheetImport.objects.filter(
+        file_folder_name=file_folder,
+        sub_folder_name=sub_folder,
+        file_name=file_name,
+    )
 
 
 class Command(BaseCommand):
@@ -93,39 +73,67 @@ class Command(BaseCommand):
     def handle(self, *args, **options) -> None:
         file_name = options["file_name"]
         tapes_data = pd.read_excel(
-            file_name, sheet_name="Tapes(row 4560-24712)"
-        )  # NOTE: sheet name is hard-coded here
-
-        # Create a new column of status IDs parsed from status information
-        tapes_data["status_ids"] = (
-            tapes_data["Requires Manual Intervention"]
-            .fillna("")
-            .apply(parse_status_info)
+            file_name,
+            sheet_name="Tapes(row 4560-24712)",  # NOTE: sheet name is hard-coded here
         )
 
-        # Drop completely duplicate rows, if any
+        # Provide total row count for tapes data
+        total_rows = len(tapes_data.index)
+        print(f"There are {total_rows} rows in source data.")
+
+        # # Count duplicated rows, then drop them
+        duplicate_count = tapes_data.duplicated().sum()
+        print(
+            f"Found {duplicate_count} duplicated rows in source data. Dropping them..."
+        )
         tapes_data.drop_duplicates(inplace=True)
 
-        # Call `match_record` for each row in DataFrame
-        # and set status on `SheetImport` records only if unique match.
-        objects_updated = 0
-        multiple_objects_returned = 0
-        does_not_exist = 0
+        # Count rows without status info, then drop them
+        no_status_info_count = tapes_data["Requires Manual Intervention"].isna().sum()
+        print(
+            f"Found {no_status_info_count} rows without status info in source data.",
+            "Dropping them...",
+        )
+        tapes_data.dropna(subset=["Requires Manual Intervention"], inplace=True)
+
+        # Create a new column of status IDs parsed from status information
+        tapes_data["status_ids"] = tapes_data["Requires Manual Intervention"].apply(
+            parse_status_info
+        )
+
+        # Fill NA values with empty string, to avoid type issues with Django.
+        # Being explicit with columns, because Pandas complains otherwise.
+        tapes_data.fillna(
+            {"File Folder Name": "", "Sub Folder": "", "File Name": ""}, inplace=True
+        )
+
+        records_updated = 0
+        multiple_matches = []
+        no_matches = []
         for _, row in tapes_data.iterrows():
-            record, result = match_record(
-                row["File Name"], row["Sub Folder"], row["File Folder Name"]
-            )
+            matched_records = match_record(row)
+            count = matched_records.count()
 
-            if record and result == "unique match":
+            if count == 1:
+                record = matched_records.first()
                 record.status.set(row["status_ids"])
-                objects_updated += 1
+                records_updated += 1
 
-            if result == "multiple matches":
-                multiple_objects_returned += 1
+            if count > 1:
+                multiple_matches.append(row)
 
-            if result == "no matches":
-                does_not_exist += 1
+            if count == 0:
+                no_matches.append(row)
 
-        print(f"{objects_updated} objects found")
-        print(f"{multiple_objects_returned} objects returned more than one")
-        print(f"{does_not_exist} objects do not exist")
+        print(f"{records_updated} records updated")
+        print(f"{len(multiple_matches)} rows returned more than one match")
+        print(f"{len(no_matches)} rows returned no match")
+
+        print("Writing report...")
+        with pd.ExcelWriter("import_status_info_report.xlsx") as writer:
+            pd.DataFrame(multiple_matches).to_excel(
+                writer, sheet_name="multiple_matches", index=False
+            )
+            pd.DataFrame(no_matches).to_excel(
+                writer, sheet_name="no_matches", index=False
+            )
