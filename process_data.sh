@@ -44,3 +44,8 @@ docker compose exec django python manage.py clean_imported_data
 echo ""
 echo "Updating the tape carrier / location info..."
 docker compose exec django python manage.py clean_tape_info --update_records
+
+# Import status info
+echo ""
+echo "Importing status info..."
+docker compose exec django python manage.py import_status_info --file_name copy_dl_sheet_2024-10-18.xlsx
