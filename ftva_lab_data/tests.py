@@ -111,7 +111,8 @@ class UserAccessTestCase(TestCase):
 
         # POST request
         response = self.client.post(url, self.test_form_data)
-        self.assertEqual(response.status_code, 200)
+        # Should redirect after successful POST
+        self.assertEqual(response.status_code, 302)
         # Confirm item successfully updated in database
         self.test_object.refresh_from_db()
         self.assertEqual(self.test_object.file_name, self.test_form_data["file_name"])

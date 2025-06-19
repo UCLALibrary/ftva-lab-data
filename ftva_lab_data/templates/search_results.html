@@ -19,11 +19,11 @@
         <select name="search_column" class="form-select form-select-md">
             <option value="">All columns</option>
             {% for field, label in columns %}
-            <option value="{{ field }}">{{ label }}</option>
+            <option value="{{ field }}" {% if field == search_column %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
         <div class="input-group input-group-md">
-            <input id="search-input" class="form-control form-control-md" type="text" name="search" placeholder="Enter search term...">
+            <input id="search-input" class="form-control form-control-md" type="text" name="search" placeholder="Enter search term..." value="{{ search }}">
             <span class="input-group-text">
                 <button class="btn p-0 border-0" type="button" hx-on:click="clearSearchInput()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -55,7 +55,9 @@
 
 <!-- On page load, HTMX triggers GET request to 'render_table'
 and inserts it within div -->
-<div id="table-container" class="table-responsive container-fluid p-4" hx-get="{% url 'render_table' %}" hx-trigger="load"></div>
-
+<div id="table-container" class="table-responsive container-fluid p-4"
+     hx-get="{% url 'render_table' %}?search={{ search }}&search_column={{ search_column }}&page={{ page }}"
+     hx-trigger="load">
+</div>
 
 {% endblock %}

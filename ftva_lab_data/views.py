@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
@@ -59,12 +60,23 @@ def add_item(request):
 def edit_item(request, item_id):
     # Retrieve the item to edit
     item = SheetImport.objects.get(id=item_id)
+    # Get search params from GET or POST, to be used to help navigate back
+    # to the search results after editing
+    search = request.GET.get("search", request.POST.get("search", ""))
+    search_column = request.GET.get(
+        "search_column", request.POST.get("search_column", "")
+    )
+    page = request.GET.get("page", request.POST.get("page", ""))
+
     # context values to be passed to the add_edit_item template
     edit_item_context = {
         "form": ItemForm(instance=item),
         "item": item,
         "title": "Edit Item",
         "button_text": "Save Changes",
+        "search": search,
+        "search_column": search_column,
+        "page": page,
     }
     # Get form fields, divided into basic and advanced sections
     fields = get_add_edit_item_fields(ItemForm(instance=item))
@@ -76,7 +88,12 @@ def edit_item(request, item_id):
         if form.is_valid():
             form.save()
             messages.success(request, "Item updated successfully!")
-            return render(request, "view_item.html", get_item_display_dicts(item))
+            url = (
+                f"{reverse('view_item', args=[item.id])}"
+                f"?search={search}&search_column={search_column}&page={page}"
+            )
+            return redirect(url)
+
         else:
             messages.error(request, "Please correct the errors below.")
             return render(request, "add_edit_item.html", edit_item_context)
@@ -90,14 +107,33 @@ def view_item(request, item_id):
     item = SheetImport.objects.get(id=item_id)
     # For easier parsing in the template, separate attributes into dictionaries
     display_dicts = get_item_display_dicts(item)
+    # Pass search params to template, so they can be preserved
+    # if using the "Back to Search" button
+    display_dicts.update(
+        {
+            "search": request.GET.get("search", ""),
+            "search_column": request.GET.get("search_column", ""),
+            "page": request.GET.get("page", ""),
+        }
+    )
     return render(request, "view_item.html", display_dicts)
 
 
 @login_required
 def search_results(request: HttpRequest) -> HttpResponse:
     users = get_user_model().objects.all().order_by("username")
+    # Pass search params from GET to template context,
+    # so we can consistently render the results table after navigation
     return render(
-        request, "search_results.html", context={"columns": COLUMNS, "users": users}
+        request,
+        "search_results.html",
+        context={
+            "columns": COLUMNS,
+            "users": users,
+            "search": request.GET.get("search", ""),
+            "search_column": request.GET.get("search_column", ""),
+            "page": request.GET.get("page", 1),
+        },
     )
 
 
