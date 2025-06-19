@@ -95,9 +95,10 @@ The container runs via `docker_scripts/entrypoint.sh`, which
 
 1. Get a copy of the [Digital Lab Hard Drives Google sheet](https://docs.google.com/spreadsheets/d/1UcytVzczTxxFHhfxQzhr7pUKjL9bcIzoqIhLC0vRc6g/edit?gid=1871334680#gid=1871334680) (access required) as an Excel file, called `ftva_dl_sheet.xlsx` for this example.
 
-2. Convert it to a JSON fixture suitable for loading into Django. This will create `sheet_data.json` in the current directory:
+2. Convert it to a JSON fixture suitable for loading into Django. This will create `sheet_data.json` in the current directory,
+with data from all relevant sheets in the Excel file:
 
-   ```python manage.py convert_dl_sheet_data -f ftva_dl_sheet.xlsx -s LTO-Backup```
+   ```python manage.py convert_dl_sheet_data -f ftva_dl_sheet.xlsx```
 
 3. Load into Django:
 
