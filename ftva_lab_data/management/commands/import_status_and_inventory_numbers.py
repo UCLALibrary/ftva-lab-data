@@ -178,6 +178,7 @@ class Command(BaseCommand):
                             }
                         )
                     record.inventory_number = row["inventory_number"]
+                    record.save()
                 if process_status:
                     record.status.set(row["status_ids"])
                 records_updated += 1
