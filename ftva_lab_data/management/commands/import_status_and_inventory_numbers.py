@@ -163,7 +163,7 @@ class Command(BaseCommand):
                 record = matched_records.first()
                 if process_inventory:
                     # If the record already has an inventory number, and it is different
-                    # from the one in the sheet, it add to the report with before and after values.
+                    # from the one in the sheet, add it to the report with before and after values.
                     if (
                         record.inventory_number
                         and record.inventory_number != row["inventory_number"]
