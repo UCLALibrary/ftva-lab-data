@@ -517,7 +517,7 @@ class SearchTestCase(TestCase):
 
 
 class ItemStatusTestCase(TestCase):
-    fixtures = ["sample_data.json", "item_statuses.json"]
+    fixtures = ["item_statuses.json"]
 
     @classmethod
     def setUpTestData(cls):
@@ -560,7 +560,10 @@ class ItemStatusTestCase(TestCase):
 
     def test_parse_status_info(self):
         for status_info, expected_status_ids in self.status_info_test_map:
-            parsed_status = parse_status_info(status_info)
-            # Using sets to check equivalence
-            # because order shouldn't matter here.
-            self.assertEqual(set(parsed_status), set(expected_status_ids))
+            with self.subTest(
+                status_info=status_info, expected_status_ids=expected_status_ids
+            ):
+                parsed_status = parse_status_info(status_info)
+                # Using sets to check equivalence
+                # because order shouldn't matter here.
+                self.assertSetEqual(set(parsed_status), set(expected_status_ids))

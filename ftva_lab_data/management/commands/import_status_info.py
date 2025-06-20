@@ -1,5 +1,6 @@
 import pandas as pd
 from django.core.management.base import BaseCommand
+from django.db.models import QuerySet
 from ftva_lab_data.models import SheetImport
 
 
@@ -40,7 +41,7 @@ def parse_status_info(status_info: str) -> tuple[int]:
     return tuple(status_id_list)
 
 
-def match_record(row: pd.Series):
+def match_record(row: pd.Series) -> QuerySet[SheetImport]:
     """Try to get a matching `SheetImport` object using data from the Google Sheet."""
 
     # These three fields alone uniquely match most (6460 out of 6741)
@@ -107,6 +108,12 @@ class Command(BaseCommand):
             {"File Folder Name": "", "Sub Folder": "", "File Name": ""}, inplace=True
         )
 
+        remaining_records_count = len(tapes_data.index)
+        print(
+            f"There are {remaining_records_count} remaining rows.",
+            "Attempting to match them to SheetImport records...",
+        )
+
         records_updated = 0
         multiple_matches = []
         no_matches = []
@@ -129,8 +136,9 @@ class Command(BaseCommand):
         print(f"{len(multiple_matches)} rows returned more than one match")
         print(f"{len(no_matches)} rows returned no match")
 
-        print("Writing report...")
-        with pd.ExcelWriter("import_status_info_report.xlsx") as writer:
+        report_filename = "import_status_info_report.xlsx"
+        print(f"Writing report to {report_filename}...")
+        with pd.ExcelWriter(report_filename) as writer:
             pd.DataFrame(multiple_matches).to_excel(
                 writer, sheet_name="multiple_matches", index=False
             )
