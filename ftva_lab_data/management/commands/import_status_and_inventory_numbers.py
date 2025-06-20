@@ -10,6 +10,10 @@ def parse_status_info(status_info: str) -> tuple[int]:
     :param status_info: The status info string as it comes from the Google Sheet.
     :return: A tuple of `ItemStatus` IDs.
     """
+    # Begin by checking if the status_info is empty or NaN
+    if not status_info or pd.isna(status_info):
+        # If it is empty or NaN, return an empty tuple
+        return ()
 
     # Column A in the Google Sheet uses key sub-strings consistently
     # to describe the status of the record.
@@ -60,7 +64,10 @@ def match_record(row: pd.Series) -> QuerySet[SheetImport]:
 
 
 class Command(BaseCommand):
-    help = "Import status information from `Copy of DL Sheet_10_18_2024` Google Sheet"
+    help = (
+        "Import status and inventory number information from "
+        "`Copy of DL Sheet_10_18_2024` Google Sheet"
+    )
 
     def add_arguments(self, parser) -> None:
         parser.add_argument(
@@ -70,8 +77,21 @@ class Command(BaseCommand):
             required=True,
             help="Path to XLSX copy of Google Sheet",
         )
+        parser.add_argument(
+            "-i",
+            "--inventory_numbers",
+            action="store_true",
+            help="If set, imports inventory numbers from the sheet",
+        )
+        parser.add_argument(
+            "-s",
+            "--status_info",
+            action="store_true",
+            help="If set, imports status info from the sheet",
+        )
 
     def handle(self, *args, **options) -> None:
+
         file_name = options["file_name"]
         tapes_data = pd.read_excel(
             file_name,
@@ -89,24 +109,41 @@ class Command(BaseCommand):
         )
         tapes_data.drop_duplicates(inplace=True)
 
-        # Count rows without status info, then drop them
-        no_status_info_count = tapes_data["Requires Manual Intervention"].isna().sum()
-        print(
-            f"Found {no_status_info_count} rows without status info in source data.",
-            "Dropping them...",
-        )
-        tapes_data.dropna(subset=["Requires Manual Intervention"], inplace=True)
-
-        # Create a new column of status IDs parsed from status information
-        tapes_data["status_ids"] = tapes_data["Requires Manual Intervention"].apply(
-            parse_status_info
-        )
-
         # Fill NA values with empty string, to avoid type issues with Django.
         # Being explicit with columns, because Pandas complains otherwise.
         tapes_data.fillna(
             {"File Folder Name": "", "Sub Folder": "", "File Name": ""}, inplace=True
         )
+
+        # Determine which columns to process
+        process_inventory = options["inventory_numbers"]
+        process_status = options["status_info"]
+
+        # Prepare to drop rows and create columns as needed
+        drop_na_cols = []
+        if process_inventory:
+            drop_na_cols.append("Inventory_no")
+        if process_status:
+            drop_na_cols.append("Requires Manual Intervention")
+
+        # Drop rows missing required info
+        if drop_na_cols:
+            missing_count = tapes_data[drop_na_cols].isna().all(axis=1).sum()
+            print(
+                f"Found {missing_count} rows missing all of {drop_na_cols} in source data. ",
+                "Dropping them...",
+            )
+            tapes_data.dropna(subset=drop_na_cols, how="all", inplace=True)
+
+        # Create new columns as needed
+        if process_inventory:
+            tapes_data["inventory_number"] = tapes_data["Inventory_no"].apply(
+                lambda x: str(x).strip() if pd.notna(x) else ""
+            )
+        if process_status:
+            tapes_data["status_ids"] = tapes_data["Requires Manual Intervention"].apply(
+                parse_status_info
+            )
 
         remaining_records_count = len(tapes_data.index)
         print(
@@ -117,13 +154,32 @@ class Command(BaseCommand):
         records_updated = 0
         multiple_matches = []
         no_matches = []
+        changed_inventory_numbers = []
         for _, row in tapes_data.iterrows():
             matched_records = match_record(row)
             count = matched_records.count()
 
             if count == 1:
                 record = matched_records.first()
-                record.status.set(row["status_ids"])
+                if process_inventory:
+                    # If the record already has an inventory number, and it is different
+                    # from the one in the sheet, it add to the report with before and after values.
+                    if (
+                        record.inventory_number
+                        and record.inventory_number != row["inventory_number"]
+                    ):
+                        changed_inventory_numbers.append(
+                            {
+                                "file_folder_name": record.file_folder_name,
+                                "sub_folder_name": record.sub_folder_name,
+                                "file_name": record.file_name,
+                                "before": record.inventory_number,
+                                "after": row["inventory_number"],
+                            }
+                        )
+                    record.inventory_number = row["inventory_number"]
+                if process_status:
+                    record.status.set(row["status_ids"])
                 records_updated += 1
 
             if count > 1:
@@ -135,8 +191,12 @@ class Command(BaseCommand):
         print(f"{records_updated} records updated")
         print(f"{len(multiple_matches)} rows returned more than one match")
         print(f"{len(no_matches)} rows returned no match")
+        if process_inventory:
+            print(
+                f"{len(changed_inventory_numbers)} records had changed inventory numbers"
+            )
 
-        report_filename = "import_status_info_report.xlsx"
+        report_filename = "import_status_inventory_no_report.xlsx"
         print(f"Writing report to {report_filename}...")
         with pd.ExcelWriter(report_filename) as writer:
             pd.DataFrame(multiple_matches).to_excel(
@@ -145,3 +205,7 @@ class Command(BaseCommand):
             pd.DataFrame(no_matches).to_excel(
                 writer, sheet_name="no_matches", index=False
             )
+            if changed_inventory_numbers:
+                pd.DataFrame(changed_inventory_numbers).to_excel(
+                    writer, sheet_name="changed_inventory_numbers", index=False
+                )
