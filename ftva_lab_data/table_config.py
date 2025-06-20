@@ -11,4 +11,5 @@ COLUMNS = [
     ("inventory_number", "Inventory number"),
     ("status", "Status"),
     ("assigned_user_full_name", "Assigned user"),
+    ("id", "Record ID"),
 ]
