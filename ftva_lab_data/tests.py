@@ -13,7 +13,7 @@ from ftva_lab_data.management.commands.clean_imported_data import (
     set_hard_drive_names,
 )
 from ftva_lab_data.models import ItemStatus, SheetImport
-from ftva_lab_data.management.commands.import_status_info import (
+from ftva_lab_data.management.commands.import_status_and_inventory_numbers import (
     parse_status_info,
 )
 from ftva_lab_data.views_utils import (
