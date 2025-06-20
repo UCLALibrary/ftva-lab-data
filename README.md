@@ -131,6 +131,12 @@ These are mutually exclusive, and one or the other must be provided.
 Use `--update_records` to update the database; use `--report_problems` to print information about records which have invalid data, needing
 manual review.
 
+#### Importing status info
+
+FTVA staff created a spreadsheet that includes status information related to the records loaded from the Digital Lab's Google Sheet. Ask a teammember for a copy of this spreadsheet, if need be. The status data can then be loaded using the `import_status_info` management command:
+
+```python manage.py import_status_info --file_name {PATH_TO_SPREADSHEET}```
+
 #### Loading group and permission definitions
 
 Certain views within the application are restricted to users with appropriate permissions. Corresponding group and permission definitions are included in the `groups_and_permissions.json` fixture.  This is loaded automatically in the development environment, but also can be loaded manually:

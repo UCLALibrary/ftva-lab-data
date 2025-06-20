@@ -13,6 +13,9 @@ from ftva_lab_data.management.commands.clean_imported_data import (
     set_hard_drive_names,
 )
 from ftva_lab_data.models import ItemStatus, SheetImport
+from ftva_lab_data.management.commands.import_status_info import (
+    parse_status_info,
+)
 from ftva_lab_data.views_utils import (
     get_field_value,
     get_item_display_dicts,
@@ -511,3 +514,56 @@ class SearchTestCase(TestCase):
             search_fields=["carrier_a_with_location"],
         )
         self.assertEqual(items.all()[0], self.item_basic)
+
+
+class ItemStatusTestCase(TestCase):
+    fixtures = ["item_statuses.json"]
+
+    @classmethod
+    def setUpTestData(cls):
+
+        # This maps all the unique values
+        # in Column A of the `Copy of DL Sheet_10_18_2024` Google Sheet
+        # to a tuple of corresponding `ItemStatus` IDs,
+        # as defined in `fixtures/item_statuses.json`
+        cls.status_info_test_map = [
+            ("YES: invalid vault Presence of multiple Inventory_nos", (3, 5)),
+            ("YES: invalid vault", (3,)),
+            ("YES: Duplicated in Source Data (invalid vault)", (2, 3)),
+            (
+                "YES: invalid vault Presence of multiple Inventory_nos; Duplicated in Source Data",
+                (3, 5, 2),
+            ),
+            ("YES: invalid vault (Multiple corresponding Inventory_no in PD)", (3, 6)),
+            ("YES: invalid vault (invalid inventory_no)", (3, 4)),
+            (
+                "YES: invalid vault (invalid inventory_no); Duplicated in Source Data",
+                (3, 4, 2),
+            ),
+            ("Presence of multiple Inventory_nos", (5,)),
+            (
+                "YES: Duplicated in Source Data Presence of multiple Inventory_nos",
+                (2, 5),
+            ),
+            ("YES: Multiple corresponding Inventory_no in PD", (6,)),
+            ("YES:invalid inventory_no", (4,)),
+            ("Duplicated in Source Data", (2,)),
+            (
+                "YES: Duplicated in Source Data (Multiple corresponding Inventory_no in PD)",
+                (2, 6),
+            ),
+            ("YES: Duplicated in Source Data (invalid inventory_no)", (2, 4)),
+            ("YES:invalid Inventory_no", (4,)),
+            ("Inventory number in filename is incorrect", (1,)),
+            ("", ()),
+        ]
+
+    def test_parse_status_info(self):
+        for status_info, expected_status_ids in self.status_info_test_map:
+            with self.subTest(
+                status_info=status_info, expected_status_ids=expected_status_ids
+            ):
+                parsed_status = parse_status_info(status_info)
+                # Using sets to check equivalence
+                # because order shouldn't matter here.
+                self.assertSetEqual(set(parsed_status), set(expected_status_ids))
