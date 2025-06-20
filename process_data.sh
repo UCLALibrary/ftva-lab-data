@@ -19,10 +19,10 @@ echo ""
 echo "Loading users..."
 docker compose exec django python manage.py create_users_from_sheet -f list_of_django_users.xlsx
 
-# Convert DL sheet to JSON
+# Convert DL sheets to JSON
 echo ""
 echo "Converting DL sheet data..."
-docker compose exec django python manage.py convert_dl_sheet_data -f ftva_dl_sheet.xlsx -s LTO-Backup
+docker compose exec django python manage.py convert_dl_sheet_data -f ftva_dl_sheet.xlsx
 
 # Load the full set of converted data
 echo ""

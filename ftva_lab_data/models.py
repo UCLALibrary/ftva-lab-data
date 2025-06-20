@@ -7,6 +7,9 @@ class SheetImport(models.Model):
     """Represents rows of the original DL Google Sheet.
     By design, this model does not attempt to validate data;
     it just stores the original source data, almost entirely as-is.
+
+    WARNING: If you add any fields to this model, be sure to add them to the
+    "excluded" list in `convert_dl_sheet_data._get_field_names()`.
     """
 
     # By default, null=False and blank=False.
