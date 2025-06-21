@@ -1,3 +1,8 @@
+// enables tooltips
+// see @https://getbootstrap.com/docs/5.2/components/tooltips/
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
 function toggleAdvancedFields(el) {
   const advancedFields = document.getElementById("advanced-fields");
   const isHidden = (advancedFields.hidden = !advancedFields.hidden);
@@ -60,11 +65,11 @@ document.addEventListener("htmx:afterSwap", function (e) {
   }
 });
 
-document.addEventListener("DOMContentLoaded", function() {
-    const searchForm = document.querySelector('form[hx-get]');
-    if (searchForm) {
-        searchForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent form submission on Enter
-        });
-    }
+document.addEventListener("DOMContentLoaded", function () {
+  const searchForm = document.querySelector('form[hx-get]');
+  if (searchForm) {
+    searchForm.addEventListener('submit', function (e) {
+      e.preventDefault(); // Prevent form submission on Enter
+    });
+  }
 });

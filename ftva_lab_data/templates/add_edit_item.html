@@ -33,7 +33,20 @@
             <div class="col">
             {% for field in form %}
                 {% if field.name in basic_fields %}
-                    {% bootstrap_field field %}
+                    <!-- `field.field` accesses actual field instance, rather than wrapper -->
+                    {% if field.field.required %}
+                        <div class="mb-3">
+                            <label
+                                for="id_file_name"
+                                class="form-label required-field-label"
+                                data-bs-toggle="tooltip"
+                                title="Required field"
+                            >{{ field.label }}</label>
+                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" required>
+                        </div>
+                    {% else %}
+                        {% bootstrap_field field %}
+                    {% endif %}
                 {% endif %}
                 {% if field.name == "notes"  or field.name == "hard_drive_barcode_id"%}
                     </div><div class="col">
