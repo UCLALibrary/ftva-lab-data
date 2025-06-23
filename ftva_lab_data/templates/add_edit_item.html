@@ -60,7 +60,19 @@
             <div class="col">
             {% for field in form %}
                 {% if field.name in advanced_fields %}
-                    {% bootstrap_field field %}
+                    {% if field.field.required %}
+                        <div class="mb-3">
+                            <label
+                                for="id_file_name"
+                                class="form-label required-field-label"
+                                data-bs-toggle="tooltip"
+                                title="Required field"
+                            >{{ field.label }}</label>
+                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" required>
+                        </div>
+                    {% else %}
+                        {% bootstrap_field field %}
+                    {% endif %}
                 {% endif %}
                 {% if field.name == "color_bit_depth"  or field.name == "date_audio_edit_completed" %}
                     </div><div class="col">
