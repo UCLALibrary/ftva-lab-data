@@ -1,4 +1,4 @@
-[ 
+[
   {
     "model": "ftva_lab_data.itemstatus",
     "pk": 1,
@@ -39,6 +39,13 @@
     "pk": 6,
     "fields": {
       "status": "Multiple matching inv no in PD"
+    }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 7,
+    "fields": {
+      "status": "Deletion requested"
     }
   }
 ]
