@@ -155,12 +155,25 @@ def get_search_result_items(search: str, search_fields: list[str]) -> QuerySet:
             query |= Q(assigned_user__last_name__icontains=search)
             query |= Q(assigned_user__first_name__icontains=search)
             query |= Q(assigned_user__username__icontains=search)
+            # Carriers: search both the carrier itself, and its location
         elif field == "carrier_a_with_location":
             query |= Q(carrier_a__icontains=search)
             query |= Q(carrier_a_location__icontains=search)
         elif field == "carrier_b_with_location":
             query |= Q(carrier_b__icontains=search)
             query |= Q(carrier_b_location__icontains=search)
+        elif field == "id":
+            # Record id: make this precise, not substring.
+            # This is all dynamic, so search string might be empty at first;
+            # id also must be numeric, not a string like the others.
+            if search:
+                try:
+                    num_search = int(search)
+                except ValueError:
+                    # If user something not convertible to int for record id,
+                    # treat it like 0 (finding nothing), with no errors.
+                    num_search = 0
+                query |= Q(id=num_search)
         else:
             query |= Q(**{f"{field}__icontains": search})
     # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.

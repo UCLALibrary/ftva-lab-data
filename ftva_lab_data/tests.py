@@ -515,6 +515,25 @@ class SearchTestCase(TestCase):
         )
         self.assertEqual(items.all()[0], self.item_basic)
 
+    def test_search_finds_numeric_ids(self):
+        # Confirm string id is converted to int and the appropriate record found.
+        # ids created during tests are not guaranteed, so find out what it is now
+        # and use that.
+        search = str(self.item_basic.id)
+        items = get_search_result_items(
+            search=search,
+            search_fields=["id"],
+        )
+        self.assertEqual(items.all()[0], self.item_basic)
+
+    def test_search_ignores_nonnumeric_ids(self):
+        # Confirm searching for non-numeric ids (like "abc") find nothing, with no error.
+        items = get_search_result_items(
+            search="abc",
+            search_fields=["id"],
+        )
+        self.assertEqual(items.count(), 0)
+
 
 class ItemStatusTestCase(TestCase):
     fixtures = ["item_statuses.json"]
