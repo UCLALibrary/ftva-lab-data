@@ -32,7 +32,7 @@
         <col style="width: 11%;">
         <!--Assigned user-->
         <col style="width: 9%;">
-        <!--View link-->
+        <!--View link and Record ID-->
         <col style="width: 5%;">
         <!--Checkbox for assigning-->
         <col style="width: 5%;">
@@ -40,10 +40,12 @@
     <thead>
         <tr>
             {% for _, label in columns %}
-            <th>{{ label }}</th>
+                {% if label == "Record ID" %}
+                    <th></th>
+                {% else %}
+                    <th>{{ label }}</th>
+                {% endif %}
             {% endfor %}
-            <!--Empty <th> for View link-->
-            <th></th>
             <th class ="text-center">
                 Assign
                 <div class="form-check justify-content-center m-0" style="display: flex;" title="Select all items on this page">
@@ -61,15 +63,20 @@
                         {% for status in value %}
                             <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
                         {% endfor %}
+                    {% elif field == "id" %}
+                        <div class="d-flex flex-column align-items-start">
+                            <!--View link includes search parameters, for later use by "Back to Search" button-->
+                            <a class="btn btn-link btn-sm p-0" 
+                            href="{% url 'view_item' row.id %}?search={{ search }}&search_column={{ search_column }}&page={{ page_obj.number }}">
+                            View</a> 
+                            <br>
+                            <span class="text-muted small">ID: {{ value }}</span>
+                        </div>
                     {% else %}
                         {{ value }}
                     {% endif %}     
                 </td>         
-            {% endfor %}
-            <td>
-                <!--View link includes search parameters, for later use by "Back to Search" button-->
-                <a class="btn btn-link btn-sm" href="{% url 'view_item' row.id %}?search={{ search }}&search_column={{ search_column }}&page={{ page_obj.number }}">View</a>
-            </td>
+            {% endfor %}                    
             <td class="align-top">
                 <div class="form-check justify-content-center m-0" style="display: flex;">
                     <input type="checkbox" class="form-check-input row-checkbox checkbox-bold" name="selected_ids" value="{{ row.id }}">

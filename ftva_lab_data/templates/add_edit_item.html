@@ -10,6 +10,9 @@
 
 <div class="container">
     <h1>{{ title }}</h1>
+    {% if item %}
+        <p class="fs-5">Editing Item: {{ item.id }}</p>
+    {% endif %}
     <!-- Buttons -->
     <div class="d-flex justify-content-between mb-3">
         <div class="d-flex gap-2">
