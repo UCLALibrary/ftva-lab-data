@@ -160,7 +160,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     # Convert elided page range to list to allow multiple iterations in template
     elided_page_range = list(
         paginator.get_elided_page_range(
-            number=page_obj.number, on_each_side=2, on_ends=1
+            number=page_obj.number, on_each_side=5, on_ends=1
         )
     )
 
