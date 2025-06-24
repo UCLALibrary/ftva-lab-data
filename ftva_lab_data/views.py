@@ -157,6 +157,12 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
 
     paginator = Paginator(items, 10)
     page_obj = paginator.get_page(page)
+    # Convert elided page range to list to allow multiple iterations in template
+    elided_page_range = list(
+        paginator.get_elided_page_range(
+            number=page_obj.number, on_each_side=5, on_ends=1
+        )
+    )
 
     # Construct of list of dicts to use as table rows instead of QuerySets
     # allowing row[field] to be accessed, rather than specifying each field literal.
@@ -169,6 +175,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
         "partials/search_results_table.html",
         {
             "page_obj": page_obj,
+            "elided_page_range": elided_page_range,
             "search": search,
             "search_column": search_column,
             "columns": COLUMNS,
