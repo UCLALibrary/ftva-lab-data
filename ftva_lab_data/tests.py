@@ -586,3 +586,42 @@ class ItemStatusTestCase(TestCase):
                 # Using sets to check equivalence
                 # because order shouldn't matter here.
                 self.assertSetEqual(set(parsed_status), set(expected_status_ids))
+
+
+class AddEditItemTestCase(TestCase):
+    """Tests for the `add_item` and `edit_item` views."""
+
+    fixtures = ["sample_data.json", "groups_and_permissions.json"]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = Client()
+
+        cls.authorized_user = User.objects.create_user(
+            username="authorized", password="testpassword"
+        )
+        editors_group = Group.objects.get(name="editors")
+        cls.authorized_user.groups.add(editors_group)
+
+        cls.test_object = SheetImport.objects.get(pk=2)
+
+    def test_required_fields_display_with_indicator(self):
+        self.client.login(username="authorized", password="testpassword")
+        url = reverse("add_item")
+
+        response = self.client.get(url)
+
+        # At minimum, the label for the `file_name` field should have `required-field-label`
+        # in its CSS class list, which appends an asterisk using the CSS `::after` pseudo-element.
+        # The presence of this class should be enough to prove that
+        # the conditional block in `add_edit_item.html` is working.
+        expected_markup = (
+            '<label for="id_file_name" class="form-label required-field-label"'
+            'data-bs-toggle="tooltip" title="Required field">File name</label>'
+        )
+        self.assertContains(
+            response=response,
+            text=expected_markup,
+            count=1,
+            html=True,
+        )
