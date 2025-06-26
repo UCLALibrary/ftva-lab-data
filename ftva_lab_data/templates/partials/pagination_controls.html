@@ -1,15 +1,15 @@
 <div class="row">
     {% if show_auxiliary_controls %}
-        <div class="col d-flex align-items-center gap-2">
+        <div class="col-2 d-flex align-items-center gap-2">
             <select
-                name="records_per_page"
+                name="items_per_page"
                 class="form-select form-select-md"
                 style="width: fit-content;"
-                hx-get="{% url 'render_table' %}?page={{ page }}&search={{ search }}&search_column={{ search_column }}"
+                hx-get="{% url 'render_table' %}"
                 hx-target="#table-container"    
             >
-                {% for option in records_per_page_options %}
-                    <option value="{{ option }}" {% if option == page_obj.paginator.per_page %}selected{% endif %}>{{ option }}</option>
+                {% for option in items_per_page_options %}
+                    <option value={{option}} {% if option == page_obj.paginator.per_page %}selected{% endif %}>{{option}}</option>
                 {% endfor %}
             </select>
             <span class="fs-6 fw-light">Records per page</span>
@@ -17,10 +17,10 @@
     {% endif %}
 
 
-    <div class="col-8 d-flex justify-content-center align-items-center gap-2">
+    <div class="col d-flex justify-content-center align-items-center gap-2">
         <button class="btn btn-primary"
             {% if page_obj.has_previous %}
-                hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}&search_column={{ search_column }}&records_per_page={{ page_obj.paginator.per_page }}"
+                hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}&search_column={{ search_column }}"
                 hx-target="#table-container"
             {% else %} disabled {% endif %}>
             Previous
@@ -32,7 +32,7 @@
                 <span class="btn btn-secondary active mx-1">{{ page }}</span>
             {% else %}
                 <button class="btn btn-outline-secondary mx-1"
-                    hx-get="{% url 'render_table' %}?page={{ page }}&search={{ search }}&search_column={{ search_column }}&records_per_page={{ page_obj.paginator.per_page }}"
+                    hx-get="{% url 'render_table' %}?page={{ page }}&search={{ search }}&search_column={{ search_column }}"
                     hx-target="#table-container">
                     {{ page }}
                 </button>
@@ -40,7 +40,7 @@
         {% endfor %}
         <button class="btn btn-primary"
             {% if page_obj.has_next %}
-                hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}&search_column={{ search_column }}&records_per_page={{ page_obj.paginator.per_page }}"
+                hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}&search_column={{ search_column }}"
                 hx-target="#table-container"
             {% else %} disabled {% endif %}>
             Next
@@ -48,8 +48,8 @@
     </div>
 
     {% if show_auxiliary_controls %}
-        <div class="col">
-            <!-- COULD BE A NICE PLACE FOR EXPORT CONTROLS -->
+        <div class="col-2">
+            <!-- Could be a nice place for export controls -->
         </div>
     {% endif %}
 </div>

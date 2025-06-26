@@ -147,17 +147,28 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
     page = request.GET.get("page", 1)
-    records_per_page = request.GET.get("records_per_page", 10)
-    display_fields = [field for field, _ in COLUMNS]
-    records_per_page_options = [10, 20, 50, 100]
+    items_per_page = request.GET.get("items_per_page")
 
+    display_fields = [field for field, _ in COLUMNS]
     # If there's a specific search column, use it;
     # otherwise, search in all display fields.
     search_fields = [search_column] if search_column else display_fields
 
     items = get_search_result_items(search, search_fields)
 
-    paginator = Paginator(items, records_per_page)
+    items_per_page_options = [10, 20, 50, 100]
+    # If `items_per_page` comes from request
+    # overwrite value in session object
+    if items_per_page:
+        request.session["items_per_page"] = items_per_page
+    # If `items_per_page` is not defined on session
+    # default to first value in options list
+    elif "items_per_page" not in request.session:
+        request.session["items_per_page"] = items_per_page_options[0]
+    # Finally, defer to session for `items_per_page`
+    items_per_page = request.session["items_per_page"]
+
+    paginator = Paginator(items, items_per_page)
     page_obj = paginator.get_page(page)
     # Convert elided page range to list to allow multiple iterations in template
     elided_page_range = list(
@@ -182,7 +193,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             "search_column": search_column,
             "columns": COLUMNS,
             "rows": rows,
-            "records_per_page_options": records_per_page_options,
+            "items_per_page_options": items_per_page_options,
         },
     )
 
