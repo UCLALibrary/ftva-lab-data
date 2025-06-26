@@ -18,7 +18,7 @@ function clearSearchInput() {
   htmx.trigger(input, "clear");
 }
 
-// Utility: Set or update a hidden input in a form
+// Utility function: Set or update a hidden input in a form
 function setOrUpdate(form, name, value) {
   let el = form.querySelector(`input[name="${name}"]`);
   if (!el) {
@@ -47,7 +47,6 @@ document.getElementById("assigned-users-form").onsubmit = function (e) {
   const search = document.querySelector('input[name="search"]');
   const search_column = document.querySelector('select[name="search_column"]');
   const page = document.querySelector("#current-page")?.value;
-
 
   setOrUpdate(this, "search", search ? search.value : "");
   setOrUpdate(
@@ -78,8 +77,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Sync export form fields with search inputs
-// This ensures that the export form always has the current search parameters
-// when the user clicks the export button.
 // This is necessary because the export form is a separate form and does not
 // automatically get updated by HTMX when the search form changes.
 function syncExportFormFields() {
@@ -87,7 +84,6 @@ function syncExportFormFields() {
   const searchColumn = document.querySelector('select[name="search_column"]');
   const exportForm = document.querySelector('form[action$="export_search_results/"]');
   if (!exportForm) return;
-
 
   setOrUpdate(exportForm, "search", searchInput ? searchInput.value : "");
   setOrUpdate(exportForm, "search_column", searchColumn ? searchColumn.value : "");
