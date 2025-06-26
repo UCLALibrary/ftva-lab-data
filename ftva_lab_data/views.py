@@ -147,7 +147,9 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
     page = request.GET.get("page", 1)
+    records_per_page = request.GET.get("records_per_page", 10)
     display_fields = [field for field, _ in COLUMNS]
+    records_per_page_options = [10, 20, 50, 100]
 
     # If there's a specific search column, use it;
     # otherwise, search in all display fields.
@@ -155,7 +157,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
 
     items = get_search_result_items(search, search_fields)
 
-    paginator = Paginator(items, 10)
+    paginator = Paginator(items, records_per_page)
     page_obj = paginator.get_page(page)
     # Convert elided page range to list to allow multiple iterations in template
     elided_page_range = list(
@@ -180,6 +182,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             "search_column": search_column,
             "columns": COLUMNS,
             "rows": rows,
+            "records_per_page_options": records_per_page_options,
         },
     )
 
