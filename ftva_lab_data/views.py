@@ -156,15 +156,19 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
 
     items = get_search_result_items(search, search_fields)
 
-    items_per_page_options = [10, 20, 50, 100]
+    items_per_page_options = [10, 20, 50, 100]  # hard-coded here for now
+    default_per_page = items_per_page_options[0]
     # If `items_per_page` comes from request
     # overwrite value in session object
     if items_per_page:
-        request.session["items_per_page"] = items_per_page
-    # If `items_per_page` is not defined on session
+        try:  # handle cases where request value cannot be coerced to int
+            request.session["items_per_page"] = int(items_per_page)
+        except ValueError:
+            request.session["items_per_page"] = default_per_page
+    # Else if `items_per_page` is not defined on session
     # default to first value in options list
     elif "items_per_page" not in request.session:
-        request.session["items_per_page"] = items_per_page_options[0]
+        request.session["items_per_page"] = default_per_page
     # Finally, defer to session for `items_per_page`
     items_per_page = request.session["items_per_page"]
 

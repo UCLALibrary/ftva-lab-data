@@ -9,7 +9,7 @@
                 hx-target="#table-container"    
             >
                 {% for option in items_per_page_options %}
-                    <option value={{option}} {% if option == page_obj.paginator.per_page %}selected{% endif %}>{{option}}</option>
+                    <option value={{option}} {% if option == request.session.items_per_page %}selected{% endif %}>{{option}}</option>
                 {% endfor %}
             </select>
             <span class="fs-6 fw-light">Records per page</span>
@@ -49,7 +49,8 @@
 
     {% if show_auxiliary_controls %}
         <div class="col-2">
-            <!-- Could be a nice place for export controls -->
+            <!-- Added to keep row balanced and main pagination controls centered.
+            Could be a nice place for other controls. -->
         </div>
     {% endif %}
 </div>

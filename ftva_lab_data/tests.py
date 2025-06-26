@@ -202,11 +202,11 @@ class TablePaginationTestCase(TestCase):
 
         # Create enough SheetImport objects to require pagination
         # (i.e. more than the default page size of 10)
-        for i in range(15):
+        for i in range(150):
             SheetImport.objects.create(file_name=f"test_file_{i}", id=i)
         # Create SheetImport objects with different filenames
         SheetImport.objects.create(
-            file_name="unique_file_1", hard_drive_name="test_drive_1", id=100
+            file_name="unique_file_1", hard_drive_name="test_drive_1", id=1000
         )
 
     def test_search_results_with_pagination(self):
@@ -238,6 +238,26 @@ class TablePaginationTestCase(TestCase):
         page_2_content = response_page_2.content.decode()
         self.assertIn("test_file_10", page_2_content)
         self.assertNotIn("unique_file_1", page_2_content)
+
+    def test_items_per_page_control(self):
+        url = reverse("render_table")
+        test_values = ["", 10, 20, 50, 100, "foobar"]
+
+        # Test that given various values in the request parameters,
+        # the per page value in the paginator object
+        # and in the session store stay in sync.
+        # So long as they are in sync, the table should render correctly
+        # and the per page setting should persist within the session.
+        for value in test_values:
+            with self.subTest(value=value):
+                response = self.client.get(url, {"items_per_page": value})
+
+                paginator_per_page = response.context.get("page_obj").paginator.per_page
+                session_per_page = response.context.get("request").session[
+                    "items_per_page"
+                ]
+
+                self.assertEqual(paginator_per_page, session_per_page)
 
 
 class HistoryModelTestCase(TestCase):
