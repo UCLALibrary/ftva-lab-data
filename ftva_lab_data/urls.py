@@ -8,4 +8,9 @@ urlpatterns = [
     path("edit_item/<int:item_id>/", views.edit_item, name="edit_item"),
     path("view_item/<int:item_id>/", views.view_item, name="view_item"),
     path("assign/", views.assign_to_user, name="assign_to_user"),
+    path(
+        "export_search_results/",
+        views.export_search_results,
+        name="export_search_results",
+    ),
 ]

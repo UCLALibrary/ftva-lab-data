@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
-
+import pandas as pd
 
 from .forms import ItemForm
 from .models import SheetImport
@@ -223,3 +223,35 @@ def assign_to_user(request: HttpRequest) -> HttpResponse:
 
     # Otherwise, do a normal redirect
     return redirect("search_results")
+
+
+@login_required
+def export_search_results(request: HttpRequest) -> HttpResponse:
+    """Exports search results to an Excel file."""
+    search = request.GET.get("search", "")
+    search_column = request.GET.get("search_column", "")
+    search_fields = (
+        [search_column] if search_column else [field for field, _ in COLUMNS]
+    )
+
+    rows = get_search_result_items(search, search_fields)
+
+    # Include all fields in the DataFrame, even if they are not displayed
+    data_dicts = [row.__dict__ for row in rows]
+    # Remove the '_state' field added by Django
+    for data_dict in data_dicts:
+        data_dict.pop("_state", None)
+    # Convert rows to DataFrame for exporting
+    df = pd.DataFrame(data_dicts)
+
+    filename_base = "FTVA_DL_search_results"
+    timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{filename_base}_{timestamp}.xlsx"
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f"attachment; filename={filename}"
+    with pd.ExcelWriter(response, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False)
+    return response
