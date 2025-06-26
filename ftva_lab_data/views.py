@@ -26,6 +26,10 @@ from .views_utils import (
     raise_exception=True,
 )
 def add_item(request):
+    """Add a new item to the database.
+    :param request: The HTTP request object.
+    :return: Rendered template for adding an item.
+    """
     # context values to be passed to the add_edit_item template
     add_item_context = {
         "form": ItemForm(),
@@ -59,6 +63,11 @@ def add_item(request):
     raise_exception=True,
 )
 def edit_item(request, item_id):
+    """Edit an existing item in the database.
+    :param request: The HTTP request object.
+    :param item_id: The ID of the item to edit.
+    :return: Rendered template for editing an item.
+    """
     # Retrieve the item to edit
     item = SheetImport.objects.get(id=item_id)
     # Get search params from GET or POST, to be used to help navigate back
@@ -104,6 +113,12 @@ def edit_item(request, item_id):
 
 @login_required
 def view_item(request, item_id):
+    """View details of a specific item.
+
+    :param request: The HTTP request object.
+    :param item_id: The ID of the item to view.
+    :return: Rendered template for viewing an item.
+    """
     # Retrieve the item to view
     item = SheetImport.objects.get(id=item_id)
     # For easier parsing in the template, separate attributes into dictionaries
@@ -122,6 +137,15 @@ def view_item(request, item_id):
 
 @login_required
 def search_results(request: HttpRequest) -> HttpResponse:
+    """Render search results page.
+    This view handles the initial rendering of the search results page,
+    including the user list and search parameters, but not the actual search
+    results table.
+
+    :param request: The HTTP request object.
+    :return: Rendered template for search results.
+    """
+
     users = get_user_model().objects.all().order_by("username")
     # Pass search params from GET to template context,
     # so we can consistently render the results table after navigation
@@ -143,7 +167,10 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     """Handles search and pagination of table.
 
     Search can either be column-specific, determined by dropdown,
-    or broad, CTRL-F-style across all fields
+    or broad, CTRL-F-style across all fields.
+
+    :param request: The HTTP request object.
+    :return: Rendered HTML for the search results table.
     """
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
@@ -209,7 +236,12 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     raise_exception=True,
 )
 def assign_to_user(request: HttpRequest) -> HttpResponse:
-    """Assigns a SheetImport item to a user."""
+    """Assigns a SheetImport item to a user.
+
+    :param request: The HTTP request object.
+    :return: Redirects to search results,
+        or returns updated table HTML for HTMX requests.
+    """
     ids = request.POST.get("ids", "").split(",")
     user_id = request.POST.get("user_id")
     if ids and user_id:
@@ -246,7 +278,11 @@ def assign_to_user(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def export_search_results(request: HttpRequest) -> HttpResponse:
-    """Exports search results to an Excel file."""
+    """Exports search results to an Excel file.
+
+    :param request: The HTTP request object.
+    :return: An HTTP response with the Excel file attachment.
+    """
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
     search_fields = (
