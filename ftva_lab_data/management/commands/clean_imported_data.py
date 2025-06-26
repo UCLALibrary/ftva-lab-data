@@ -1,6 +1,7 @@
 import re
 from django.core.management.base import BaseCommand
-from ftva_lab_data.models import SheetImport
+from ftva_lab_data.models import SheetImport, ItemStatus
+from django.db.models import Q
 
 
 def _is_header_record(record: SheetImport) -> bool:
@@ -119,6 +120,23 @@ def delete_hard_drive_only_records() -> int:
     return records_deleted
 
 
+def set_status_for_records_with_inline_notes() -> int:
+    fields_to_query = ["file_folder_name", "sub_folder_name", "file_name"]
+    pattern = r"\[.*?\]"
+
+    query = Q()
+    for field in fields_to_query:
+        query |= Q(**{f"{field}__regex": pattern})
+
+    records = SheetImport.objects.filter(query)
+
+    need_review_status = ItemStatus.objects.get(status="Needs review")
+    for record in records:
+        record.status.add(need_review_status.id)
+
+    return records.count()
+
+
 class Command(BaseCommand):
     help = "Clean up imported Digital Labs Google Sheet data"
 
@@ -139,3 +157,6 @@ class Command(BaseCommand):
 
         records_deleted = delete_hard_drive_only_records()
         self.stdout.write(f"Hard drive only records deleted: {records_deleted}")
+
+        records_updated = set_status_for_records_with_inline_notes()
+        self.stdout.write(f"Records with inline notes status set: {records_updated}")
