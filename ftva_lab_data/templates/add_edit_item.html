@@ -42,7 +42,7 @@
                                 data-bs-toggle="tooltip"
                                 title="Required field"
                             >{{ field.label }}</label>
-                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" value="{{ field.value }}" required>
+                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" value="{{ field.value|default:'' }}" required>
                         </div>
                     {% else %}
                         {% bootstrap_field field %}
@@ -68,7 +68,7 @@
                                 data-bs-toggle="tooltip"
                                 title="Required field"
                             >{{ field.label }}</label>
-                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" value="{{ field.value }}" required>
+                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" value="{{ field.value|default:'' }}" required>
                         </div>
                     {% else %}
                         {% bootstrap_field field %}
