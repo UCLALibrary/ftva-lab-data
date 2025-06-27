@@ -16,6 +16,7 @@ from .views_utils import (
     get_add_edit_item_fields,
     get_search_result_data,
     get_search_result_items,
+    get_items_per_page_options,
 )
 
 
@@ -147,15 +148,32 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
     page = request.GET.get("page", 1)
-    display_fields = [field for field, _ in COLUMNS]
+    items_per_page = request.GET.get("items_per_page")
 
+    display_fields = [field for field, _ in COLUMNS]
     # If there's a specific search column, use it;
     # otherwise, search in all display fields.
     search_fields = [search_column] if search_column else display_fields
 
     items = get_search_result_items(search, search_fields)
 
-    paginator = Paginator(items, 10)
+    items_per_page_options = get_items_per_page_options()
+    default_per_page = items_per_page_options[0]
+    # If `items_per_page` comes from request
+    # overwrite value in session object
+    if items_per_page:
+        try:  # handle cases where request value cannot be coerced to int
+            request.session["items_per_page"] = int(items_per_page)
+        except ValueError:
+            request.session["items_per_page"] = default_per_page
+    # Else if `items_per_page` is not defined on session
+    # default to first value in options list
+    elif "items_per_page" not in request.session:
+        request.session["items_per_page"] = default_per_page
+    # Finally, defer to session for `items_per_page`
+    items_per_page = request.session["items_per_page"]
+
+    paginator = Paginator(items, items_per_page)
     page_obj = paginator.get_page(page)
     # Convert elided page range to list to allow multiple iterations in template
     elided_page_range = list(
@@ -180,6 +198,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             "search_column": search_column,
             "columns": COLUMNS,
             "rows": rows,
+            "items_per_page_options": items_per_page_options,
         },
     )
 

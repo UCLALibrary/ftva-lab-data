@@ -1,29 +1,62 @@
-<div class="d-flex justify-content-center align-items-center gap-2">
-    <button class="btn btn-primary"
-        {% if page_obj.has_previous %}
-            hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}&search_column={{ search_column }}"
-            hx-target="#table-container"
-        {% else %} disabled {% endif %}>
-        Previous
-    </button>
-    {% for page in elided_page_range %}
-        {% if page == '…' %}
-            <span class="mx-1">…</span>
-        {% elif page == page_obj.number %}
-            <span class="btn btn-secondary active mx-1">{{ page }}</span>
-        {% else %}
-            <button class="btn btn-outline-secondary mx-1"
-                hx-get="{% url 'render_table' %}?page={{ page }}&search={{ search }}&search_column={{ search_column }}"
-                hx-target="#table-container">
-                {{ page }}
-            </button>
-        {% endif %}
-    {% endfor %}
-    <button class="btn btn-primary"
-        {% if page_obj.has_next %}
-            hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}&search_column={{ search_column }}"
-            hx-target="#table-container"
-        {% else %} disabled {% endif %}>
-        Next
-    </button>
+<div class="row">
+    {% comment %}This conditional controls whether the two <div> elements
+    on either side of the main pagination controls are shown or not,
+    as this partial is used both above and below the table,
+    and we only want to show the additional controls above the table.
+    {% endcomment %}
+    {% if show_auxiliary_controls %}
+        <div class="col-2 d-flex align-items-center gap-2">
+            <select
+                name="items_per_page"
+                class="form-select form-select-md"
+                style="width: fit-content;"
+                hx-get="{% url 'render_table' %}?search={{ search }}&search_column={{ search_column }}"
+                hx-target="#table-container"    
+            >
+                {% for option in items_per_page_options %}
+                    <option value={{option}} {% if option == request.session.items_per_page %}selected{% endif %}>{{option}}</option>
+                {% endfor %}
+            </select>
+            <span class="fs-6 fw-light">Records per page</span>
+        </div>
+    {% endif %}
+
+
+    <div class="col d-flex justify-content-center align-items-center gap-2">
+        <button class="btn btn-primary"
+            {% if page_obj.has_previous %}
+                hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}&search_column={{ search_column }}"
+                hx-target="#table-container"
+            {% else %} disabled {% endif %}>
+            Previous
+        </button>
+        {% for page in elided_page_range %}
+            {% if page == '…' %}
+                <span class="mx-1">…</span>
+            {% elif page == page_obj.number %}
+                <span class="btn btn-secondary active mx-1">{{ page }}</span>
+            {% else %}
+                <button class="btn btn-outline-secondary mx-1"
+                    hx-get="{% url 'render_table' %}?page={{ page }}&search={{ search }}&search_column={{ search_column }}"
+                    hx-target="#table-container">
+                    {{ page }}
+                </button>
+            {% endif %}
+        {% endfor %}
+        <button class="btn btn-primary"
+            {% if page_obj.has_next %}
+                hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}&search_column={{ search_column }}"
+                hx-target="#table-container"
+            {% else %} disabled {% endif %}>
+            Next
+        </button>
+    </div>
+    
+    {% comment %}See comment above regarding this conditional.{% endcomment %}
+    {% if show_auxiliary_controls %}
+        <div class="col-2">
+            <!-- Added to keep row balanced and main pagination controls centered.
+            Could be a nice place for other controls. -->
+        </div>
+    {% endif %}
 </div>

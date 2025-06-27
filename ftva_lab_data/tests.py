@@ -20,6 +20,7 @@ from ftva_lab_data.views_utils import (
     get_field_value,
     get_item_display_dicts,
     get_search_result_items,
+    get_items_per_page_options,
 )
 from ftva_lab_data.table_config import COLUMNS
 
@@ -201,12 +202,12 @@ class TablePaginationTestCase(TestCase):
         SheetImport.objects.all().delete()
 
         # Create enough SheetImport objects to require pagination
-        # (i.e. more than the default page size of 10)
-        for i in range(15):
+        # (i.e. more than the maximum page size allowed by `items_per_page`)
+        for i in range(150):
             SheetImport.objects.create(file_name=f"test_file_{i}", id=i)
         # Create SheetImport objects with different filenames
         SheetImport.objects.create(
-            file_name="unique_file_1", hard_drive_name="test_drive_1", id=100
+            file_name="unique_file_1", hard_drive_name="test_drive_1", id=1000
         )
 
     def test_search_results_with_pagination(self):
@@ -238,6 +239,51 @@ class TablePaginationTestCase(TestCase):
         page_2_content = response_page_2.content.decode()
         self.assertIn("test_file_10", page_2_content)
         self.assertNotIn("unique_file_1", page_2_content)
+
+    def test_valid_items_per_page_options(self):
+        url = reverse("render_table")
+        items_per_page_options = get_items_per_page_options()
+
+        # Test that for each option from `get_items_per_page_options()`,
+        # the per page value in the paginator object
+        # and in the session store stay in sync.
+        # So long as they are in sync, the table should render correctly
+        # and the per page setting should persist within the session.
+        for option in items_per_page_options:
+            with self.subTest(option=option):
+                response = self.client.get(url, {"items_per_page": option})
+
+                paginator_per_page = response.context.get("page_obj").paginator.per_page
+                session_per_page = response.context.get("request").session[
+                    "items_per_page"
+                ]
+
+                self.assertEqual(paginator_per_page, session_per_page)
+
+    def test_invalid_items_per_page_options(self):
+        url = reverse("render_table")
+
+        # The view expects `items_per_page` to be an integer,
+        # so this tests an empty string and a boolean
+        # to make sure they are handled correctly by the view
+        # and fall back to the default per-page option.
+        invalid_options = ["", True]
+
+        for option in invalid_options:
+            with self.subTest(option=option):
+                response = self.client.get(url, {"items_per_page": option})
+
+                paginator_per_page = response.context.get("page_obj").paginator.per_page
+                session_per_page = response.context.get("request").session[
+                    "items_per_page"
+                ]
+                # The default per-page option is the first item
+                # in the list returned by `items_per_page_options`.
+                default_per_page = get_items_per_page_options()[0]
+                # The per-page values in both the paginator and session objects
+                # should fall back to the default when give non-int values.
+                self.assertEqual(paginator_per_page, default_per_page)
+                self.assertEqual(session_per_page, default_per_page)
 
 
 class HistoryModelTestCase(TestCase):

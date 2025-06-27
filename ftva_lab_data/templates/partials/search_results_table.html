@@ -1,4 +1,8 @@
-{% include "partials/pagination_controls.html" %}
+{% comment %}The `show_auxiliary_controls` attribute controls whether or not
+to render <div> elements for controls on either side of the main pagination controls.
+See comment on partial as well.
+{% endcomment %}
+{% include "partials/pagination_controls.html" with show_auxiliary_controls=True %}
 
 <table class="table table-hover" style="table-layout: fixed;">
     <colgroup>
@@ -79,7 +83,8 @@
     </tbody>
 </table>
 
-{% include "partials/pagination_controls.html" %}
+{% comment %}See comment above regarding `show_auxiliary_controls` attribute.{% endcomment %}
+{% include "partials/pagination_controls.html" with show_auxiliary_controls=False %}
 
 <!-- Hidden input to store the current page number for HTMX requests -->
 <!-- Used to maintain state after POST requests to assign items to users -->
