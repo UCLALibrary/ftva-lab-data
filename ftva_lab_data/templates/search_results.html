@@ -49,7 +49,14 @@
         </select>
         <button type="submit" class="btn btn-sm btn-primary">Assign Selected</button>
     </form>
-    {% endif %}    
+    {% endif %}
+    <form method="get" action="{% url 'export_search_results' %}" class="mb-3">
+        <input type="hidden" name="search" value="{{ search }}">
+        <input type="hidden" name="search_column" value="{{ search_column }}">
+        <button type="submit" class="btn btn-outline-success">
+            Export to Excel
+        </button>
+    </form>
 </div> 
 
 
