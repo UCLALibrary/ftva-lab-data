@@ -4,11 +4,11 @@ from django.db.models import QuerySet
 from ftva_lab_data.models import SheetImport
 
 
-def parse_status_info(status_info: str) -> tuple[int]:
+def parse_status_info(status_info: str) -> tuple[int] | tuple:
     """Parse status info string into a list of `ItemStatus` IDs.
 
     :param status_info: The status info string as it comes from the Google Sheet.
-    :return: A tuple of `ItemStatus` IDs.
+    :return: A tuple of `ItemStatus` IDs, which can be empty.
     """
     # Begin by checking if the status_info is empty or NaN
     if not status_info or pd.isna(status_info):
@@ -46,7 +46,11 @@ def parse_status_info(status_info: str) -> tuple[int]:
 
 
 def match_record(row: pd.Series) -> QuerySet[SheetImport]:
-    """Try to get a matching `SheetImport` object using data from the Google Sheet."""
+    """Try to get a matching `SheetImport` object using data from the Google Sheet.
+
+    :param row: A Pandas Series representing a row of data from the Google Sheet.
+    :return: A Django QuerySet with 0 or more records matching the relevant row data.
+    """
 
     # These three fields alone uniquely match most (6460 out of 6741)
     # of the unique rows with status info in the `Copy of DL` sheet.
@@ -61,6 +65,67 @@ def match_record(row: pd.Series) -> QuerySet[SheetImport]:
         sub_folder_name=sub_folder,
         file_name=file_name,
     )
+
+
+def get_tapes_data(
+    file_name: str, process_inventory: bool, process_status: bool
+) -> pd.DataFrame:
+    """Load data from `file_name` and update it based on other parameters.
+
+    :param file_name: Path to the Excel file from which Pandas will read data.
+    :param process_inventory: Whether updates based on inventory number should be done.
+    :param process_status: Whether updates based on status should be done.
+    :return tapes_data: A Pandas DataFrame with updated data, ready for comparison with
+      the database.
+    """
+
+    tapes_data = pd.read_excel(
+        file_name,
+        sheet_name="Tapes(row 4560-24712)",  # NOTE: sheet name is hard-coded here
+    )
+
+    # Provide total row count for tapes data
+    total_rows = len(tapes_data.index)
+    print(f"There are {total_rows} rows in source data.")
+
+    # # Count duplicated rows, then drop them
+    duplicate_count = tapes_data.duplicated().sum()
+    print(f"Found {duplicate_count} duplicated rows in source data. Dropping them...")
+    tapes_data.drop_duplicates(inplace=True)
+
+    # Fill NA values with empty string, to avoid type issues with Django.
+    # Being explicit with columns, because Pandas complains otherwise.
+    tapes_data.fillna(
+        {"File Folder Name": "", "Sub Folder": "", "File Name": ""}, inplace=True
+    )
+
+    # Prepare to drop rows and create columns as needed
+    drop_na_cols = []
+    if process_inventory:
+        drop_na_cols.append("Inventory_no")
+    if process_status:
+        drop_na_cols.append("Requires Manual Intervention")
+
+    # Drop rows missing required info
+    if drop_na_cols:
+        missing_count = tapes_data[drop_na_cols].isna().all(axis=1).sum()
+        print(
+            f"Found {missing_count} rows missing all of {drop_na_cols} in source data. ",
+            "Dropping them...",
+        )
+        tapes_data.dropna(subset=drop_na_cols, how="all", inplace=True)
+
+    # Create new columns as needed
+    if process_inventory:
+        tapes_data["inventory_number"] = tapes_data["Inventory_no"].apply(
+            lambda x: str(x).strip() if pd.notna(x) else ""
+        )
+    if process_status:
+        tapes_data["status_ids"] = tapes_data["Requires Manual Intervention"].apply(
+            parse_status_info
+        )
+
+    return tapes_data
 
 
 class Command(BaseCommand):
@@ -92,59 +157,20 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
 
-        file_name = options["file_name"]
-        tapes_data = pd.read_excel(
-            file_name,
-            sheet_name="Tapes(row 4560-24712)",  # NOTE: sheet name is hard-coded here
-        )
+        file_name: str = options["file_name"]
 
-        # Provide total row count for tapes data
-        total_rows = len(tapes_data.index)
-        print(f"There are {total_rows} rows in source data.")
+        # Determine which columns to process.
+        process_inventory: bool = options["inventory_numbers"]
+        process_status: bool = options["status_info"]
 
-        # # Count duplicated rows, then drop them
-        duplicate_count = tapes_data.duplicated().sum()
-        print(
-            f"Found {duplicate_count} duplicated rows in source data. Dropping them..."
-        )
-        tapes_data.drop_duplicates(inplace=True)
-
-        # Fill NA values with empty string, to avoid type issues with Django.
-        # Being explicit with columns, because Pandas complains otherwise.
-        tapes_data.fillna(
-            {"File Folder Name": "", "Sub Folder": "", "File Name": ""}, inplace=True
-        )
-
-        # Determine which columns to process
-        process_inventory = options["inventory_numbers"]
-        process_status = options["status_info"]
-
-        # Prepare to drop rows and create columns as needed
-        drop_na_cols = []
-        if process_inventory:
-            drop_na_cols.append("Inventory_no")
-        if process_status:
-            drop_na_cols.append("Requires Manual Intervention")
-
-        # Drop rows missing required info
-        if drop_na_cols:
-            missing_count = tapes_data[drop_na_cols].isna().all(axis=1).sum()
-            print(
-                f"Found {missing_count} rows missing all of {drop_na_cols} in source data. ",
-                "Dropping them...",
-            )
-            tapes_data.dropna(subset=drop_na_cols, how="all", inplace=True)
-
-        # Create new columns as needed
-        if process_inventory:
-            tapes_data["inventory_number"] = tapes_data["Inventory_no"].apply(
-                lambda x: str(x).strip() if pd.notna(x) else ""
-            )
-        if process_status:
-            tapes_data["status_ids"] = tapes_data["Requires Manual Intervention"].apply(
-                parse_status_info
+        # User must provide at least one of the inventory_numbers / status_info arguments,
+        # else there's nothing to update.
+        if not process_inventory and not process_status:
+            raise ValueError(
+                "At least one of --inventory_numbers or --status_info must be used."
             )
 
+        tapes_data = get_tapes_data(file_name, process_inventory, process_status)
         remaining_records_count = len(tapes_data.index)
         print(
             f"There are {remaining_records_count} remaining rows.",
@@ -180,6 +206,7 @@ class Command(BaseCommand):
                     record.inventory_number = row["inventory_number"]
                     record.save()
                 if process_status:
+                    # Updating with many-to-many with .set() saves automatically.
                     record.status.set(row["status_ids"])
                 records_updated += 1
 
