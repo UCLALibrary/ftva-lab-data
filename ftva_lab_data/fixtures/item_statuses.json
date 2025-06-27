@@ -47,5 +47,12 @@
     "fields": {
       "status": "Deletion requested"
     }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 8,
+    "fields": {
+      "status": "Needs review"
+    }
   }
 ]
