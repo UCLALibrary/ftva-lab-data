@@ -16,6 +16,7 @@ from .views_utils import (
     get_add_edit_item_fields,
     get_search_result_data,
     get_search_result_items,
+    get_items_per_page_options,
 )
 
 
@@ -156,7 +157,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
 
     items = get_search_result_items(search, search_fields)
 
-    items_per_page_options = [10, 20, 50, 100]  # hard-coded here for now
+    items_per_page_options = get_items_per_page_options()
     default_per_page = items_per_page_options[0]
     # If `items_per_page` comes from request
     # overwrite value in session object

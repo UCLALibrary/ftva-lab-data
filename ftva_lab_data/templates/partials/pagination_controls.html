@@ -1,11 +1,16 @@
 <div class="row">
+    {% comment %}This conditional controls whether the two <div> elements
+    on either side of the main pagination controls are shown or not,
+    as this partial is used both above and below the table,
+    and we only want to show the additional controls above the table.
+    {% endcomment %}
     {% if show_auxiliary_controls %}
         <div class="col-2 d-flex align-items-center gap-2">
             <select
                 name="items_per_page"
                 class="form-select form-select-md"
                 style="width: fit-content;"
-                hx-get="{% url 'render_table' %}"
+                hx-get="{% url 'render_table' %}?search={{ search }}&search_column={{ search_column }}"
                 hx-target="#table-container"    
             >
                 {% for option in items_per_page_options %}
@@ -46,7 +51,8 @@
             Next
         </button>
     </div>
-
+    
+    {% comment %}See comment above regarding this conditional.{% endcomment %}
     {% if show_auxiliary_controls %}
         <div class="col-2">
             <!-- Added to keep row balanced and main pagination controls centered.

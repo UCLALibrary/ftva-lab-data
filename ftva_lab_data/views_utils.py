@@ -205,3 +205,13 @@ def get_search_result_data(
     ]
 
     return rows
+
+
+def get_items_per_page_options() -> list[int]:
+    """Returns options to use on the `items_per_page` control
+    in `partials/pagination_controls.html`.
+
+    :return list[int]: A list of integers representing per-page options.
+    """
+
+    return [10, 20, 50, 100]
