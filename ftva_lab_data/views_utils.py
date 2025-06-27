@@ -49,7 +49,6 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "Carrier A Location": item.carrier_a_location,
         "Carrier B": item.carrier_b,
         "Carrier B Location": item.carrier_b_location,
-        "Hard Drive Barcode ID": item.hard_drive_barcode_id,
     }
     file_info = {
         "File/Folder Name": item.file_folder_name,
@@ -97,6 +96,7 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "Security Data Encrypted": item.security_data_encrypted,
         "Migration or Preservation Record": item.migration_or_preservation_record,
         "Hard Drive Location": item.hard_drive_location,
+        "Hard Drive Barcode ID": item.hard_drive_barcode_id,
         "Date Job Started": item.date_job_started,
         "Date Job Completed": item.date_job_completed,
         "General Entry Cataloged By": item.general_entry_cataloged_by,
@@ -120,7 +120,6 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
         "carrier_a_location",
         "carrier_b",
         "carrier_b_location",
-        "hard_drive_barcode_id",
         "file_folder_name",
         "sub_folder_name",
         "file_name",
