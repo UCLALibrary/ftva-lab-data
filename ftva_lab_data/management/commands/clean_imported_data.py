@@ -1,15 +1,24 @@
 import re
 from django.core.management.base import BaseCommand
-from ftva_lab_data.models import SheetImport
+from ftva_lab_data.models import SheetImport, ItemStatus
+from django.db.models import Q
 
 
 def _is_header_record(record: SheetImport) -> bool:
-    """Determines whether a record contains a header row from the imported data."""
+    """Determines whether a record contains a header row from the imported data.
+
+    :param record: A `SheetImport` record.
+    :return bool:
+    """
     return record.file_folder_name == "File Folder Name"
 
 
 def _get_combined_field_data(record: SheetImport) -> str:
-    """Combines all string fields into one big string for some checks elsewhere."""
+    """Combines all string fields into one big string for some checks elsewhere.
+
+    :param record: A `SheetImport` record.
+    :return str:
+    """
     # All SheetImport fields are string (CharField) except the system-assigned id
     # and the foreign key relations to assigned_user and status (which does not matter
     # at this stage for imported, empty records).
@@ -26,13 +35,19 @@ def _get_combined_field_data(record: SheetImport) -> str:
 
 
 def _is_empty_record(record: SheetImport) -> bool:
-    """Determines whether all string fields in a record are empty."""
+    """Determines whether all string fields in a record are empty.
+
+    :param record: A `SheetImport` record.
+    :return bool:
+    """
     return _get_combined_field_data(record) == ""
 
 
 def delete_empty_records() -> int:
     """Deletes SheetImport records which contain no data other than
     the system-assigned id.
+
+    :return int: Count of records changed.
     """
     records_changed = 0
     for record in SheetImport.objects.all().order_by("id"):
@@ -46,6 +61,8 @@ def delete_empty_records() -> int:
 def set_hard_drive_names() -> int:
     """Sets the hard drive name for rows which can be associated with hard drives,
     based on the presence of a specific header row value.
+
+    :return int: Count of records changed.
     """
     records_changed = 0
     current_drive_name = None
@@ -73,7 +90,10 @@ def set_hard_drive_names() -> int:
 
 def set_file_folder_names() -> int:
     """Sets the file folder name for rows which don't have one, but
-    do have file names."""
+    do have file names.
+
+    :return int: Count of records changed.
+    """
     records_changed = 0
     current_file_folder_name = None
     for record in SheetImport.objects.all().order_by("id"):
@@ -99,7 +119,10 @@ def set_file_folder_names() -> int:
 
 
 def delete_header_records() -> int:
-    """Deletes header rows that are embedded throughout the original imported data."""
+    """Deletes header rows that are embedded throughout the original imported data.
+
+    :return int: Count of records deleted.
+    """
     records_deleted = 0
     for record in SheetImport.objects.all().order_by("id"):
         if _is_header_record(record):
@@ -109,7 +132,10 @@ def delete_header_records() -> int:
 
 
 def delete_hard_drive_only_records() -> int:
-    """Deletes records which only have a value in the hard_drive_name field."""
+    """Deletes records which only have a value in the hard_drive_name field.
+
+    :return int: Count of records deleted.
+    """
     records_deleted = 0
     for record in SheetImport.objects.all().order_by("id"):
         combined_field_data = _get_combined_field_data(record)
@@ -117,6 +143,35 @@ def delete_hard_drive_only_records() -> int:
             record.delete()
             records_deleted += 1
     return records_deleted
+
+
+def set_status_for_records_with_inline_notes() -> int:
+    """Adds `Needs review` status to records with inline notes in the path fields.
+
+    :return int: Count of records updated.
+    """
+    # Thus far, the fields representing path components are the only fields
+    # where we need to flag inline notes. Other fields may have inline notes,
+    # but these are the ones that have been identified as most potentially problematic.
+    fields_to_query = ["file_folder_name", "sub_folder_name", "file_name"]
+    # The pattern matches any character between square brackets zero or more times.
+    # These are presumed to be inline notes, rather than actual sub-strings of the paths
+    # represented in the fields.
+    pattern = r"\[.*?\]"
+
+    query = Q()
+    for field in fields_to_query:
+        # Add OR statements to the Q object,
+        # unpacking the dynamic dict to keyword arguments.
+        query |= Q(**{f"{field}__regex": pattern})
+
+    records = SheetImport.objects.filter(query)
+
+    need_review_status = ItemStatus.objects.get(status="Needs review")
+    for record in records:
+        record.status.add(need_review_status.id)
+
+    return records.count()
 
 
 class Command(BaseCommand):
@@ -139,3 +194,6 @@ class Command(BaseCommand):
 
         records_deleted = delete_hard_drive_only_records()
         self.stdout.write(f"Hard drive only records deleted: {records_deleted}")
+
+        records_updated = set_status_for_records_with_inline_notes()
+        self.stdout.write(f"Records with inline notes status set: {records_updated}")
