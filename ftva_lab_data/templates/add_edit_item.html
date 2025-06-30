@@ -35,15 +35,7 @@
                 {% if field.name in basic_fields %}
                     <!-- `field.field` accesses actual field instance, rather than wrapper -->
                     {% if field.field.required %}
-                        <div class="mb-3">
-                            <label
-                                for="id_file_name"
-                                class="form-label required-field-label"
-                                data-bs-toggle="tooltip"
-                                title="Required field"
-                            >{{ field.label }}</label>
-                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" value="{{ field.value|default:'' }}" required>
-                        </div>
+                        {% bootstrap_field field %}
                     {% else %}
                         {% bootstrap_field field %}
                     {% endif %}
@@ -61,15 +53,7 @@
             {% for field in form %}
                 {% if field.name in advanced_fields %}
                     {% if field.field.required %}
-                        <div class="mb-3">
-                            <label
-                                for="id_file_name"
-                                class="form-label required-field-label"
-                                data-bs-toggle="tooltip"
-                                title="Required field"
-                            >{{ field.label }}</label>
-                            <input type="text" class="form-control" id="id_file_name" placeholder="{{ field.label }}" value="{{ field.value|default:'' }}" required>
-                        </div>
+                        {% bootstrap_field field %}
                     {% else %}
                         {% bootstrap_field field %}
                     {% endif %}
