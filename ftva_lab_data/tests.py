@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
+from ftva_lab_data.forms import ItemForm
 from ftva_lab_data.management.commands.clean_tape_info import (
     get_tape_info_parts,
     process_carrier_fields,
@@ -23,7 +24,6 @@ from ftva_lab_data.views_utils import (
     get_items_per_page_options,
 )
 from ftva_lab_data.table_config import COLUMNS
-from unittest import skip
 
 
 class GetFieldValueTestCase(TestCase):
@@ -652,7 +652,6 @@ class AddEditItemTestCase(TestCase):
 
         cls.test_object = SheetImport.objects.get(pk=2)
 
-    @skip("Skipping this test for now, after HTML changes")
     def test_required_fields_display_with_indicator(self):
         self.client.login(username="authorized", password="testpassword")
         url = reverse("add_item")
@@ -664,8 +663,8 @@ class AddEditItemTestCase(TestCase):
         # The presence of this class should be enough to prove that
         # the conditional block in `add_edit_item.html` is working.
         expected_markup = (
-            '<label for="id_file_name" class="form-label required-field-label"'
-            'data-bs-toggle="tooltip" title="Required field">File name</label>'
+            '<label class="form-label required-field-label" '
+            'for="id_file_name">File name</label>'
         )
         self.assertContains(
             response=response,
@@ -673,3 +672,35 @@ class AddEditItemTestCase(TestCase):
             count=1,
             html=True,
         )
+
+
+class RequiredFormFieldTestCase(TestCase):
+    def test_missing_required_field_prevents_validation(self):
+        # file_name is currently the only required field.
+        form_data = {"file_name": ""}
+        form = ItemForm(data=form_data)
+        # Missing data means form is not valid.
+        self.assertFalse(form.is_valid())
+
+    def test_missing_required_field_prevents_save(self):
+        # file_name is currently the only required field.
+        form_data = {"file_name": ""}
+        form = ItemForm(data=form_data)
+        # Trying to save invalid form data should raise a ValueError.
+        with self.assertRaises(ValueError):
+            form.save()
+
+    def test_having_required_field_allows_validation(self):
+        # file_name is currently the only required field.
+        form_data = {"file_name": "My new file"}
+        form = ItemForm(data=form_data)
+        # Form should be valid when file_name has a value.
+        self.assertTrue(form.is_valid())
+
+    def test_having_required_field_allows_save(self):
+        # file_name is currently the only required field.
+        form_data = {"file_name": "My new file"}
+        form = ItemForm(data=form_data)
+        new_item = form.save()
+        self.assertIsNotNone(new_item)
+        self.assertIsInstance(new_item, SheetImport)
