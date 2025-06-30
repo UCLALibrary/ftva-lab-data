@@ -119,10 +119,10 @@ document.addEventListener("DOMContentLoaded", function () {
     exportBtn.addEventListener("click", function () {
       spinner.style.display = "block";
       exportForm.submit();
-      // Hide spinner after a constant delay
+      // Hide spinner after a constant 10s delay
       setTimeout(() => {
       spinner.style.display = "none";
-      }, 60000);
+      }, 10000);
     });
   }
 });

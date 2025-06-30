@@ -269,21 +269,4 @@ def format_data_for_export(data_dicts: list[dict[str, Any]]) -> pd.DataFrame:
     # Convert rows to DataFrame for exporting
     df = pd.DataFrame(data_dicts)
 
-    # Reorder carrier_a_location and carrier_b_location to be next to carrier_a and carrier_b
-    carrier_a_index = df.columns.get_loc("carrier_a")
-    carrier_a_location_index = df.columns.get_loc("carrier_a_location")
-    # Move carrier_a_location and carrier_b_location next to their respective carriers
-    if carrier_a_location_index > carrier_a_index + 1:
-        # Move carrier_a_location to the right of carrier_a
-        df.insert(
-            carrier_a_index + 1, "carrier_a_location", df.pop("carrier_a_location")
-        )
-    carrier_b_index = df.columns.get_loc("carrier_b")
-    carrier_b_location_index = df.columns.get_loc("carrier_b_location")
-    if carrier_b_location_index > carrier_b_index + 1:
-        # Move carrier_b_location to the right of carrier_b
-        df.insert(
-            carrier_b_index + 1, "carrier_b_location", df.pop("carrier_b_location")
-        )
-
     return df
