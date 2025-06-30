@@ -18,6 +18,18 @@ function clearSearchInput() {
   htmx.trigger(input, "clear");
 }
 
+// Utility function: Set or update a hidden input in a form
+function setOrUpdate(form, name, value) {
+  let el = form.querySelector(`input[name="${name}"]`);
+  if (!el) {
+    el = document.createElement("input");
+    el.type = "hidden";
+    el.name = name;
+    form.appendChild(el);
+  }
+  el.value = value || "";
+}
+
 document.addEventListener("htmx:afterSwap", function (e) {
   const selectAll = document.getElementById("select-all-checkbox");
   if (selectAll) {
@@ -59,23 +71,58 @@ document.addEventListener("DOMContentLoaded", function () {
       const search_column = document.querySelector('select[name="search_column"]');
       const page = document.querySelector("#current-page")?.value;
 
-      function setOrUpdate(name, value) {
-        let el = this.querySelector(`input[name="${name}"]`);
-        if (!el) {
-          el = document.createElement("input");
-          el.type = "hidden";
-          el.name = name;
-          this.appendChild(el);
-        }
-        el.value = value || "";
-      }
-      setOrUpdate.call(this, "search", search ? search.value : "");
-      setOrUpdate.call(
+      setOrUpdate(this, "search", search ? search.value : "");
+      setOrUpdate(
         this,
         "search_column",
         search_column ? search_column.value : ""
       );
-      setOrUpdate.call(this, "page", page || "");
+      setOrUpdate(this, "page", page || "");
     });
   };
+});
+// Sync export form fields with search inputs
+// This is necessary because the export form is a separate form and does not
+// automatically get updated by HTMX when the search form changes.
+function syncExportFormFields() {
+  const searchInput = document.querySelector('input[name="search"]');
+  const searchColumn = document.querySelector('select[name="search_column"]');
+  const exportForm = document.querySelector('form[action$="export_search_results/"]');
+  if (!exportForm) return;
+
+  setOrUpdate(exportForm, "search", searchInput ? searchInput.value : "");
+  setOrUpdate(exportForm, "search_column", searchColumn ? searchColumn.value : "");
+}
+
+// Sync on page load
+document.addEventListener("DOMContentLoaded", syncExportFormFields);
+
+// Sync after any HTMX swap (table/search form updates)
+document.addEventListener("htmx:afterSwap", syncExportFormFields);
+
+// Sync on search form input changes
+document.addEventListener("input", function (e) {
+  if (
+    e.target.matches('input[name="search"]') ||
+    e.target.matches('select[name="search_column"]')
+  ) {
+    syncExportFormFields();
+  }
+});
+
+// Handle export button click - add spinner and submit export form
+document.addEventListener("DOMContentLoaded", function () {
+  const exportBtn = document.getElementById("export-button");
+  const exportForm = document.getElementById("export-form");
+  const spinner = document.getElementById("export-spinner");
+  if (exportBtn && exportForm && spinner) {
+    exportBtn.addEventListener("click", function () {
+      spinner.style.display = "block";
+      exportForm.submit();
+      // Hide spinner after a constant 10s delay
+      setTimeout(() => {
+      spinner.style.display = "none";
+      }, 10000);
+    });
+  }
 });

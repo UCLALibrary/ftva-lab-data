@@ -3,6 +3,7 @@ from django.db.models import Model, Q
 from django.db.models.query import QuerySet
 from .models import SheetImport
 from .forms import ItemForm
+import pandas as pd
 
 
 # Recursive implementation adapted from:
@@ -21,6 +22,10 @@ def get_field_value(obj: Model, field: str) -> Any:
 
     Returns the value of the field, or an empty string if the field does not exist
     or is None.
+
+    :param obj: The model instance to get the field value from.
+    :param field: The field name, which can include nested fields separated by "__".
+    :return: The value of the field, or an empty string if the field does not exist or is None.
     """
     # Special case for status field, which is a ManyToMany field
     if field == "status":
@@ -36,7 +41,13 @@ def get_field_value(obj: Model, field: str) -> Any:
 
 def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     """Returns a dictionary of dictionaries. Each top-level dict represents a display section for
-    the view_item.html template."""
+    the view_item.html template.
+
+    :param item: The SheetImport object to get the display data for.
+    :return: A dictionary with keys "header_info", "storage_info", "file_info",
+    "inventory_info", and "advanced_info". Each key maps to a dictionary of field names and values
+    for that section.
+    """
     header_info = {
         "file_name": item.file_name,
         "title": item.title,
@@ -112,7 +123,11 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
 
 def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
     """Returns a dict with keys "basic_fields" and "advanced_fields",
-    each containing a list of field names to be used in the add/edit item form."""
+    each containing a list of field names to be used in the add/edit item form.
+
+    :param form: The ItemForm instance to get the fields from.
+    :return: A dictionary with keys "basic_fields" and "advanced_fields".
+    """
     basic_fields = [
         "status",
         "hard_drive_name",
@@ -136,6 +151,11 @@ def get_search_result_items(search: str, search_fields: list[str]) -> QuerySet:
     in ftva_lab_data.table_config.
 
     Returns a QuerySet of SheetImport objects matching the search.
+
+    :param search: The search term to look for in the specified fields.
+    :param search_fields: A list of field names to search in. These should be valid
+    field names of the SheetImport model or its related models.
+    :return: A QuerySet of SheetImport objects that match the search criteria.
     """
 
     # Use all() here instead of only(specific fields) to allow separation
@@ -193,6 +213,10 @@ def get_search_result_data(
     accessed for links.
     `data` simplifies template output, allowing `row[field]` to be accessed instead of specifying
     each field explicitly.
+
+    :param item_list: A QuerySet of SheetImport objects to process.
+    :param display_fields: A list of field names to include in the data dicts.
+    :return: A list of dictionaries, each representing a row in the table.
     """
 
     rows = [
@@ -214,3 +238,35 @@ def get_items_per_page_options() -> list[int]:
     """
 
     return [10, 20, 50, 100]
+
+
+def format_data_for_export(data_dicts: list[dict[str, Any]]) -> pd.DataFrame:
+    """Formats a list of dictionaries of SheetImport data for export to Excel.
+
+    :param data_dicts: A list of dictionaries, each representing a row of data.
+    :return: A pandas DataFrame with the formatted data.
+    """
+
+    # Add and remove fields to match the expected output format:
+    # Add a column for Status (ManyToMany relationship with Status model),
+    # replace the Assigned User ID with assigned_user_full_name property, and
+    # remove the '_state' field added by Django.
+    for data_dict in data_dicts:
+        current_item = SheetImport.objects.get(id=data_dict["id"])
+        # Add status display values as a concatenated string
+        statuses = current_item.status.values_list("status", flat=True)
+        data_dict["status"] = ", ".join(statuses) if statuses else ""
+        # Replace the assigned_user_id with the full name
+        assigned_user_id = data_dict.pop("assigned_user_id")
+        if assigned_user_id is not None:
+            assigned_user_full_name = current_item.assigned_user_full_name
+            data_dict["assigned_user"] = assigned_user_full_name
+        else:
+            data_dict["assigned_user"] = ""
+        # Remove the '_state' field added by Django
+        data_dict.pop("_state", None)
+
+    # Convert rows to DataFrame for exporting
+    df = pd.DataFrame(data_dicts)
+
+    return df
