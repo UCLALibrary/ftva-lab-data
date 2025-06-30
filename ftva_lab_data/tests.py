@@ -694,7 +694,7 @@ class RequiredFormFieldTestCase(TestCase):
         # file_name is currently the only required field.
         form_data = {"file_name": "My new file"}
         form = ItemForm(data=form_data)
-        # Missing data means form is not valid.
+        # Form should be valid when file_name has a value.
         self.assertTrue(form.is_valid())
 
     def test_having_required_field_allows_save(self):
