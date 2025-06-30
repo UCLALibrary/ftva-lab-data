@@ -150,11 +150,19 @@ def set_status_for_records_with_inline_notes() -> int:
 
     :return int: Count of records updated.
     """
+    # Thus far, the fields representing path components are the only fields
+    # where we need to flag inline notes. Other fields may have inline notes,
+    # but these are the ones that have been identified as most potentially problematic.
     fields_to_query = ["file_folder_name", "sub_folder_name", "file_name"]
+    # The pattern matches any character between square brackets zero or more times.
+    # These are presumed to be inline notes, rather than actual sub-strings of the paths
+    # represented in the fields.
     pattern = r"\[.*?\]"
 
     query = Q()
     for field in fields_to_query:
+        # Add OR statements to the Q object,
+        # unpacking the dynamic dict to keyword arguments.
         query |= Q(**{f"{field}__regex": pattern})
 
     records = SheetImport.objects.filter(query)
