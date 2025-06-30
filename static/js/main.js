@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
     exportBtn.addEventListener("click", function () {
       spinner.style.display = "block";
       exportForm.submit();
-      // Hide spinner after a delay?      
+      // Hide spinner after a constant delay
       setTimeout(() => {
       spinner.style.display = "none";
       }, 60000);

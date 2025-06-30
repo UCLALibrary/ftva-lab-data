@@ -22,6 +22,7 @@ from ftva_lab_data.views_utils import (
     get_item_display_dicts,
     get_search_result_items,
     get_items_per_page_options,
+    format_data_for_export,
 )
 from ftva_lab_data.table_config import COLUMNS
 
@@ -704,3 +705,40 @@ class RequiredFormFieldTestCase(TestCase):
         new_item = form.save()
         self.assertIsNotNone(new_item)
         self.assertIsInstance(new_item, SheetImport)
+
+
+class DataExportTestCase(TestCase):
+    """Tests the format_data_for_export function."""
+
+    fixtures = ["sample_data.json", "item_statuses.json"]
+
+    def setUp(self):
+        # Create a test user to assign to a SheetImport object
+        self.user = get_user_model().objects.create_user(
+            username="testuser", first_name="Example", last_name="User"
+        )
+        SheetImport.objects.filter(pk=2).update(assigned_user=self.user)
+
+        # Give the other SheetImport object two statuses
+        SheetImport.objects.get(pk=3).status.add(1, 2)
+
+        # Create a list of SheetImport objects to test with
+        self.rows = [SheetImport.objects.get(pk=2), SheetImport.objects.get(pk=3)]
+
+    def test_format_data_for_export(self):
+        data_dicts = [row.__dict__ for row in self.rows]
+        export_data = format_data_for_export(data_dicts)
+
+        # Check that the carrier_a_location column is next to the carrier_a column
+        self.assertIn("carrier_a", export_data.columns)
+        self.assertIn("carrier_a_location", export_data.columns)
+        carrier_a_index = export_data.columns.get_loc("carrier_a")
+        carrier_a_location_index = export_data.columns.get_loc("carrier_a_location")
+        self.assertEqual(carrier_a_index + 1, carrier_a_location_index)
+        # Test that the assigned user's full name is formatted correctly
+        self.assertIn("Example User", export_data["assigned_user"].values)
+        # Check that the Statuses are concatenated correctly
+        self.assertIn(
+            "Duplicated in source data, Incorrect inv no in filename",
+            export_data["status"].values,
+        )
