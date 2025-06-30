@@ -35,7 +35,9 @@
                 {% if field.name in basic_fields %}
                     <!-- `field.field` accesses actual field instance, rather than wrapper -->
                     {% if field.field.required %}
-                        {% bootstrap_field field %}
+                        <div data-bs-toggle="tooltip" title="Required field">
+                            {% bootstrap_field field label_class="form-label required-field-label" title="Required field" %}
+                        </div>
                     {% else %}
                         {% bootstrap_field field %}
                     {% endif %}
@@ -53,7 +55,9 @@
             {% for field in form %}
                 {% if field.name in advanced_fields %}
                     {% if field.field.required %}
-                        {% bootstrap_field field %}
+                        <div data-bs-toggle="tooltip" title="Required field">
+                            {% bootstrap_field field label_class="form-label required-field-label" title="Required field" %}
+                        </div>
                     {% else %}
                         {% bootstrap_field field %}
                     {% endif %}
