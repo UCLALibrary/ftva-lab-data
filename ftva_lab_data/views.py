@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 import pandas as pd
+import io
 
 from .forms import ItemForm
 from .models import SheetImport
@@ -25,8 +26,9 @@ from .views_utils import (
     "ftva_lab_data.add_sheetimport",
     raise_exception=True,
 )
-def add_item(request):
+def add_item(request: HttpRequest) -> HttpResponse:
     """Add a new item to the database.
+
     :param request: The HTTP request object.
     :return: Rendered template for adding an item.
     """
@@ -62,8 +64,9 @@ def add_item(request):
     "ftva_lab_data.change_sheetimport",
     raise_exception=True,
 )
-def edit_item(request, item_id):
+def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
     """Edit an existing item in the database.
+
     :param request: The HTTP request object.
     :param item_id: The ID of the item to edit.
     :return: Rendered template for editing an item.
@@ -112,7 +115,7 @@ def edit_item(request, item_id):
 
 
 @login_required
-def view_item(request, item_id):
+def view_item(request: HttpRequest, item_id: int) -> HttpResponse:
     """View details of a specific item.
 
     :param request: The HTTP request object.
@@ -293,11 +296,44 @@ def export_search_results(request: HttpRequest) -> HttpResponse:
 
     # Include all fields in the DataFrame, even if they are not displayed
     data_dicts = [row.__dict__ for row in rows]
-    # Remove the '_state' field added by Django
+    # Add and remove fields to match the expected output format:
+    # Add a column for Status (ManyToMany relationship with Status model),
+    # replace the Assigned User ID with assigned_user_full_name property, and
+    # remove the '_state' field added by Django.
     for data_dict in data_dicts:
+        current_item = SheetImport.objects.get(id=data_dict["id"])
+        # Add status display values as a concatenated string
+        statuses = current_item.status.values_list("status", flat=True)
+        data_dict["status"] = ", ".join(statuses) if statuses else ""
+        # Replace the assigned_user_id with the full name
+        assigned_user_id = data_dict.pop("assigned_user_id")
+        if assigned_user_id is not None:
+            assigned_user_full_name = current_item.assigned_user_full_name
+            data_dict["assigned_user"] = assigned_user_full_name
+        else:
+            data_dict["assigned_user"] = ""
+        # Remove the '_state' field added by Django
         data_dict.pop("_state", None)
+
     # Convert rows to DataFrame for exporting
     df = pd.DataFrame(data_dicts)
+
+    # Reorder carrier_a_location and carrier_b_location to be next to carrier_a and carrier_b
+    carrier_a_index = df.columns.get_loc("carrier_a")
+    carrier_a_location_index = df.columns.get_loc("carrier_a_location")
+    # Move carrier_a_location and carrier_b_location next to their respective carriers
+    if carrier_a_location_index > carrier_a_index + 1:
+        # Move carrier_a_location to the right of carrier_a
+        df.insert(
+            carrier_a_index + 1, "carrier_a_location", df.pop("carrier_a_location")
+        )
+    carrier_b_index = df.columns.get_loc("carrier_b")
+    carrier_b_location_index = df.columns.get_loc("carrier_b_location")
+    if carrier_b_location_index > carrier_b_index + 1:
+        # Move carrier_b_location to the right of carrier_b
+        df.insert(
+            carrier_b_index + 1, "carrier_b_location", df.pop("carrier_b_location")
+        )
 
     filename_base = "FTVA_DL_search_results"
     timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
@@ -307,6 +343,13 @@ def export_search_results(request: HttpRequest) -> HttpResponse:
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     response["Content-Disposition"] = f"attachment; filename={filename}"
-    with pd.ExcelWriter(response, engine="xlsxwriter") as writer:
+    # Create buffer in memory to hold the Excel file,
+    # because ExcelWriter expects a file-like object
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False)
+    # Return to the start of the buffer so we can read from it
+    buffer.seek(0)
+    # Write the buffer content to the response
+    response.write(buffer.read())
     return response

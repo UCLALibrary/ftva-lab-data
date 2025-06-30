@@ -109,3 +109,20 @@ document.addEventListener("input", function (e) {
     syncExportFormFields();
   }
 });
+
+// Handle export button click - add spinner and submit export form
+document.addEventListener("DOMContentLoaded", function () {
+  const exportBtn = document.getElementById("export-button");
+  const exportForm = document.getElementById("export-form");
+  const spinner = document.getElementById("export-spinner");
+  if (exportBtn && exportForm && spinner) {
+    exportBtn.addEventListener("click", function () {
+      spinner.style.display = "block";
+      exportForm.submit();
+      // Hide spinner after a delay?
+      // setTimeout(() => {
+      //  spinner.style.display = "none";
+      //}, 5000);
+    });
+  }
+});

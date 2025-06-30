@@ -50,14 +50,20 @@
         <button type="submit" class="btn btn-sm btn-primary">Assign Selected</button>
     </form>
     {% endif %}
-    <form method="get" action="{% url 'export_search_results' %}" class="mb-3">
+    <form method="get" action="{% url 'export_search_results' %}" class="mb-3" id="export-form">
+        {% csrf_token %}
         <input type="hidden" name="search" value="{{ search }}">
         <input type="hidden" name="search_column" value="{{ search_column }}">
-        <button type="submit" class="btn btn-outline-success">
+        <button type="button" class="btn btn-outline-success" id="export-button">
             Export to Excel
         </button>
     </form>
 </div> 
+
+<div id="export-spinner" class="text-center my-3" style="display: none;">
+  <div class="spinner-border text-success" role="status"></div>
+  <div class="mt-2">Exporting...</div>
+</div>
 
 
 <!-- On page load, HTMX triggers GET request to 'render_table'
