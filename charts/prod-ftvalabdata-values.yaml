@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: uclalibrary/ftva-lab-data
-  tag: v0.9.6
+  tag: v1.0.0
   pullPolicy: Always
 
 nameOverride: ""

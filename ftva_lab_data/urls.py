@@ -13,4 +13,7 @@ urlpatterns = [
         views.export_search_results,
         name="export_search_results",
     ),
+    path("logs/", views.show_log, name="show_log"),
+    path("logs/<int:line_count>", views.show_log, name="show_log"),
+    path("release_notes/", views.release_notes, name="release_notes"),
 ]

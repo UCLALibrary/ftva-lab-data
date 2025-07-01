@@ -46,8 +46,8 @@ else
   # Gunicorn cmd line flags:
   # -w number of gunicorn worker processes
   # -b IPADDR:PORT binding
-  # -t timeout in seconds.
+  # -t timeout in seconds; allow 90 seconds, for long-running Excel exports.
   # --access-logfile where to send HTTP access logs (- is stdout)
-  export GUNICORN_CMD_ARGS="-w 3 -b 0.0.0.0:8000 -t 10 --access-logfile -"
+  export GUNICORN_CMD_ARGS="-w 3 -b 0.0.0.0:8000 -t 90 --access-logfile -"
   gunicorn project.wsgi:application
 fi
