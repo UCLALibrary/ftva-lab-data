@@ -1,7 +1,7 @@
 // enables tooltips
 // see @https://getbootstrap.com/docs/5.2/components/tooltips/
-const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
 function toggleAdvancedFields(el) {
   const advancedFields = document.getElementById("advanced-fields");
@@ -28,6 +28,64 @@ function setOrUpdate(form, name, value) {
     form.appendChild(el);
   }
   el.value = value || "";
+}
+
+/** 
+ * Handle the click event for the export button by triggering
+ * an asynchronous fetch of the `export_search_results` endpoint.
+ * Spinner styling is applied when the request is initiated,
+ * then removed when the download completes via JavaScript,
+ * which creates a phony anchor tag, and adds the spreadsheet data
+ * to its attributes, then triggers download and removes the tag.
+ * 
+ * @param {HTMLButtonElement} button
+ * @param {Event} event
+ */
+async function handleExportSearchResults(button, event) {
+  event.preventDefault();
+
+  // style button
+  button.disabled = true;
+  // display spinner
+  const spinner = document.getElementById("export-spinner");
+  spinner.classList.add("spinner-border");
+
+  // get table filter form data
+  const form = document.getElementById("table-filters-form");
+  const formData = new FormData(form);
+  const filterParams = new URLSearchParams(formData);
+
+  try {
+    // filter params have to be encoded in the query string,
+    // because the endpoint is a `GET` endpoint
+    const response = await fetch(`/export_search_results/?${filterParams.toString()}`);
+
+    const disposition = response.headers.get("Content-Disposition");
+    let filename = "dl_data_export.xlsx"; // default fallback
+    // this is a sort of hacky way to get the filename that is encoded
+    // in the response `Content-Disposition` returned by the Django view
+    if (disposition && disposition.includes("filename=")) {
+      filename = disposition.split("filename=")[1]
+    }
+
+    // use `createObjectURL` to encode spreadsheet data in URL
+    // then download via temporary anchor tag
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.log(`An error occured while exporting data: ${error}`)
+  } finally {
+    // remove spinner and return button to functional state
+    spinner.classList.remove("spinner-border");
+    button.disabled = false;
+  }
 }
 
 document.addEventListener("htmx:afterSwap", function (e) {
@@ -80,49 +138,4 @@ document.addEventListener("DOMContentLoaded", function () {
       setOrUpdate(this, "page", page || "");
     });
   };
-});
-// Sync export form fields with search inputs
-// This is necessary because the export form is a separate form and does not
-// automatically get updated by HTMX when the search form changes.
-function syncExportFormFields() {
-  const searchInput = document.querySelector('input[name="search"]');
-  const searchColumn = document.querySelector('select[name="search_column"]');
-  const exportForm = document.querySelector('form[action$="export_search_results/"]');
-  if (!exportForm) return;
-
-  setOrUpdate(exportForm, "search", searchInput ? searchInput.value : "");
-  setOrUpdate(exportForm, "search_column", searchColumn ? searchColumn.value : "");
-}
-
-// Sync on page load
-document.addEventListener("DOMContentLoaded", syncExportFormFields);
-
-// Sync after any HTMX swap (table/search form updates)
-document.addEventListener("htmx:afterSwap", syncExportFormFields);
-
-// Sync on search form input changes
-document.addEventListener("input", function (e) {
-  if (
-    e.target.matches('input[name="search"]') ||
-    e.target.matches('select[name="search_column"]')
-  ) {
-    syncExportFormFields();
-  }
-});
-
-// Handle export button click - add spinner and submit export form
-document.addEventListener("DOMContentLoaded", function () {
-  const exportBtn = document.getElementById("export-button");
-  const exportForm = document.getElementById("export-form");
-  const spinner = document.getElementById("export-spinner");
-  if (exportBtn && exportForm && spinner) {
-    exportBtn.addEventListener("click", function () {
-      spinner.style.display = "block";
-      exportForm.submit();
-      // Hide spinner after a constant 10s delay
-      setTimeout(() => {
-      spinner.style.display = "none";
-      }, 10000);
-    });
-  }
 });

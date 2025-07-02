@@ -14,7 +14,7 @@
     <!-- HTMX will listen for triggers from enclosed controls,
     then issue GET requests to 'render_table' URL
     and replace content of #table-container with result -->
-    <form class="d-flex gap-2 align-items-stretch w-50" hx-get="{% url 'render_table' %}" hx-target="#table-container"
+    <form id="table-filters-form" class="d-flex gap-2 align-items-stretch w-50" hx-get="{% url 'render_table' %}" hx-target="#table-container"
         hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
         <select name="search_column" class="form-select form-select-md">
             <option value="">All columns</option>
@@ -50,19 +50,17 @@
         <button type="submit" class="btn btn-sm btn-primary">Assign Selected</button>
     </form>
     {% endif %}
-    <form method="get" action="{% url 'export_search_results' %}" class="mb-3" id="export-form">
-        {% csrf_token %}
-        <input type="hidden" name="search" value="{{ search }}">
-        <input type="hidden" name="search_column" value="{{ search_column }}">
-        <button type="button" class="btn btn-outline-success" id="export-button">
-            Export to Excel
-        </button>
-    </form>
-</div> 
 
-<div id="export-spinner" class="text-center my-3" style="display: none;">
-  <div class="spinner-border text-success" role="status"></div>
-  <div class="mt-2">Exporting...</div>
+    <div class="mb-3">
+        <button
+            type="button" 
+            class="btn btn-outline-success h-100" 
+            id="export-button"
+            hx-on:click="handleExportSearchResults(this, event)"
+            >Export to Excel
+                <span id="export-spinner"></span>
+        </button>
+    </div>
 </div>
 
 
