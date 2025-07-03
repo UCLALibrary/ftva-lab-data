@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -282,11 +282,11 @@ def assign_to_user(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
-def export_search_results(request: HttpRequest) -> HttpResponse:
-    """Exports search results to an Excel file.
+def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
+    """Exports search results to a CSV file.
 
     :param request: The HTTP request object.
-    :return: An HTTP response with the Excel file attachment.
+    :return: a streaming HTTP response with the CSV file attachment.
     """
     print("Starting export")
     timestamp_debug = pd.Timestamp.now()
@@ -302,29 +302,26 @@ def export_search_results(request: HttpRequest) -> HttpResponse:
     data_dicts = [row.__dict__ for row in rows]
     print(f"Time to get data: {pd.Timestamp.now() - timestamp_debug}")
     # Add, remove, and reorder fields as needed
-    export_df = format_data_for_export(data_dicts)
-    print(f"Time to format data: {pd.Timestamp.now() - timestamp_debug}")
+    export_dicts = format_data_for_export(data_dicts)
 
     filename_base = "FTVA_DL_search_results"
     timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{filename_base}_{timestamp}.xlsx"
+    filename = f"{filename_base}_{timestamp}.csv"
 
-    response = HttpResponse(
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    # format dicts into CSV so we can use a streaming response
+    csv_buffer = io.StringIO()
+    df = pd.DataFrame(export_dicts)
+    df.to_csv(csv_buffer, index=False)
+    # Reset the buffer to the beginning so it can be read from the start
+    csv_buffer.seek(0)
+    response = StreamingHttpResponse(
+        csv_buffer,
+        content_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Cache-Control": "no-cache",
+        },
     )
-    response["Content-Disposition"] = f"attachment; filename={filename}"
-
-    # Create buffer in memory to hold the Excel file,
-    # because ExcelWriter expects a file-like object
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        export_df.to_excel(writer, index=False)
-    # Return to the start of the buffer so we can read from it
-    buffer.seek(0)
-    # Write the buffer content to the response
-    response.write(buffer.read())
-    print("Returning response")
-    print(f"Total time: {pd.Timestamp.now() - timestamp_debug}")
 
     return response
 
