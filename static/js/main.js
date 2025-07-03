@@ -60,8 +60,12 @@ async function handleExportSearchResults(button, event) {
     // because the endpoint is a `GET` endpoint
     const response = await fetch(`/export_search_results/?${filterParams.toString()}`);
 
+    // handle bad responses by displaying browser alert
+    if (response.status != 200) {
+      throw Error(`An error occured while exporting data.\n\n${response.statusText} (${response.status})`)
+    }
+
     const disposition = response.headers.get("Content-Disposition");
-    let filename = "dl_data_export.xlsx"; // default fallback
     // this is a sort of hacky way to get the filename that is encoded
     // in the response `Content-Disposition` returned by the Django view
     if (disposition && disposition.includes("filename=")) {
@@ -80,7 +84,7 @@ async function handleExportSearchResults(button, event) {
     a.remove();
     window.URL.revokeObjectURL(url);
   } catch (error) {
-    console.log(`An error occured while exporting data: ${error}`)
+    alert(error)
   } finally {
     // remove spinner and return button to functional state
     spinner.classList.remove("spinner-border");
