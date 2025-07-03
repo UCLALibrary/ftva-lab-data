@@ -247,26 +247,34 @@ def format_data_for_export(data_dicts: list[dict[str, Any]]) -> pd.DataFrame:
     :return: A pandas DataFrame with the formatted data.
     """
 
-    # Add and remove fields to match the expected output format:
-    # Add a column for Status (ManyToMany relationship with Status model),
-    # replace the Assigned User ID with assigned_user_full_name property, and
-    # remove the '_state' field added by Django.
+    if not data_dicts:
+        return pd.DataFrame()
+
+    # Gather all IDs
+    ids = [d["id"] for d in data_dicts]
+
+    # Bulk fetch all SheetImport objects with related fields
+    items = (
+        SheetImport.objects.filter(id__in=ids)
+        .prefetch_related("status")
+        .select_related("assigned_user")
+    )
+    # Build lookup dicts
+    status_map = {
+        item.id: ", ".join(item.status.values_list("status", flat=True))
+        for item in items
+    }
+    user_map = {item.id: getattr(item, "assigned_user_full_name", "") for item in items}
+
     for data_dict in data_dicts:
-        current_item = SheetImport.objects.get(id=data_dict["id"])
+        item_id = data_dict["id"]
         # Add status display values as a concatenated string
-        statuses = current_item.status.values_list("status", flat=True)
-        data_dict["status"] = ", ".join(statuses) if statuses else ""
+        data_dict["status"] = status_map.get(item_id, "")
         # Replace the assigned_user_id with the full name
-        assigned_user_id = data_dict.pop("assigned_user_id")
-        if assigned_user_id is not None:
-            assigned_user_full_name = current_item.assigned_user_full_name
-            data_dict["assigned_user"] = assigned_user_full_name
-        else:
-            data_dict["assigned_user"] = ""
+        data_dict.pop("assigned_user_id", None)
+        data_dict["assigned_user"] = user_map.get(item_id, "")
         # Remove the '_state' field added by Django
         data_dict.pop("_state", None)
 
-    # Convert rows to DataFrame for exporting
     df = pd.DataFrame(data_dicts)
-
     return df
