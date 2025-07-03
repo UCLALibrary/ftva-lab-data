@@ -6,4 +6,3 @@ gunicorn==23.0.0
 whitenoise==6.9.0
 pandas==2.2.3
 openpyxl==3.1.5
-xlsxwriter==3.2.5
