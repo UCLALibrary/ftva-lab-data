@@ -3,7 +3,6 @@ from django.db.models import Model, Q
 from django.db.models.query import QuerySet
 from .models import SheetImport
 from .forms import ItemForm
-import pandas as pd
 
 
 # Recursive implementation adapted from:
@@ -240,15 +239,15 @@ def get_items_per_page_options() -> list[int]:
     return [10, 20, 50, 100]
 
 
-def format_data_for_export(data_dicts: list[dict[str, Any]]) -> pd.DataFrame:
+def format_data_for_export(data_dicts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Formats a list of dictionaries of SheetImport data for export to Excel.
 
     :param data_dicts: A list of dictionaries, each representing a row of data.
-    :return: A pandas DataFrame with the formatted data.
+    :return: A list of dicts with added status and assigned_user fields.
     """
 
     if not data_dicts:
-        return pd.DataFrame()
+        return []
 
     # Gather all IDs
     ids = [d["id"] for d in data_dicts]
@@ -276,5 +275,4 @@ def format_data_for_export(data_dicts: list[dict[str, Any]]) -> pd.DataFrame:
         # Remove the '_state' field added by Django
         data_dict.pop("_state", None)
 
-    df = pd.DataFrame(data_dicts)
-    return df
+    return data_dicts
