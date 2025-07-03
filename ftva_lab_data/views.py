@@ -288,8 +288,6 @@ def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
     :param request: The HTTP request object.
     :return: a streaming HTTP response with the CSV file attachment.
     """
-    print("Starting export")
-    timestamp_debug = pd.Timestamp.now()
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
     search_fields = (
@@ -300,7 +298,6 @@ def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
 
     # Include all fields in the DataFrame, even if they are not displayed
     data_dicts = [row.__dict__ for row in rows]
-    print(f"Time to get data: {pd.Timestamp.now() - timestamp_debug}")
     # Add, remove, and reorder fields as needed
     export_dicts = format_data_for_export(data_dicts)
 
@@ -308,7 +305,7 @@ def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
     timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{filename_base}_{timestamp}.csv"
 
-    # format dicts into CSV so we can use a streaming response
+    # Format dicts into CSV so we can use a streaming response
     csv_buffer = io.StringIO()
     df = pd.DataFrame(export_dicts)
     df.to_csv(csv_buffer, index=False)
