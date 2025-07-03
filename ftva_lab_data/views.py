@@ -312,7 +312,7 @@ def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
     # Reset the buffer to the beginning so it can be read from the start
     csv_buffer.seek(0)
     response = StreamingHttpResponse(
-        csv_buffer,
+        csv_buffer,  # type: ignore
         content_type="text/csv",
         headers={
             "Content-Disposition": f"attachment; filename={filename}",
