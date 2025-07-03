@@ -730,9 +730,10 @@ class DataExportTestCase(TestCase):
         export_data = format_data_for_export(data_dicts)
 
         # Test that the assigned user's full name is formatted correctly
-        self.assertIn("Example User", export_data["assigned_user"].values)
+        # export_data is now a list of dicts, not a df
+        self.assertIn("Example User", export_data[0]["assigned_user"])
         # Check that the Statuses are concatenated correctly
         self.assertIn(
             "Duplicated in source data, Incorrect inv no in filename",
-            export_data["status"].values,
+            export_data[1]["status"],
         )
