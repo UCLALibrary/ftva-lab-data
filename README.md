@@ -134,9 +134,11 @@ manual review.
 
 #### Importing status info
 
-FTVA staff created a spreadsheet that includes status information related to the records loaded from the Digital Lab's Google Sheet. Ask a teammember for a copy of this spreadsheet, if need be. The status data can then be loaded using the `import_status_info` management command:
+FTVA staff created a spreadsheet that includes status information related to the records loaded from the Digital Lab's Google Sheet. Ask a teammember for a copy of this spreadsheet, if need be. The status data can then be loaded using the `import_status_and_inventory_numbers` management command:
 
-```python manage.py import_status_info --file_name {PATH_TO_SPREADSHEET}```
+```python manage.py import_status_and_inventory_numbers --file_name {PATH_TO_SPREADSHEET} --inventory_numbers --status_info```
+
+The `--inventory_numbers` and `--status_info` flags are optional, but at least one must be provided, otherwise records won't be updated.
 
 #### Loading group and permission definitions
 
