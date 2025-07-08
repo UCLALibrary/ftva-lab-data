@@ -53,9 +53,6 @@ def _has_file_info(record: SheetImport) -> bool:
     file_info = "".join(
         [record.file_folder_name, record.sub_folder_name, record.file_name]
     )
-    # TODO: TEMPORARY
-    if not file_info:
-        print(f"No file info: {record.id}")
     return file_info != ""
 
 
