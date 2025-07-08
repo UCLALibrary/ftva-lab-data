@@ -43,6 +43,22 @@ def _is_empty_record(record: SheetImport) -> bool:
     return _get_combined_field_data(record) == ""
 
 
+def _has_file_info(record: SheetImport) -> bool:
+    """Determines whether a record has at least one of the attributes needed to indicate file/path
+    information.
+
+    :param record: A `SheetImport` record.
+    :return bool:
+    """
+    file_info = "".join(
+        [record.file_folder_name, record.sub_folder_name, record.file_name]
+    )
+    # TODO: TEMPORARY
+    if not file_info:
+        print(f"No file info: {record.id}")
+    return file_info != ""
+
+
 def delete_empty_records() -> int:
     """Deletes SheetImport records which contain no data other than
     the system-assigned id.
@@ -90,7 +106,7 @@ def set_hard_drive_names() -> int:
 
 def set_file_folder_names() -> int:
     """Sets the file folder name for rows which don't have one, but
-    do have file names.
+    do have other file info (subfolder and/or file names).
 
     :return int: Count of records changed.
     """
@@ -110,7 +126,11 @@ def set_file_folder_names() -> int:
                 # Use this later if needed, but change nothing in this record.
                 current_file_folder_name = record.file_folder_name
             else:
-                if current_file_folder_name:
+                # Since we're here, the record currently has no file_folder_name.
+                # Only make updates when the record does have other file info
+                # (subfolder and/or file name).
+                # current_file_folder_name must also be set, via a previous iteration.
+                if current_file_folder_name and _has_file_info(record):
                     record.file_folder_name = current_file_folder_name
                     record.save()
                     records_changed += 1
