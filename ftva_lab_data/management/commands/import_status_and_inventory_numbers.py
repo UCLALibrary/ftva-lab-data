@@ -60,11 +60,26 @@ def match_record(row: pd.Series) -> QuerySet[SheetImport]:
     sub_folder = str(row["Sub Folder"]).strip()
     file_name = str(row["File Name"]).strip()
 
-    return SheetImport.objects.filter(
+    matches = SheetImport.objects.filter(
         file_folder_name=file_folder,
         sub_folder_name=sub_folder,
         file_name=file_name,
     )
+
+    # If multiple SheetImport records are found, try refining the search with Carrier A.
+    if len(matches) > 1:
+        # Create a new set of matches, which will be returned if appropriate.
+        carrier_a = str(row["Legacy Carrier Name A"]).strip()
+        refined_matches = matches.filter(carrier_a=carrier_a)
+        # Only return refined_matches if that has improved things; otherwise,
+        # return the original matches.
+        if len(refined_matches) == 1:
+            return refined_matches
+        else:
+            return matches
+    else:
+        # Original query found no matches, or one match; return it.
+        return matches
 
 
 def get_tapes_data(
