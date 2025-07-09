@@ -374,6 +374,7 @@ class CleanImportedDataTestCase(TestCase):
         records_updated = set_file_folder_names()
         # Only 3 real data rows should be updated; 2 of the 5 already have folder names.
         # The empty row, the 2 hard-drive-only rows and the 2 header rows should not be updated.
+        # Nor should the row with no file info, but with other data (carrier a, inventory numbner).
         self.assertEqual(records_updated, 3)
 
     def test_delete_header_records(self):
