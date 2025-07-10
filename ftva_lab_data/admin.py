@@ -11,4 +11,4 @@ class ItemStatusAdmin(admin.ModelAdmin):
 
 @admin.register(SheetImport)
 class SheetImportAdmin(SimpleHistoryAdmin):
-    search_fields = ("id",)
+    search_fields = ("id__exact",)
