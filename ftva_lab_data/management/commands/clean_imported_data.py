@@ -13,6 +13,22 @@ def _is_header_record(record: SheetImport) -> bool:
     return record.file_folder_name == "File Folder Name"
 
 
+def _get_carrier_info(record: SheetImport | None) -> tuple[str, str]:
+    """Gets record's relevant carrier fields, for convenient use elsewhere.
+
+    :param record: A `SheetImport` record, or None.
+    :return tuple[str, str]: A tuple of values from the input record, or a tuple of
+    empty strings if no record was provided.
+    """
+    if record:
+        return (
+            record.carrier_a,
+            record.carrier_b,
+        )
+    else:
+        return ("", "")
+
+
 def _get_combined_field_data(record: SheetImport) -> str:
     """Combines all string fields into one big string for some checks elsewhere.
 
@@ -135,6 +151,73 @@ def set_file_folder_names() -> int:
     return records_changed
 
 
+def set_carrier_info() -> int:
+    """Sets several carrier-related fields for rows which don't have it, but
+    do have file info (subfolder and/or file names).
+    Applies only to rows which are not associated with hard drives.
+
+    :return int: Count of records changed.
+    """
+    records_changed = 0
+    # Initialize with empty values.
+    prev_carrier_a, prev_carrier_b = _get_carrier_info(None)
+
+    # Look only at non-hard-drive records, as carrier / tape info is spotty for media which
+    # is also on hard drives.
+    # Also exclude records which have carrier locations set, which are only the Hearst ML Tapes;
+    # those all have carrier_a_location == "Digital Lab", already have carrier_a filled in,
+    # and don't have carrier_b.
+    for record in (
+        SheetImport.objects.filter(hard_drive_name="")
+        .exclude(carrier_a_location="Digital Lab")
+        .order_by("id")
+    ):
+        # Ignore empty records.
+        if _is_empty_record(record):
+            continue
+
+        # Ignore header records: there's only one in the tapes section (around row 4563)
+        # and it's not relevant.
+        if _is_header_record(record):
+            continue
+
+        carrier_a, carrier_b = _get_carrier_info(record)
+        if carrier_a and carrier_b:
+            # Records with both need no update, but save this data updating other records.
+            prev_carrier_a, prev_carrier_b = carrier_a, carrier_b
+        else:
+            # Current record is missing at least one carrier.
+            # Only update if both previous carrier values exist.
+            # Only update records with real file info.
+            # If both carrier values are empty, fill them both in.
+            # If one is empty and one not, update only the empty one.
+            if all((prev_carrier_a, prev_carrier_b)) and _has_file_info(record):
+                # Both prev_carrier_a and prev_carrier_b have values.
+                # Keep the current carrier value(s) if they exist (are not the default ""),
+                # otherwise use the value(s) from the previous record that has both.
+                record.carrier_a = (
+                    record.carrier_a if record.carrier_a else prev_carrier_a
+                )
+                record.carrier_b = (
+                    record.carrier_b if record.carrier_b else prev_carrier_b
+                )
+                record.save()
+                records_changed += 1
+
+                # TODO: Temporary, for review
+                record_id = record.id
+                if not carrier_a:
+                    print(
+                        f"Changed record {record_id} carrier_a from {carrier_a} to {prev_carrier_a}"
+                    )
+                if not carrier_b:
+                    print(
+                        f"Changed record {record_id} carrier_b from {carrier_b} to {prev_carrier_b}"
+                    )
+
+    return records_changed
+
+
 def delete_header_records() -> int:
     """Deletes header rows that are embedded throughout the original imported data.
 
@@ -204,6 +287,9 @@ class Command(BaseCommand):
 
         records_changed = set_file_folder_names()
         self.stdout.write(f"Folder names set: {records_changed}")
+
+        records_changed = set_carrier_info()
+        self.stdout.write(f"Carrier info set: {records_changed}")
 
         # This must be done after some of the methods above, which rely on header info.
         records_deleted = delete_header_records()
