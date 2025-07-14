@@ -10,6 +10,7 @@ from ftva_lab_data.management.commands.clean_tape_info import (
 from ftva_lab_data.management.commands.clean_imported_data import (
     delete_empty_records,
     delete_header_records,
+    set_carrier_info,
     set_file_folder_names,
     set_hard_drive_names,
 )
@@ -370,6 +371,16 @@ class CleanImportedDataTestCase(TestCase):
         # or the 2 hard-drive-only rows or the 2 header rows.
         self.assertEqual(records_updated, 5)
 
+    def test_set_carrier_info(self):
+        carrier_a_count_before = SheetImport.objects.filter(carrier_a="MMM555").count()
+        self.assertEqual(carrier_a_count_before, 2)
+        records_updated = set_carrier_info()
+        carrier_a_count_after = SheetImport.objects.filter(carrier_a="MMM555").count()
+        self.assertEqual(carrier_a_count_after, 3)
+        # Only 2 of the 4 test carrier rows should be updated: one missing carrier_a
+        # and 1 missing carrier_b.
+        self.assertEqual(records_updated, 2)
+
     def test_set_file_folder_names(self):
         records_updated = set_file_folder_names()
         # Only 3 real data rows should be updated; 2 of the 5 already have folder names.
@@ -379,7 +390,8 @@ class CleanImportedDataTestCase(TestCase):
 
     def test_delete_header_records(self):
         records_deleted = delete_header_records()
-        self.assertEqual(records_deleted, 2)
+        # 3 total: 2 full header records, and 1 brief one (minimal fields) for carrier testing.
+        self.assertEqual(records_deleted, 3)
 
 
 class CleanTapeInfoTestCase(TestCase):
