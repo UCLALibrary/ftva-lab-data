@@ -187,10 +187,9 @@ def set_carrier_info() -> int:
             prev_carrier_a, prev_carrier_b = carrier_a, carrier_b
         else:
             # Current record is missing at least one carrier.
-            # Only update if both previous carrier values exist.
+            # Only update if both (all()) previous carrier values exist.
             # Only update records with real file info.
-            # If both carrier values are empty, fill them both in.
-            # If one is empty and one not, update only the empty one.
+            # Only fill in empty carrier fields with previous value(s).
             if all((prev_carrier_a, prev_carrier_b)) and _has_file_info(record):
                 # Both prev_carrier_a and prev_carrier_b have values.
                 # Keep the current carrier value(s) if they exist (are not the default ""),
@@ -203,17 +202,6 @@ def set_carrier_info() -> int:
                 )
                 record.save()
                 records_changed += 1
-
-                # TODO: Temporary, for review
-                record_id = record.id
-                if not carrier_a:
-                    print(
-                        f"Changed record {record_id} carrier_a from {carrier_a} to {prev_carrier_a}"
-                    )
-                if not carrier_b:
-                    print(
-                        f"Changed record {record_id} carrier_b from {carrier_b} to {prev_carrier_b}"
-                    )
 
     return records_changed
 
