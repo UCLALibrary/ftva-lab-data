@@ -4,11 +4,19 @@
 <h3>Release Notes</h3>
 <hr/>
 
+<h4>1.0.3</h4>
+<p><i>July 14, 2025</i></p>
+<ul>
+    <li>Admin interface now allows searching SheetImport objects by record id.</li>
+    <li>Carrier fields are now filled in where possible (via clean_imported_data.set_carrier_info()).</li>
+    <li>Overly broad cleanup in clean_imported_data.set_file_folder_names() has been fixed.</li>
+</ul>
+
 <h4>1.0.2</h4>
 <p><i>July 3, 2025</i></p>
 <ul>
     <li>Exports are now in CSV instead of XLSX.</li>
-    <li>Exports are significantly faster.</li>
+    <li>Exports are significantly faster, though full exports may still fail.</li>
     <li>The spinner / download indicator is now active only during export.</li>
 </ul>
 
