@@ -581,5 +581,75 @@
       "general_entry_cataloged_by": "",
       "notes": ""
     }
+  },
+  {
+    "model": "ftva_lab_data.sheetimport",
+    "pk": 10000,
+    "fields": {
+      "hard_drive_name": "Hard Drive Name",
+      "carrier_a": "",
+      "carrier_b": "Hard Drive Bar Code ID # ",
+      "file_folder_name": "File Folder Name",
+      "sub_folder_name": "Sub Folder",
+      "file_name": "File Name",
+      "inventory_number": "Inventory #",
+      "notes": "Brief header record for set_carrier_info() tests"
+    }
+  },
+  {
+    "model": "ftva_lab_data.sheetimport",
+    "pk": 10001,
+    "fields": {
+      "hard_drive_name": "",
+      "carrier_a": "MMM555",
+      "carrier_b": "ZYX987",
+      "file_folder_name": "",
+      "sub_folder_name": "",
+      "file_name": "random file",
+      "inventory_number": "INV NO",
+      "notes": "Brief sample data for set_carrier_info() tests"
+    }
+  },
+  {
+    "model": "ftva_lab_data.sheetimport",
+    "pk": 10002,
+    "fields": {
+      "hard_drive_name": "",
+      "carrier_a": "MMM555",
+      "carrier_b": "",
+      "file_folder_name": "",
+      "sub_folder_name": "",
+      "file_name": "random file",
+      "inventory_number": "INV NO",
+      "notes": "Brief sample data for set_carrier_info() tests"
+    }
+  },
+  {
+    "model": "ftva_lab_data.sheetimport",
+    "pk": 10003,
+    "fields": {
+      "hard_drive_name": "",
+      "carrier_a": "",
+      "carrier_b": "ZYX987",
+      "file_folder_name": "",
+      "sub_folder_name": "",
+      "file_name": "random file",
+      "inventory_number": "INV NO",
+      "notes": "Brief sample data for set_carrier_info() tests"
+    }
+  },
+  {
+    "model": "ftva_lab_data.sheetimport",
+    "pk": 10004,
+    "fields": {
+      "hard_drive_name": "",
+      "carrier_a": "DEF456",
+      "carrier_b": "WVU654",
+      "file_folder_name": "",
+      "sub_folder_name": "",
+      "file_name": "random file",
+      "inventory_number": "INV NO",
+      "notes": "Brief sample data for set_carrier_info() tests"
+    }
   }
 ]
