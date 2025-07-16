@@ -54,5 +54,40 @@
     "fields": {
       "status": "Needs review"
     }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 9,
+    "fields": {
+      "status": "Curator reviewed - Do not ingest"
+    }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 10,
+    "fields": {
+      "status": "Curator reviewed - Ingest"
+    }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 11,
+    "fields": {
+      "status": "DL Reviewed - Do not ingest"
+    }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 12,
+    "fields": {
+      "status": "DL Reviewed - Ingest"
+    }
+  },
+  {
+    "model": "ftva_lab_data.itemstatus",
+    "pk": 13,
+    "fields": {
+      "status": "Ingested"
+    }
   }
 ]
