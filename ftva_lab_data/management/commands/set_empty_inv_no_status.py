@@ -13,12 +13,14 @@ def set_empty_inv_no_status() -> None:
         return
     logger.info(f"Found {records.count()} records with empty inventory number.")
 
+    # Filter out records that already have the 'Invalid inv no' status
     records_to_update = records.exclude(status__status="Invalid inv no")
     logger.info(
         f"Filtered down to {records_to_update.count()} records without 'Invalid inv no' status."
     )
 
     for record in records_to_update:
+        # Django's .add() method will save the change to the database automatically
         record.status.add(ItemStatus.objects.get(status="Invalid inv no"))
 
     logger.info(
