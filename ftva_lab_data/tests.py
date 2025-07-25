@@ -773,7 +773,7 @@ class SetEmptyInvNoStatusTestCase(TestCase):
     def test_set_empty_inv_no_status_existing_status(self):
         # Create a SheetImport object with an empty inventory number
         # and an existing 'Needs review' status
-        item = SheetImport.objects.create(file_name="test_file_2", inventory_number="")
+        item = SheetImport.objects.create(file_name="test_file", inventory_number="")
         item.status.add(ItemStatus.objects.get(status="Needs review"))
 
         # Call the management command function directly
@@ -787,7 +787,7 @@ class SetEmptyInvNoStatusTestCase(TestCase):
     def test_set_empty_inv_no_status_existing_inv_no(self):
         # Create a SheetImport object with a non-empty inventory number
         item = SheetImport.objects.create(
-            file_name="test_file_3", inventory_number="INV123"
+            file_name="test_file", inventory_number="INV123"
         )
 
         # Call the management command function directly
