@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from urllib.parse import urlencode
 import pandas as pd
 import io
 
@@ -90,6 +91,8 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         "title": "Edit Item",
         "button_text": "Save Changes",
         "search": search,
+        # Encode search string here to make it safe for use in URL query strings
+        "url_encoded_search": urlencode({"search": search}),
         "search_column": search_column,
         "page": page,
     }
@@ -105,7 +108,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             messages.success(request, "Item updated successfully!")
             url = (
                 f"{reverse('view_item', args=[item.id])}"
-                f"?search={search}&search_column={search_column}&page={page}"
+                f"?{urlencode({"search": search})}&search_column={search_column}&page={page}"
             )
             return redirect(url)
 
@@ -126,15 +129,23 @@ def view_item(request: HttpRequest, item_id: int) -> HttpResponse:
     """
     # Retrieve the item to view
     item = SheetImport.objects.get(id=item_id)
+
+    # Retrieve search params
+    search = request.GET.get("search", "")
+    search_column = request.GET.get("search_column", "")
+    page = request.GET.get("page", "")
+
     # For easier parsing in the template, separate attributes into dictionaries
     display_dicts = get_item_display_dicts(item)
     # Pass search params to template, so they can be preserved
     # if using the "Back to Search" button
     display_dicts.update(
         {
-            "search": request.GET.get("search", ""),
-            "search_column": request.GET.get("search_column", ""),
-            "page": request.GET.get("page", ""),
+            "search": search,
+            "search_column": search_column,
+            # Encode search string here to make it safe for use in URL query strings
+            "url_encoded_search": urlencode({"search": search}),
+            "page": page,
         }
     )
     return render(request, "view_item.html", display_dicts)
@@ -152,6 +163,12 @@ def search_results(request: HttpRequest) -> HttpResponse:
     """
 
     users = get_user_model().objects.all().order_by("username")
+
+    # Retrieve search params
+    search = request.GET.get("search", "")
+    search_column = request.GET.get("search_column", "")
+    page = request.GET.get("page", "")
+
     # Pass search params from GET to template context,
     # so we can consistently render the results table after navigation
     return render(
@@ -160,9 +177,11 @@ def search_results(request: HttpRequest) -> HttpResponse:
         context={
             "columns": COLUMNS,
             "users": users,
-            "search": request.GET.get("search", ""),
-            "search_column": request.GET.get("search_column", ""),
-            "page": request.GET.get("page", 1),
+            "search": search,
+            # Encode search string here to make it safe for use in URL query strings
+            "url_encoded_search": urlencode({"search": search}),
+            "search_column": search_column,
+            "page": page,
         },
     )
 
@@ -227,6 +246,8 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
             "page_obj": page_obj,
             "elided_page_range": elided_page_range,
             "search": search,
+            # Encode search string here to make it safe for use in URL query strings
+            "url_encoded_search": urlencode({"search": search}),
             "search_column": search_column,
             "columns": COLUMNS,
             "rows": rows,
