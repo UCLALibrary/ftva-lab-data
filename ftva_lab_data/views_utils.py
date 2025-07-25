@@ -67,6 +67,7 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     }
     inventory_info = {
         "Inventory Number": item.inventory_number,
+        "Date of Ingest": item.date_of_ingest,
         "Source Barcode": item.source_barcode,
         "Notes": item.notes,
     }
@@ -138,6 +139,7 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
         "sub_folder_name",
         "file_name",
         "inventory_number",
+        "date_of_ingest",
         "notes",
     ]
     advanced_fields = [f for f in form.fields if f not in basic_fields]
