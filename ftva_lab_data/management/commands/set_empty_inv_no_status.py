@@ -19,9 +19,10 @@ def set_empty_inv_no_status() -> None:
         f"Filtered down to {records_to_update.count()} records without 'Invalid inv no' status."
     )
 
+    invalid_inv_no_status = ItemStatus.objects.get(status="Invalid inv no")
     for record in records_to_update:
         # Django's .add() method will save the change to the database automatically
-        record.status.add(ItemStatus.objects.get(status="Invalid inv no"))
+        record.status.add(invalid_inv_no_status)
 
     logger.info(
         f"Added 'Invalid inv no' status to {records_to_update.count()} records."
