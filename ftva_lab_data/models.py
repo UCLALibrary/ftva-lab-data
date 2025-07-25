@@ -76,6 +76,7 @@ class SheetImport(models.Model):
         blank=True,
         related_name="sheet_imports",
     )
+    date_of_ingest = models.DateField(blank=True, null=True)
     history = HistoricalRecords()
 
     def __str__(self):

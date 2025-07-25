@@ -18,6 +18,7 @@ class ItemForm(forms.ModelForm):
             "sub_folder_name",
             "file_name",
             "inventory_number",
+            "date_of_ingest",
             "source_inventory_number",
             "source_barcode",
             "title",
@@ -71,4 +72,7 @@ class ItemForm(forms.ModelForm):
         widgets = {
             "status": forms.CheckboxSelectMultiple,
             "notes": forms.Textarea(attrs={"rows": 4, "cols": 40}),
+            "date_of_ingest": forms.DateInput(
+                attrs={"type": "date", "class": "form-control"}
+            ),
         }
