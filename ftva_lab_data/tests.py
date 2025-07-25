@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from ftva_lab_data.forms import ItemForm
+from ftva_lab_data.management.commands.set_empty_inv_no_status import (
+    set_empty_inv_no_status,
+)
 from ftva_lab_data.management.commands.clean_tape_info import (
     get_tape_info_parts,
     process_carrier_fields,
@@ -750,3 +753,50 @@ class DataExportTestCase(TestCase):
             "Duplicated in source data, Incorrect inv no in filename",
             export_data[1]["status"],
         )
+
+
+class SetEmptyInvNoStatusTestCase(TestCase):
+    """Tests the set_empty_inv_no_status management command."""
+
+    fixtures = ["item_statuses.json"]
+
+    def test_set_empty_inv_no_status(self):
+        # Create a SheetImport object with an empty inventory number
+        SheetImport.objects.create(file_name="test_file", inventory_number="")
+
+        # Call the management command function directly
+        set_empty_inv_no_status()
+
+        # Check that the status was set correctly
+        updated_record = SheetImport.objects.get(file_name="test_file")
+        self.assertTrue(updated_record.status.filter(status="Invalid inv no").exists())
+
+    def test_set_empty_inv_no_status_existing_status(self):
+        # Create a SheetImport object with an empty inventory number
+        # and an existing 'Invalid inv no' status
+        item = SheetImport.objects.create(file_name="test_file_2", inventory_number="")
+        item.status.add(ItemStatus.objects.get(status="Needs review"))
+
+        # Call the management command function directly
+        set_empty_inv_no_status()
+
+        # Check that both statuses are present, and exactly two statuses exist
+        updated_record = SheetImport.objects.get(file_name="test_file_2")
+        self.assertTrue(updated_record.status.filter(status="Invalid inv no").exists())
+        self.assertTrue(updated_record.status.filter(status="Needs review").exists())
+        self.assertEqual(updated_record.status.count(), 2)
+
+    def test_set_empty_inv_no_status_existing_inv_no(self):
+        # Create a SheetImport object with a non-empty inventory number
+        item = SheetImport.objects.create(
+            file_name="test_file_3", inventory_number="INV123"
+        )
+        item.status.add(ItemStatus.objects.get(status="Needs review"))
+
+        # Call the management command function directly
+        set_empty_inv_no_status()
+
+        # Check that no status was added
+        updated_record = SheetImport.objects.get(file_name="test_file_3")
+        self.assertFalse(updated_record.status.filter(status="Invalid inv no").exists())
+        self.assertEqual(updated_record.status.count(), 1)
