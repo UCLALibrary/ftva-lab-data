@@ -67,7 +67,8 @@
 <!-- On page load, HTMX triggers GET request to 'render_table'
 and inserts it within div -->
 <div id="table-container" class="table-responsive container-fluid p-4"
-     hx-get="{% url 'render_table' %}?{{ url_encoded_search }}&search_column={{ search_column }}&page={{ page }}"
+     hx-get="{% url 'render_table' %}"
+     hx-include="#table-filters-form"
      hx-trigger="load">
 </div>
 

@@ -1,6 +1,7 @@
 from typing import Any
 from django.db.models import Model, Q
 from django.db.models.query import QuerySet
+from urllib.parse import urlencode
 from .models import SheetImport
 from .forms import ItemForm
 
@@ -278,3 +279,12 @@ def format_data_for_export(data_dicts: list[dict[str, Any]]) -> list[dict[str, A
         data_dict.pop("_state", None)
 
     return data_dicts
+
+
+def build_url_parameters(**kwargs) -> str:
+    """Encodes URL parameters as a string ready for use as a query string in the templates.
+
+    :param **kwargs: Keyword arguments representing URL parameters.
+    :return: An encoded URL query string.
+    """
+    return urlencode(kwargs)
