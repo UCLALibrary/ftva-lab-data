@@ -30,6 +30,7 @@ from ftva_lab_data.views_utils import (
     get_search_result_items,
     get_items_per_page_options,
     format_data_for_export,
+    build_url_parameters,
 )
 from ftva_lab_data.table_config import COLUMNS
 
@@ -293,6 +294,33 @@ class TablePaginationTestCase(TestCase):
                 # should fall back to the default when give non-int values.
                 self.assertEqual(paginator_per_page, default_per_page)
                 self.assertEqual(session_per_page, default_per_page)
+
+    def test_url_parameters(self):
+        # These are reserved characters in URL query strings.
+        # See @https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
+        reserved_chars = ":/?#[]@!$&'()*+,;="
+        test_filename = f"test_file_{reserved_chars}"
+
+        # Create a record with reserved characters
+        test_record_id = SheetImport.objects.last().id + 1
+        SheetImport.objects.create(file_name=test_filename, id=test_record_id)
+
+        # Test navigation to `search_results` view,
+        # with search params encoded in URL query string.
+        # This mimics the navigation from the item view
+        # to the search results via the "Back to Search" button,
+        # and should preserve the search string even with reserved URL characters.
+        url = reverse("search_results")
+        test_url_parameters = build_url_parameters(
+            search=test_filename, search_column="file_name", page=1
+        )  # encode values to be safe for use in URLs
+        response = self.client.get(url, QUERY_STRING=test_url_parameters)
+        context_search_string = response.context.get("search")
+
+        # After being passed to `search_results` view via the URL query string,
+        # the resulting search_string should equal
+        # the test filename with all the reserved characters.
+        self.assertEqual(context_search_string, test_filename)
 
 
 class HistoryModelTestCase(TestCase):

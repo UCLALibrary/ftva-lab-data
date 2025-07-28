@@ -163,13 +163,16 @@ def search_results(request: HttpRequest) -> HttpResponse:
     # Retrieve search params
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
-    # page = request.GET.get("page", "")
+    page = request.GET.get("page", "")
 
+    # The search parameters, while encoded as a query string elsewhere,
+    # need to be returned individually here to sync with input element values.
     search_results_context = {
         "columns": COLUMNS,
         "users": users,
         "search": search,
         "search_column": search_column,
+        "page": page,
     }
 
     # Pass search params from GET to template context,

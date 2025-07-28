@@ -11,9 +11,9 @@
 
 <div class="d-flex align-items-stretch gap-2 mb-3 w-75 mx-auto">
 
-    <!-- HTMX will listen for triggers from enclosed controls,
+    {% comment %} HTMX will listen for triggers from enclosed controls,
     then issue GET requests to 'render_table' URL
-    and replace content of #table-container with result -->
+    and replace content of #table-container with result {% endcomment %}
     <form id="table-filters-form" class="d-flex gap-2 align-items-stretch w-50" hx-get="{% url 'render_table' %}" hx-target="#table-container"
         hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
         <select name="search_column" class="form-select form-select-md">
@@ -64,10 +64,12 @@
 </div>
 
 
-<!-- On page load, HTMX triggers GET request to 'render_table'
-and inserts it within div -->
+{% comment %} On page load, HTMX triggers GET request to 'render_table'
+and inserts the resulting HTML within div. HTMX includes the child fields of
+`table-filters-form` from above, but since the state of `page` is managed
+elsewhere, it is included in the URL query string here. {% endcomment %}
 <div id="table-container" class="table-responsive container-fluid p-4"
-     hx-get="{% url 'render_table' %}"
+     hx-get="{% url 'render_table' %}?page={{ page }}"
      hx-include="#table-filters-form"
      hx-trigger="load">
 </div>
