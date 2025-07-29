@@ -7,7 +7,6 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
-from urllib.parse import urlencode
 import pandas as pd
 import io
 
@@ -107,7 +106,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             messages.success(request, "Item updated successfully!")
             url = (
                 f"{reverse('view_item', args=[item.id])}"
-                f"?{urlencode({"search": search})}&search_column={search_column}&page={page}"
+                f"?{build_url_parameters(search=search, search_column=search_column, page=page)}"
             )
             return redirect(url)
 
