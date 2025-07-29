@@ -6,6 +6,9 @@ from ftva_lab_data.forms import ItemForm
 from ftva_lab_data.management.commands.set_empty_inv_no_status import (
     set_empty_inv_no_status,
 )
+from ftva_lab_data.management.commands.set_empty_location_status import (
+    set_empty_location_status,
+)
 from ftva_lab_data.management.commands.clean_tape_info import (
     get_tape_info_parts,
     process_carrier_fields,
@@ -795,3 +798,41 @@ class SetEmptyInvNoStatusTestCase(TestCase):
 
         # Check that no status was added
         self.assertFalse(item.status.filter(status="Invalid inv no").exists())
+
+
+class SetEmptyLocationStatusTestCase(TestCase):
+    """Tests the set_empty_location_status management command."""
+
+    fixtures = ["item_statuses.json"]
+
+    def test_set_empty_location_status(self):
+        # Create a SheetImport object with no locations set
+        item = SheetImport.objects.create(file_name="test_file")
+        set_empty_location_status()
+
+        # Check that the status was set correctly
+        self.assertTrue(item.status.filter(status="Invalid vault").exists())
+
+    def test_set_empty_location_status_no_updates(self):
+        # Create a SheetImport object with a valid carrier_a location
+        item = SheetImport.objects.create(
+            file_name="test_file",
+            carrier_a_location="a_location",
+        )
+        set_empty_location_status()
+
+        # Check that no status was added
+        self.assertFalse(item.status.filter(status="Invalid vault").exists())
+
+    def test_set_empty_location_status_existing_status(self):
+        # Create a SheetImport object with no locations set
+        # and an existing 'Needs review' status
+        item = SheetImport.objects.create(file_name="test_file")
+        item.status.add(ItemStatus.objects.get(status="Needs review"))
+
+        set_empty_location_status()
+
+        # Check that both statuses are present, and exactly two statuses exist
+        self.assertTrue(item.status.filter(status="Invalid vault").exists())
+        self.assertTrue(item.status.filter(status="Needs review").exists())
+        self.assertEqual(item.status.count(), 2)
