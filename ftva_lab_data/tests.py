@@ -814,7 +814,7 @@ class SetEmptyLocationStatusTestCase(TestCase):
         self.assertTrue(item.status.filter(status="Invalid vault").exists())
 
     def test_set_empty_location_status_no_updates(self):
-        # Create a SheetImport object a valid carrier_a location
+        # Create a SheetImport object with a valid carrier_a location
         item = SheetImport.objects.create(
             file_name="test_file",
             carrier_a_location="a_location",
