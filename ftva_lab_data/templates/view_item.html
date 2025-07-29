@@ -27,14 +27,14 @@
                 hx-on:click="toggleAdvancedFields(this)">Show Advanced Fields</button>
             {% if perms.ftva_lab_data.change_sheetimport %}
             <a class="btn btn-primary"
-            href="{% url 'edit_item' header_info.id %}?search={{ search }}&search_column={{ search_column }}&page={{ page }}">
+            href="{% url 'edit_item' header_info.id %}?{{ url_parameters }}">
             Edit This Record
             </a>
             {% endif %}
         </div>
 
         <a class="btn btn-outline-secondary"
-        href="{% url 'search_results' %}?search={{ search }}&search_column={{ search_column }}&page={{ page }}">
+        href="{% url 'search_results' %}?{{ url_parameters }}">
         Back to Search
         </a>
     </div>

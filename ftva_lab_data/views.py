@@ -20,6 +20,7 @@ from .views_utils import (
     get_search_result_items,
     get_items_per_page_options,
     format_data_for_export,
+    build_url_parameters,
 )
 
 
@@ -89,9 +90,9 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         "item": item,
         "title": "Edit Item",
         "button_text": "Save Changes",
-        "search": search,
-        "search_column": search_column,
-        "page": page,
+        "url_parameters": build_url_parameters(
+            search=search, search_column=search_column, page=page
+        ),  # encode values to be safe for use in URLs
     }
     # Get form fields, divided into basic and advanced sections
     fields = get_add_edit_item_fields(ItemForm(instance=item))
@@ -105,7 +106,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             messages.success(request, "Item updated successfully!")
             url = (
                 f"{reverse('view_item', args=[item.id])}"
-                f"?search={search}&search_column={search_column}&page={page}"
+                f"?{build_url_parameters(search=search, search_column=search_column, page=page)}"
             )
             return redirect(url)
 
@@ -126,18 +127,23 @@ def view_item(request: HttpRequest, item_id: int) -> HttpResponse:
     """
     # Retrieve the item to view
     item = SheetImport.objects.get(id=item_id)
+
+    # Retrieve search params
+    search = request.GET.get("search", "")
+    search_column = request.GET.get("search_column", "")
+    page = request.GET.get("page", "")
+
     # For easier parsing in the template, separate attributes into dictionaries
     display_dicts = get_item_display_dicts(item)
-    # Pass search params to template, so they can be preserved
-    # if using the "Back to Search" button
-    display_dicts.update(
-        {
-            "search": request.GET.get("search", ""),
-            "search_column": request.GET.get("search_column", ""),
-            "page": request.GET.get("page", ""),
-        }
-    )
-    return render(request, "view_item.html", display_dicts)
+
+    view_item_context = {
+        "url_parameters": build_url_parameters(
+            search=search, search_column=search_column, page=page
+        ),  # encode values to be safe for use in URLs
+        **display_dicts,
+    }
+
+    return render(request, "view_item.html", view_item_context)
 
 
 @login_required
@@ -152,19 +158,25 @@ def search_results(request: HttpRequest) -> HttpResponse:
     """
 
     users = get_user_model().objects.all().order_by("username")
+
+    # Retrieve search params
+    search = request.GET.get("search", "")
+    search_column = request.GET.get("search_column", "")
+    page = request.GET.get("page", "")
+
+    # The search parameters, while encoded as a query string elsewhere,
+    # need to be returned individually here to sync with input element values.
+    search_results_context = {
+        "columns": COLUMNS,
+        "users": users,
+        "search": search,
+        "search_column": search_column,
+        "page": page,
+    }
+
     # Pass search params from GET to template context,
     # so we can consistently render the results table after navigation
-    return render(
-        request,
-        "search_results.html",
-        context={
-            "columns": COLUMNS,
-            "users": users,
-            "search": request.GET.get("search", ""),
-            "search_column": request.GET.get("search_column", ""),
-            "page": request.GET.get("page", 1),
-        },
-    )
+    return render(request, "search_results.html", search_results_context)
 
 
 @login_required
@@ -220,18 +232,19 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
         item_list=page_obj.object_list, display_fields=display_fields
     )
 
+    search_results_table_context = {
+        "page_obj": page_obj,
+        "elided_page_range": elided_page_range,
+        "columns": COLUMNS,
+        "rows": rows,
+        "items_per_page_options": items_per_page_options,
+        "url_parameters": build_url_parameters(
+            search=search, search_column=search_column, page=page
+        ),  # encode values to be safe for use in URLs
+    }
+
     return render(
-        request,
-        "partials/search_results_table.html",
-        {
-            "page_obj": page_obj,
-            "elided_page_range": elided_page_range,
-            "search": search,
-            "search_column": search_column,
-            "columns": COLUMNS,
-            "rows": rows,
-            "items_per_page_options": items_per_page_options,
-        },
+        request, "partials/search_results_table.html", search_results_table_context
     )
 
 

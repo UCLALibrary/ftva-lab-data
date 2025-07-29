@@ -10,7 +10,8 @@
                 name="items_per_page"
                 class="form-select form-select-md"
                 style="width: fit-content;"
-                hx-get="{% url 'render_table' %}?search={{ search }}&search_column={{ search_column }}"
+                hx-get="{% url 'render_table' %}"
+                hx-include="#table-filters-form"
                 hx-target="#table-container"    
             >
                 {% for option in items_per_page_options %}
@@ -25,7 +26,8 @@
     <div class="col d-flex justify-content-center align-items-center gap-2">
         <button class="btn btn-primary"
             {% if page_obj.has_previous %}
-                hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}&search={{ search }}&search_column={{ search_column }}"
+                hx-get="{% url 'render_table' %}?page={{ page_obj.previous_page_number }}"
+                hx-include="#table-filters-form"
                 hx-target="#table-container"
             {% else %} disabled {% endif %}>
             Previous
@@ -37,7 +39,8 @@
                 <span class="btn btn-secondary active mx-1">{{ page }}</span>
             {% else %}
                 <button class="btn btn-outline-secondary mx-1"
-                    hx-get="{% url 'render_table' %}?page={{ page }}&search={{ search }}&search_column={{ search_column }}"
+                    hx-get="{% url 'render_table' %}?page={{ page }}"
+                    hx-include="#table-filters-form"
                     hx-target="#table-container">
                     {{ page }}
                 </button>
@@ -45,7 +48,8 @@
         {% endfor %}
         <button class="btn btn-primary"
             {% if page_obj.has_next %}
-                hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}&search={{ search }}&search_column={{ search_column }}"
+                hx-get="{% url 'render_table' %}?page={{ page_obj.next_page_number }}"
+                hx-include="#table-filters-form"
                 hx-target="#table-container"
             {% else %} disabled {% endif %}>
             Next

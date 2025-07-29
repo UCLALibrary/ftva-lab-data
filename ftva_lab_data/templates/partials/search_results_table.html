@@ -59,7 +59,7 @@ See comment on partial as well.
                         <div class="d-flex flex-column align-items-start">
                             <!--View link includes search parameters, for later use by "Back to Search" button-->
                             <a class="btn btn-link btn-sm p-0" 
-                            href="{% url 'view_item' row.id %}?search={{ search }}&search_column={{ search_column }}&page={{ page_obj.number }}">
+                            href="{% url 'view_item' row.id %}?{{ url_parameters }}">
                             View</a> 
                             <br>
                             <span class="text-muted small">ID: {{ value }}</span>

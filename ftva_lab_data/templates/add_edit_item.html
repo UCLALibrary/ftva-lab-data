@@ -22,7 +22,7 @@
         </div>
 
         <a class="btn btn-outline-danger"
-            href="{% if item %}{% url 'view_item' item.id %}{% else %}{% url 'search_results' %}{% endif %}?search={{ search }}&search_column={{ search_column }}&page={{ page }}">
+            href="{% if item %}{% url 'view_item' item.id %}{% else %}{% url 'search_results' %}{% endif %}?{{ url_parameters }}">
             Cancel</a>
     </div>
 
