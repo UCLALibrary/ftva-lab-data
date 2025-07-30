@@ -36,7 +36,10 @@ from ftva_lab_data.views_utils import (
     process_full_alma_data,
 )
 from ftva_lab_data.table_config import COLUMNS
-from ftva_lab_data.management.commands.extract_inventory_numbers import compile_regex
+from ftva_lab_data.management.commands.extract_inventory_numbers import (
+    compile_regex,
+    build_inventory_number_string,
+)
 import re
 import base64
 from pymarc import Field, Indicators, Subfield
@@ -1006,26 +1009,26 @@ class ExtractInventoryNumbersTestCase(TestCase):
                 "",
             ),  # known false positive--T01 is syntactically valid, but not actual inv #, per FTVA
             # script should remove these
+            (
+                "4420_ZDV/FE2235T_FE2380TKTLA_SD_TAPE.mov",
+                "FE2235T|FE2380",
+            ),  # FTVA staff confirmed the second match should not include a suffix
+            # i.e. matching the sub-string FE2380TKTLA should yield FE2380 not FE2380T
+            (
+                "Scanner_01/FE3018TKTLAManson/FE3018T_KLTAManson",
+                "FE3018",
+            ),  # FTVA staff confirmed FE3018T in the last path segment as a false positive
+            (
+                "Scanner_01/FE3093TKTLA/FE3093KTLAsd",
+                "FE3093",
+            ),  # FTVA staff confimed FE3093TKTLA should not yield a suffix,
+            # so FE3093 is the valid inv no in this case
         )
 
     def test_regex(self):
         for input, output in self.test_cases:
             with self.subTest(input=input, output=output):
-                # This logic is excerpted from the `extract_inventory_numbers()` function
-                # in the management command, which takes a QuerySet as input.
-                # To avoid constructing a QuerySet to work with `extract_inventory_numbers()`,
-                # the logic is repeated here, to get the expected string output format.
                 matches = re.findall(compile_regex(), input)
                 if matches:
-                    unique_inventory_numbers = list(dict.fromkeys(matches))
-
-                    known_false_positives = ["T01"]
-                    for false_positive in known_false_positives:
-                        if false_positive in unique_inventory_numbers:
-                            unique_inventory_numbers.remove(false_positive)
-
-                    # per FTVA spec, provide pipe-delimited string
-                    # if multiple matches in a single input value
-                    inventory_numbers = "|".join(unique_inventory_numbers)
-
+                    inventory_numbers = build_inventory_number_string(matches)
                     self.assertEqual(inventory_numbers, output)
