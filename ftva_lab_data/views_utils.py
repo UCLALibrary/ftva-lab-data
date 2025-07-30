@@ -1,6 +1,9 @@
+import base64
 from typing import Any
 from django.db.models import Model, Q
 from django.db.models.query import QuerySet
+from django.contrib.auth import authenticate, login
+from django.http import HttpResponse, HttpRequest
 from urllib.parse import urlencode
 from .models import SheetImport
 from .forms import ItemForm
@@ -288,3 +291,37 @@ def build_url_parameters(**kwargs) -> str:
     :return: An encoded URL query string.
     """
     return urlencode(kwargs)
+
+
+def basic_auth_required(view_function: Any) -> Any:
+    """Decorator to require basic authentication for a view.
+    If the user is authenticated, they can access the view; otherwise,
+    they will be prompted to log in using basic auth.
+
+    :param view_func: The view function to decorate.
+    :return: A wrapped view function that checks for basic authentication.
+    """
+
+    def _wrapped_view(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        auth_header = request.META.get("HTTP_AUTHORIZATION")
+        if auth_header and auth_header.startswith("Basic "):
+            try:
+                # Decode the auth header
+                # First 6 characters are "Basic ", remainder is user:password base64 encoded
+                auth_decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
+                username, password = auth_decoded.split(":", 1)
+            except Exception:
+                return HttpResponse("Invalid basic auth header", status=400)
+            # Authenticate using Django's authenticate function
+            user = authenticate(request, username=username, password=password)
+            if user is not None and user.is_active:
+                request.user = user
+                login(request, user)
+                return view_function(request, *args, **kwargs)
+        # If not authenticated, prompt for login
+        response = HttpResponse("Unauthorized", status=401)
+        # Set the WWW-Authenticate header to prompt for basic auth
+        response["WWW-Authenticate"] = 'Basic realm="API"'
+        return response
+
+    return _wrapped_view

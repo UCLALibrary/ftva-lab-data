@@ -33,6 +33,7 @@ from ftva_lab_data.views_utils import (
     build_url_parameters,
 )
 from ftva_lab_data.table_config import COLUMNS
+import base64
 
 
 class GetFieldValueTestCase(TestCase):
@@ -196,6 +197,34 @@ class UserAccessTestCase(TestCase):
         # Confirm item successfully assigned to user
         self.test_object.refresh_from_db()
         self.assertEqual(self.test_object.assigned_user, self.authorized_user)
+
+    def test_basic_auth_user_can_get_record(self):
+        """Asserts that a user with basic auth can GET a record."""
+        # Construct HTTP Basic Auth credentials
+        credentials = "authorized:testpassword"
+        base64_credentials = base64.b64encode(credentials.encode("utf-8")).decode(
+            "utf-8"
+        )
+        url = reverse("get_record", args=[self.test_object.id])
+        response = self.client.get(
+            url, HTTP_AUTHORIZATION=f"Basic {base64_credentials}"
+        )
+        self.assertEqual(response.status_code, 200)
+        # Confirm the response contains the expected data
+        self.assertIn(self.test_object.file_name.encode(), response.content)
+
+    def test_basic_auth_bad_credentials(self):
+        """Asserts that a user with bad basic auth credentials receives 401."""
+        # Construct HTTP Basic Auth credentials with incorrect password
+        credentials = "authorized:wrongpassword"
+        base64_credentials = base64.b64encode(credentials.encode("utf-8")).decode(
+            "utf-8"
+        )
+        url = reverse("get_record", args=[self.test_object.id])
+        response = self.client.get(
+            url, HTTP_AUTHORIZATION=f"Basic {base64_credentials}"
+        )
+        self.assertEqual(response.status_code, 401)
 
 
 class TablePaginationTestCase(TestCase):

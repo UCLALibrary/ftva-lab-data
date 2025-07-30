@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
-from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
+from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -21,6 +21,7 @@ from .views_utils import (
     get_items_per_page_options,
     format_data_for_export,
     build_url_parameters,
+    basic_auth_required,
 )
 
 
@@ -365,3 +366,30 @@ def release_notes(request: HttpRequest) -> HttpResponse:
     :return: Rendered HTML for the release notes.
     """
     return render(request, "release_notes.html")
+
+
+@basic_auth_required
+def get_record(request: HttpRequest, record_id: int) -> HttpResponse:
+    """Retrieve a specific record by ID as JSON, intended for API use.
+
+    :param request: The HTTP request object.
+    :param record_id: The ID of the record to retrieve.
+    :return: JSON response containing the record data.
+    """
+    try:
+        record = SheetImport.objects.get(id=record_id)
+        record_data = {
+            field.name: getattr(record, field.name) for field in record._meta.fields
+        }
+        # Add Status many-to-many field data
+        record_data["status"] = [status.status for status in record.status.all()]
+        # Add Assigned User data if it exists
+        if record.assigned_user:
+            record_data["assigned_user"] = {
+                "id": record.assigned_user.id,
+                "username": record.assigned_user.username,
+                "full_name": record.assigned_user.get_full_name(),
+            }
+        return JsonResponse(record_data)
+    except SheetImport.DoesNotExist:
+        return JsonResponse({"error": "Record not found"}, status=404)
