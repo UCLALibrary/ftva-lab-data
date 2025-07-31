@@ -5,10 +5,13 @@ services:
     volumes:
       - .:/home/django/ftva-lab-data
     env_file:
-      - .docker-compose_django.env
-      - .docker-compose_db.env
-      # Local development only
-      # - .docker-compose_secrets.env
+      - path: .docker-compose_django.env
+        required: true
+      - path: .docker-compose_db.env
+        required: true
+      # Local development only, can be optional
+      - path: .docker-compose_local_secrets.env
+        required: false
     ports:
       # Variables here must be set in environment, or in .env - not in any env_file
       - "8000:8000"

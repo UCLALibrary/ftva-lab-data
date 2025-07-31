@@ -5,8 +5,9 @@ RUN apt-get update
 # Set correct timezone
 RUN ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 
-# Install dependencies needed to build psycopg python module
-RUN apt-get install -y gcc python3-dev libpq-dev
+# Install dependencies needed to build psycopg python module.
+# Also install git, needed for pip to install our local packages from github.
+RUN apt-get install -y gcc python3-dev libpq-dev git
 
 # Create django user
 RUN useradd -c "django app user" -d /home/django -s /bin/bash -m django
