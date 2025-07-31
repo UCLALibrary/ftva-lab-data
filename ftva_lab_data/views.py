@@ -369,7 +369,7 @@ def release_notes(request: HttpRequest) -> HttpResponse:
 
 
 @basic_auth_required
-def get_record(request: HttpRequest, record_id: int) -> HttpResponse:
+def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
     """Retrieve a specific record by ID as JSON, intended for API use.
 
     :param request: The HTTP request object.

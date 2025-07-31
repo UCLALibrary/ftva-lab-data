@@ -202,9 +202,7 @@ class UserAccessTestCase(TestCase):
         """Asserts that a user with basic auth can GET a record."""
         # Construct HTTP Basic Auth credentials
         credentials = "authorized:testpassword"
-        base64_credentials = base64.b64encode(credentials.encode("utf-8")).decode(
-            "utf-8"
-        )
+        base64_credentials = base64.b64encode(credentials.encode()).decode()
         url = reverse("get_record", args=[self.test_object.id])
         response = self.client.get(
             url, HTTP_AUTHORIZATION=f"Basic {base64_credentials}"
@@ -217,9 +215,7 @@ class UserAccessTestCase(TestCase):
         """Asserts that a user with bad basic auth credentials receives 401."""
         # Construct HTTP Basic Auth credentials with incorrect password
         credentials = "authorized:wrongpassword"
-        base64_credentials = base64.b64encode(credentials.encode("utf-8")).decode(
-            "utf-8"
-        )
+        base64_credentials = base64.b64encode(credentials.encode()).decode()
         url = reverse("get_record", args=[self.test_object.id])
         response = self.client.get(
             url, HTTP_AUTHORIZATION=f"Basic {base64_credentials}"

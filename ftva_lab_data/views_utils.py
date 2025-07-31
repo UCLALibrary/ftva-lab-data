@@ -1,4 +1,5 @@
 import base64
+import binascii
 from typing import Any
 from django.db.models import Model, Q
 from django.db.models.query import QuerySet
@@ -310,7 +311,7 @@ def basic_auth_required(view_function: Any) -> Any:
                 # First 6 characters are "Basic ", remainder is user:password base64 encoded
                 auth_decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
                 username, password = auth_decoded.split(":", 1)
-            except Exception:
+            except binascii.Error:
                 return HttpResponse("Invalid basic auth header", status=400)
             # Authenticate using Django's authenticate function
             user = authenticate(request, username=username, password=password)
@@ -318,10 +319,16 @@ def basic_auth_required(view_function: Any) -> Any:
                 request.user = user
                 login(request, user)
                 return view_function(request, *args, **kwargs)
-        # If not authenticated, prompt for login
-        response = HttpResponse("Unauthorized", status=401)
-        # Set the WWW-Authenticate header to prompt for basic auth
-        response["WWW-Authenticate"] = 'Basic realm="API"'
-        return response
+            else:
+                # If authentication fails, return 401 Unauthorized
+                response = HttpResponse("Unauthorized", status=401)
+                response["WWW-Authenticate"] = 'Basic realm="API"'
+                return response
+        else:
+            # If not authenticated, prompt for login
+            response = HttpResponse("Unauthorized", status=401)
+            # Set the WWW-Authenticate header to prompt for basic auth
+            response["WWW-Authenticate"] = 'Basic realm="API"'
+            return response
 
     return _wrapped_view
