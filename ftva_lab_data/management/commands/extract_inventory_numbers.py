@@ -22,9 +22,13 @@ def compile_regex() -> re.Pattern:
 
     regex_components = [
         r"(?<![A-Z])",  # pattern not preceded by capital letter, to mitigate false positives
-        r"(?:M|T|DVD|FE|HFA|VA|XFE|XFF|XVE)",  # non-capturing group of 8 prefixes defined by FTVA
-        r"\d{2,}",  # 2 or more digits, as many as possible
+        r"(?:",  # open non-capturing group for the two main alternatives
+        r"(?:DVD|FE|HFA|VA|XFE|XFF|XVE)",  # 1st main alternative: 8 prefixes defined by FTVA
+        r"\d{1,}",  # followed by 2 or more digits, as many as possible
         r"(?:[A-Z](?![A-Za-z]))?",  # optional suffix 1 capital not followed by another letter
+        r"|(?:M|T)",  # 2nd alternative: prefix of M or T
+        r"\d{1,6}",  # followed by 2 to 6 digits, as many as possible
+        r")",  # close the non-capturing group for the two main alternatives
     ]
 
     return re.compile("".join(regex_components))
@@ -41,7 +45,7 @@ def remove_false_positives(unique_inventory_numbers: list) -> list:
     :return: The list of unique inventory numbers with known false-positives removed.
     """
 
-    known_false_positives = ["T01", "FE3018T"]
+    known_false_positives = ["T01", "T1", "FE3018T"]
     for false_positive in known_false_positives:
         if false_positive in unique_inventory_numbers:
             unique_inventory_numbers.remove(false_positive)

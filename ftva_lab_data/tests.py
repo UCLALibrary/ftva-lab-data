@@ -1023,6 +1023,10 @@ class ExtractInventoryNumbersTestCase(TestCase):
                 "FE3093",
             ),  # FTVA staff confimed FE3093TKTLA should not yield a suffix,
             # so FE3093 is the valid inv no in this case
+            (
+                "M187774E4Harvest3000Textless/M1877741C4Harvest3000TextlessR1C_01",
+                "M187774",  # M and T prefixed inv nos should have 2 to 6 digits w/o suffix
+            ),
         )
 
     def test_regex(self):
