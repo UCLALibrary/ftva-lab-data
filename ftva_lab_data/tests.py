@@ -31,9 +31,13 @@ from ftva_lab_data.views_utils import (
     get_items_per_page_options,
     format_data_for_export,
     build_url_parameters,
+    count_tags,
+    get_tag_labels,
+    process_full_alma_data,
 )
 from ftva_lab_data.table_config import COLUMNS
 import base64
+from pymarc import Field, Indicators, Subfield
 
 
 class GetFieldValueTestCase(TestCase):
@@ -889,3 +893,64 @@ class SetEmptyLocationStatusTestCase(TestCase):
         self.assertTrue(item.status.filter(status="Invalid vault").exists())
         self.assertTrue(item.status.filter(status="Needs review").exists())
         self.assertEqual(item.status.count(), 2)
+
+
+class ParseAlmaDataTestCase(TestCase):
+    """Tests for count_tags, get_tag_labels, and process_full_alma_data functions."""
+
+    def setUp(self):
+        # Create a mock MARC Field list for testing
+        self.field_list = [
+            Field(
+                tag="100",
+                indicators=Indicators("0", "1"),
+                subfields=[Subfield(code="a", value="100 subfield a value")],
+            ),
+            Field(
+                tag="100",
+                indicators=Indicators("0", "1"),
+                subfields=[Subfield(code="a", value="different 100 subfield a value")],
+            ),
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[Subfield(code="c", value="245 subfield c value")],
+            ),
+        ]
+
+    def test_count_tags(self):
+        tag_100_count = count_tags(self.field_list, "100")
+        tag_245_count = count_tags(self.field_list, "245")
+        tag_300_count = count_tags(self.field_list, "300")
+
+        self.assertEqual(tag_100_count, 2)
+        self.assertEqual(tag_245_count, 1)
+        self.assertEqual(tag_300_count, 0)
+
+    def test_get_tag_labels(self):
+        tag_100_labels = get_tag_labels(self.field_list, "100")
+        tag_245_labels = get_tag_labels(self.field_list, "245")
+        tag_300_labels = get_tag_labels(self.field_list, "300")
+
+        # Multiple fields with the same tag should be formated as "Field 100 #1", "Field 100 #2"
+        self.assertEqual(tag_100_labels, ["Field 100 #1", "Field 100 #2"])
+        # Single fields should be returned as a list with one item, with no sequence number.
+        self.assertEqual(tag_245_labels, ["Field 245"])
+        # Non-existing tags should return an empty list.
+        self.assertEqual(tag_300_labels, [])
+
+    def test_process_full_alma_data(self):
+        # Call the function with the mock field list
+        processed_data = process_full_alma_data(self.field_list)
+        # Check that the processed data contains the expected keys
+        self.assertIn("Field 100 #1", processed_data)
+        self.assertIn("Field 100 #2", processed_data)
+        self.assertIn("Field 245", processed_data)
+        # Check that the values are as expected
+        self.assertEqual(
+            processed_data["Field 100 #1"], self.field_list[0].format_field()
+        )
+        self.assertEqual(
+            processed_data["Field 100 #2"], self.field_list[1].format_field()
+        )
+        self.assertEqual(processed_data["Field 245"], self.field_list[2].format_field())

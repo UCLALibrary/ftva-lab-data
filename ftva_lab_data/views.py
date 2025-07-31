@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonRe
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from ftva_etl import AlmaSRUClient
 import pandas as pd
 import io
 
@@ -22,6 +23,7 @@ from .views_utils import (
     format_data_for_export,
     build_url_parameters,
     basic_auth_required,
+    process_full_alma_data,
 )
 
 
@@ -393,3 +395,39 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
         return JsonResponse(record_data)
     except SheetImport.DoesNotExist:
         return JsonResponse({"error": "Record not found"}, status=404)
+
+
+@login_required
+def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
+    """Fetch Alma records using SRU client.
+
+    :param request: The HTTP request object.
+    :return: Rendered HTML for the Alma records.
+    """
+    sru_client = AlmaSRUClient()
+    records = sru_client.search_by_call_number(inventory_number)
+
+    # List of required fields, as defined by FTVA
+    marc_fields = ["001", "008", "245", "246", "260", "655"]
+    full_data_dicts = []
+
+    for record in records:
+        record_dict = {}
+        # Extract the record ID and title, used for search results display
+        record_dict["record_id"] = record.get_fields("001")[0].value()
+        record_dict["title"] = record.title
+
+        # Process the full MARC data to get relevant fields processed into a dict
+        record_fields = sru_client.get_fields(record, marc_fields)
+        record_dict["full_data"] = process_full_alma_data(record_fields)
+
+        full_data_dicts.append(record_dict)
+
+    # TODO: return a template with the records
+    # For now, just return a simple text response
+    response_content = f"Found {len(records)} records for {inventory_number}:\n"
+    for record in full_data_dicts:
+        response_content += f"Record ID: {record['record_id']}\n"
+        response_content += f"Title: {record['title']}\n"
+        response_content += f"Full Data: {record['full_data']}\n\n"
+    return HttpResponse(response_content, content_type="text/plain")
