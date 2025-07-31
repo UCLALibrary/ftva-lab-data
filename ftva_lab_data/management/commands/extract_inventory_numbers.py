@@ -11,24 +11,23 @@ import csv
 def compile_regex() -> re.Pattern:
     """Return a compiled RegEx pattern for matching inventory numbers.
 
-    NOTE: the pattern works in most cases, but will return false positives
-    where the input contains a substring that syntactically matches pattern
-    but is not actually a valid inventory number, according to FTVA
-    e.g. "Title_T01ASYNC_Surround" matches T01, which is a valid pattern,
-    but not an actual inventory number.
-
     :return: A compiled regex Pattern object.
     """
 
+    # NOTE: the pattern works in most cases, but will return false positives
+    # where the input contains a substring that syntactically matches the pattern
+    # but is not actually a valid inventory number, according to FTVA
+    # e.g. "Title_T01ASYNC_Surround" matches T01, which is a valid pattern,
+    # but not an actual inventory number.
     regex_components = [
         r"(?<![A-Z])",  # pattern not preceded by capital letter, to mitigate false positives
-        r"(?:",  # open non-capturing group for the two main alternatives
-        r"(?:DVD|FE|HFA|VA|XFE|XFF|XVE)",  # 1st main alternative: 8 prefixes defined by FTVA
-        r"\d{1,}",  # followed by 2 or more digits, as many as possible
-        r"(?:[A-Z](?![A-Za-z]))?",  # optional suffix 1 capital not followed by another letter
-        r"|(?:M|T)",  # 2nd alternative: prefix of M or T
-        r"\d{1,6}",  # followed by 2 to 6 digits, as many as possible
-        r")",  # close the non-capturing group for the two main alternatives
+        r"(?:",  # open non-capturing group for the two options
+        r"(?:DVD|FE|HFA|VA|XFE|XFF|XVE)",  # option 1: multi-letter prefixes
+        r"\d{1,}",  # followed by 1 or more digits, as many as possible
+        r"(?:[A-Z](?![A-Za-z]))?",  # optional suffix of 1 capital not followed by another letter
+        r"|(?:M|T)",  # option 2: single-letter prefixes
+        r"\d{1,6}",  # followed by 1 to 6 digits, as many as possible
+        r")",  # close the non-capturing group for the two options
     ]
 
     return re.compile("".join(regex_components))
@@ -38,14 +37,13 @@ def remove_false_positives(unique_inventory_numbers: list) -> list:
     """Given a list of unique inventory numbers, returns the list with
     known false positive inventory numbers removed.
 
-    NOTE: the list of known false-positives, i.e. strings that match the regex pattern
-    but are known to not be actual inv #s, are hard-coded in this function.
-
     :param list unique_inventory_numbers: A list of unique inventory numbers.
     :return: The list of unique inventory numbers with known false-positives removed.
     """
 
-    known_false_positives = ["T01", "T1", "FE3018T"]
+    # NOTE: the list of known false-positives, i.e. strings that match the regex pattern
+    # but are known to not be actual inv #s, are hard-coded here.
+    known_false_positives = ["T01", "T1", "M4", "FE3018T"]
     for false_positive in known_false_positives:
         if false_positive in unique_inventory_numbers:
             unique_inventory_numbers.remove(false_positive)
@@ -56,7 +54,7 @@ def remove_false_positives(unique_inventory_numbers: list) -> list:
 def build_inventory_number_string(matches: list) -> str:
     """Given a list of regex matches, formats an inventory number output string
     according to FTVA specs, which require inventory numbers be unique and pipe-delimited.
-    This function also removes
+    This function also removes false positives from the provided matches.
 
     :param list matches: A list of inventory number matches from a regex evaluation.
     :return: The prepared inventory number string, per FTVA specs.

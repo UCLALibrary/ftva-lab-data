@@ -1025,8 +1025,20 @@ class ExtractInventoryNumbersTestCase(TestCase):
             # so FE3093 is the valid inv no in this case
             (
                 "M187774E4Harvest3000Textless/M1877741C4Harvest3000TextlessR1C_01",
-                "M187774",  # M and T prefixed inv nos should have 2 to 6 digits w/o suffix
+                "M187774",  # M and T prefixed inv nos should have 1 to 6 digits w/o suffix
             ),
+            (
+                "M120455_Morpheus_In_hell_and_Re_Incarnation_M4v",
+                "M120455",
+            ),  # M4v creates a false positive, which is removed
+            (
+                "T165586_Give_Us_The_Children_Promo_WNBT4NY_FADED_COLOR_FINAL",
+                "T165586",
+            ),  # WNBT4NY should not yield a match
+            (
+                "M1_T2_M1234567_TESTM3TEST_M4",
+                "M1|T2|M123456",
+            ),  # contrived case to test single-letter prefixes
         )
 
     def test_regex(self):
