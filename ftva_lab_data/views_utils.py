@@ -304,6 +304,12 @@ def basic_auth_required(view_function: Any) -> Any:
     """
 
     def _wrapped_view(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        # Assume request is unauthorized, until proven otherwise.
+        # If so, prompt for login via HTTP basic auth.
+        unauthorized_response = HttpResponse("Unauthorized", status=401)
+        unauthorized_response["WWW-Authenticate"] = 'Basic realm="API"'
+
+        # Start checking for proper authorization.
         auth_header = request.META.get("HTTP_AUTHORIZATION")
         if auth_header and auth_header.startswith("Basic "):
             try:
@@ -320,15 +326,9 @@ def basic_auth_required(view_function: Any) -> Any:
                 login(request, user)
                 return view_function(request, *args, **kwargs)
             else:
-                # If authentication fails, return 401 Unauthorized
-                response = HttpResponse("Unauthorized", status=401)
-                response["WWW-Authenticate"] = 'Basic realm="API"'
-                return response
+                # If Django authentication fails, return 401 Unauthorized
+                return unauthorized_response
         else:
-            # If not authenticated, prompt for login
-            response = HttpResponse("Unauthorized", status=401)
-            # Set the WWW-Authenticate header to prompt for basic auth
-            response["WWW-Authenticate"] = 'Basic realm="API"'
-            return response
+            return unauthorized_response
 
     return _wrapped_view
