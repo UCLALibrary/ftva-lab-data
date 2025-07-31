@@ -26,7 +26,7 @@ USER django
 COPY --chown=django:django . .
 
 # Include local python bin into django user's path, mostly for pip
-ENV PATH /home/django/.local/bin:${PATH}
+ENV PATH=/home/django/.local/bin:${PATH}
 
 # Make sure pip is up to date, and don't complain if it isn't yet
 RUN pip install --upgrade pip --disable-pip-version-check
