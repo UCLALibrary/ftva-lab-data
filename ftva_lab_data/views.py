@@ -397,12 +397,13 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
         return JsonResponse({"error": "Record not found"}, status=404)
 
 
-@login_required
-def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
+def get_alma_data(request: HttpRequest, inventory_number: str) -> list[dict]:
     """Fetch Alma records using SRU client.
 
     :param request: The HTTP request object.
-    :return: Rendered HTML for the Alma records.
+    :param inventory_number: The inventory number to search for in Alma.
+    :return: a list of dictionaries containing Alma record data, each with keys
+        "record_id", "title", and "full_data".
     """
     sru_client = AlmaSRUClient()
     records = sru_client.search_by_call_number(inventory_number)
@@ -424,10 +425,5 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
         full_data_dicts.append(record_dict)
 
     # TODO: return a template with the records
-    # For now, just return a simple text response
-    response_content = f"Found {len(records)} records for {inventory_number}:\n"
-    for record in full_data_dicts:
-        response_content += f"Record ID: {record['record_id']}\n"
-        response_content += f"Title: {record['title']}\n"
-        response_content += f"Full Data: {record['full_data']}\n\n"
-    return HttpResponse(response_content, content_type="text/plain")
+    # For now, just return the list of dictionaries
+    return full_data_dicts
