@@ -11,14 +11,33 @@
 <div class="container">
     <h1>Item details</h1>
 
-    <p class="fs-5">{% if header_info.file_name %} File: {{ header_info.file_name }} {% endif %}</p>
-    <p class="fs-5">{% if header_info.title %} (Title: {{ header_info.title }}) {% endif %}</p>
-    <p class="fs-5">{% if header_info.id %} Record ID: {{ header_info.id }} {% endif %}</p>
-    <p class="fs-5">{% if header_info.status %} Status: 
-        {% for status in header_info.status %}
-            <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
-        {% endfor %}
-    {% endif %}</p>
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <p class="fs-5 mb-1">{% if header_info.file_name %} File: {{ header_info.file_name }} {% endif %}</p>
+            <p class="fs-5 mb-1">{% if header_info.title %} (Title: {{ header_info.title }}) {% endif %}</p>
+            <p class="fs-5 mb-1">{% if header_info.id %} Record ID: {{ header_info.id }} {% endif %}</p>
+            <p class="fs-5 mb-1">{% if header_info.status %} Status: 
+                {% for status in header_info.status %}
+                    <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
+                {% endfor %}
+            {% endif %}</p>
+        </div>
+        {% if header_info.inventory_number %}
+            <div class="d-flex flex-column align-items-end gap-2">
+                <a class="btn btn-secondary"
+                    href="{% url 'get_external_search_results' search_type='alma' inventory_number=header_info.inventory_number %}"
+                    target="_blank">
+                        View Alma Records
+                </a>
+                <a class="btn btn-secondary"
+                    href="{% url 'get_external_search_results' search_type='fm' inventory_number=header_info.inventory_number %}"
+                    target="_blank">
+                        View Filemaker Records
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
 
     <!-- Buttons -->
     <div class="d-flex justify-content-between mb-3">

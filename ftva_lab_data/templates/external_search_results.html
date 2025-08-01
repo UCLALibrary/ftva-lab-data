@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="w-75 mx-auto">
+    {% if search_type == "alma" %}
+    <h1>Alma Search Results</h1>
+    {% else %}
+    <h1>Filemaker Search Results</h1>
+    {% endif %}
+</div>
+
+<div class ="d-flex align-items-stretch gap-2 mb-3 w-75 mx-auto">
+    <div class="w-100">
+        <p>Your search for "{{ inventory_number }}" returned {{ records|length }} {{ search_type|title }} records.</p>
+    </div>
+</div>
+<div class="d-flex align-items-stretch gap-2 mb-3 w-75 mx-auto justify-content-start">
+    <div class="w-100">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Record ID</th>
+                    <th>Title</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.record_id }}</td>
+                    <td>{{ record.title }}</td>
+                    <!--TODO: button should display external item details-->
+                    <td><a href=# class="btn btn-sm btn-primary">View Record</a></td> 
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

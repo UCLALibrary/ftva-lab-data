@@ -17,4 +17,9 @@ urlpatterns = [
     path("logs/<int:line_count>", views.show_log, name="show_log"),
     path("release_notes/", views.release_notes, name="release_notes"),
     path("records/<int:record_id>/", views.get_record, name="get_record"),
+    path(
+        "external_search_results/<str:search_type>/<str:inventory_number>/",
+        views.get_external_search_results,
+        name="get_external_search_results",
+    ),
 ]
