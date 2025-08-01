@@ -9,6 +9,7 @@ from django.http import HttpResponse, HttpRequest
 from urllib.parse import urlencode
 from .models import SheetImport
 from .forms import ItemForm
+from fmrest.record import Record
 
 
 # Recursive implementation adapted from:
@@ -396,3 +397,20 @@ def process_full_alma_data(field_list: list[Field]) -> dict[str, str]:
             completed_tags.add(record_field.tag)
 
     return full_record_dict
+
+
+def get_specific_filemaker_fields(
+    fm_record: Record, specific_fields: list[str]
+) -> dict:
+    """Gets the provided specific fields from a Filemaker Record instance.
+
+    :param Record fm_record: A fmrest Record instance.
+    :param list[str] specific_fields: A list of specific fields to get from the Record.
+    :return: A dict with the specific fields from the Filemaker Record.
+    Fields are only included if they exist in the Record.
+    """
+    return {
+        field: fm_record[field]
+        for field in specific_fields
+        if field in fm_record.to_dict()
+    }
