@@ -191,3 +191,9 @@ LOGGING = {
         },
     },
 }
+
+# Secrets
+
+# Credentials for accessing Filemaker API
+FILEMAKER_USER = os.getenv("FILEMAKER_USER")
+FILEMAKER_PASSWORD = os.getenv("FILEMAKER_PASSWORD")

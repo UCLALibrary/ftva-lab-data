@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonRe
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
-from ftva_etl import AlmaSRUClient
+from ftva_etl import AlmaSRUClient, FilemakerClient
 import pandas as pd
 import io
 
@@ -24,6 +24,7 @@ from .views_utils import (
     build_url_parameters,
     basic_auth_required,
     process_full_alma_data,
+    get_specific_filemaker_fields,
 )
 
 
@@ -428,6 +429,60 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> list[dict]:
         record_dict["full_data"] = process_full_alma_data(record_fields)
 
         full_data_dicts.append(record_dict)
+
+    # TODO: return a template with the records
+    # For now, just return the list of dictionaries
+    return full_data_dicts
+
+
+def get_filemaker_data(request: HttpRequest, inventory_number: str) -> list[dict]:
+    """Fetch records using FilemakerClient.
+
+    :param request: The HTTP request object.
+    :param inventory_number: The inventory number to search for in Filemaker.
+    :return: a list of dictionaries containing Filemaker record data, each with keys
+        "record_id", "title", and "full_data".
+    """
+
+    user = settings.FILEMAKER_USER
+    password = settings.FILEMAKER_PASSWORD
+    fm_client = FilemakerClient(user=user, password=password)
+
+    records = fm_client.search_by_inventory_number(inventory_number)
+
+    # List of required fields, as defined by FTVA
+    filemaker_fields = [
+        "type",
+        "inventory_no",
+        "inventory_id",
+        "format_type",
+        "title",
+        "aka",
+        "director",
+        "episode_title",
+        "production_type",
+        "Acquisition type",
+        "Alma",
+        "availability",
+        "release_broadcast_year",
+        "notes",
+        "element_info",
+        "spac",
+        "episode no.",
+        "film base",
+        "donor_code",
+    ]
+    full_data_dicts = []
+
+    for record in records:
+        record = get_specific_filemaker_fields(record, filemaker_fields)
+        data_dict = {}
+
+        data_dict["record_id"] = record.get("inventory_id", "NO INVENTORY ID")
+        data_dict["title"] = record.get("title", "NO TITLE")
+        data_dict["full_data"] = record
+
+        full_data_dicts.append(data_dict)
 
     # TODO: return a template with the records
     # For now, just return the list of dictionaries
