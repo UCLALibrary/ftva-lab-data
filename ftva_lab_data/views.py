@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonRe
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from ftva_etl import AlmaSRUClient
 import pandas as pd
 import io
 
@@ -22,6 +23,7 @@ from .views_utils import (
     format_data_for_export,
     build_url_parameters,
     basic_auth_required,
+    process_full_alma_data,
 )
 
 
@@ -393,3 +395,40 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
         return JsonResponse(record_data)
     except SheetImport.DoesNotExist:
         return JsonResponse({"error": "Record not found"}, status=404)
+
+
+def get_alma_data(request: HttpRequest, inventory_number: str) -> list[dict]:
+    """Fetch Alma records using SRU client.
+
+    :param request: The HTTP request object.
+    :param inventory_number: The inventory number to search for in Alma.
+    :return: a list of dictionaries containing Alma record data, each with keys
+        "record_id", "title", and "full_data".
+    """
+    sru_client = AlmaSRUClient()
+    records = sru_client.search_by_call_number(inventory_number)
+
+    # List of required fields, as defined by FTVA
+    marc_fields = ["001", "008", "245", "246", "260", "655"]
+    full_data_dicts = []
+
+    for record in records:
+        record_dict = {}
+        # Extract the record ID and title, used for search results display
+        record_dict["record_id"] = record.get("001").value()
+        # Get relevant subfields from the 245 field for the title
+        title_subfields = ["a", "b", "n", "p"]
+        title_components = record.get("245").get_subfields(*title_subfields)
+        record_dict["title"] = " ".join(
+            [subfield for subfield in title_components if subfield]
+        )
+
+        # Process the full MARC data to get relevant fields processed into a dict
+        record_fields = sru_client.get_fields(record, marc_fields)
+        record_dict["full_data"] = process_full_alma_data(record_fields)
+
+        full_data_dicts.append(record_dict)
+
+    # TODO: return a template with the records
+    # For now, just return the list of dictionaries
+    return full_data_dicts

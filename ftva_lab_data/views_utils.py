@@ -1,6 +1,7 @@
 import base64
 import binascii
 from typing import Any
+from pymarc import Field
 from django.db.models import Model, Q
 from django.db.models.query import QuerySet
 from django.contrib.auth import authenticate, login
@@ -332,3 +333,66 @@ def basic_auth_required(view_function: Any) -> Any:
             return unauthorized_response
 
     return _wrapped_view
+
+
+def count_tags(fields: list[Field], tag: str) -> int:
+    """Give a list of Pymarc fields, count how many fields have a specific tag.
+
+    :param fields: A list of Pymarc fields to count.
+    :param tag: The tag to count in the fields.
+    :return: The count of fields with the specified tag."""
+
+    return sum(1 for field in fields if field.tag == tag)
+
+
+def get_tag_labels(fields: list[Field], tag: str) -> list[str]:
+    """Get a list of unique labels for a specific tag in a list of Pymarc fields.
+    If there are multiple fields with the same tag, labels will be generated
+    as "Field {tag} #1", "Field {tag} #2", etc.
+    If there is only one field with the tag, the label will be "Field {tag}".
+
+    :param fields: A list of Pymarc fields to process.
+    :param tag: The tag to generate lables for.
+    :return: A list of labels for the specified tag.
+    """
+    count = count_tags(fields, tag)
+    if count == 1:
+        return [f"Field {tag}"]
+    labels = []
+    for i in range(count):
+        labels.append(f"Field {tag} #{i + 1}")
+    return labels
+
+
+def process_full_alma_data(field_list: list[Field]) -> dict[str, str]:
+    """Process a list of Pymarc fields and return a dictionary with processed field tags
+    as unique keys, and formatted Pymarc Field values as their values.
+
+    :param field_list: A list of Pymarc Field objects to process.
+    :return: A dictionary with keys like "Field 100", "Field 200 #1", etc.,
+    and their corresponding formatted values.
+    """
+    # Initialize an empty dictionary to hold the full record data
+    full_record_dict = {}
+    # Keep track of which tags we've completed
+    completed_tags = set()
+
+    for record_field in field_list:
+        if record_field.tag not in completed_tags:
+            # Get the labels we will use for this tag, guaranteed to be unique
+            # even if there are multiple fields with the same tag
+            labels = get_tag_labels(field_list, record_field.tag)
+
+            # Get all other fields from record_fields with the same tag
+            current_fields = [f for f in field_list if f.tag == record_field.tag]
+            # Update dict with labels and formatted values
+            # Vaules are formatted with format_field(), which removes subfield delimiters
+            full_record_dict.update(
+                {
+                    labels[i]: field.format_field()
+                    for i, field in enumerate(current_fields)
+                }
+            )
+            completed_tags.add(record_field.tag)
+
+    return full_record_dict
