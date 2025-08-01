@@ -380,17 +380,19 @@ def process_full_alma_data(field_list: list[Field]) -> dict[str, str]:
     for record_field in field_list:
         if record_field.tag not in completed_tags:
             # Get the labels we will use for this tag, guaranteed to be unique
-            # even if there are multiple fields with the same tag.
+            # even if there are multiple fields with the same tag
             labels = get_tag_labels(field_list, record_field.tag)
 
             # Get all other fields from record_fields with the same tag
             current_fields = [f for f in field_list if f.tag == record_field.tag]
-            for i, field in enumerate(current_fields):
-                # Use the label for this field
-                label = labels[i]
-                # Add the field value to the record dict
-                # Assuming we want the format_field() display, which removes subfield delimiters
-                full_record_dict[label] = field.format_field()
+            # Update dict with labels and formatted values
+            # Vaules are formatted with format_field(), which removes subfield delimiters
+            full_record_dict.update(
+                {
+                    labels[i]: field.format_field()
+                    for i, field in enumerate(current_fields)
+                }
+            )
             completed_tags.add(record_field.tag)
 
     return full_record_dict

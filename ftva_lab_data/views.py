@@ -415,8 +415,13 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> list[dict]:
     for record in records:
         record_dict = {}
         # Extract the record ID and title, used for search results display
-        record_dict["record_id"] = record.get_fields("001")[0].value()
-        record_dict["title"] = record.title
+        record_dict["record_id"] = record.get("001").value()
+        # Get relevant subfields from the 245 field for the title
+        title_subfields = ["a", "b", "p", "n"]
+        title_components = record.get("245").get_subfields(*title_subfields)
+        record_dict["title"] = " ".join(
+            [subfield for subfield in title_components if subfield]
+        )
 
         # Process the full MARC data to get relevant fields processed into a dict
         record_fields = sru_client.get_fields(record, marc_fields)
