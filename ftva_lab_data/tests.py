@@ -36,6 +36,11 @@ from ftva_lab_data.views_utils import (
     process_full_alma_data,
 )
 from ftva_lab_data.table_config import COLUMNS
+from ftva_lab_data.management.commands.extract_inventory_numbers import (
+    compile_regex,
+    build_inventory_number_string,
+)
+import re
 import base64
 from pymarc import Field, Indicators, Subfield
 
@@ -954,3 +959,92 @@ class ParseAlmaDataTestCase(TestCase):
             processed_data["Field 100 #2"], self.field_list[1].format_field()
         )
         self.assertEqual(processed_data["Field 245"], self.field_list[2].format_field())
+
+
+class ExtractInventoryNumbersTestCase(TestCase):
+    """Tests the extract_inventory_numbers management command."""
+
+    def setUp(self):
+        # Test cases to evaluate regular expression used to match inventory numbers
+        # where the first item is an input string
+        # and the second item is the expected output derived from FTVA specs
+        self.test_cases = (
+            ("HFA27M_Reel", "HFA27M"),
+            ("VA13161T_KTLA", "VA13161T"),
+            ("M190816Medea2", "M190816"),
+            ("DVD13360_HouseOfCats_FromDVD_SD_2997FPS_VOB", "DVD13360"),
+            ("GeraldMcBoingBoingShow_T119482_DerTeamfromZwisendorpff", "T119482"),
+            ("XFE1915MX", "XFE1915"),  # invalid suffix case
+            (
+                "Randy_Requiem1",
+                "",
+            ),  # no matching inv # in this case, so should be empty string
+            (
+                "XFE4098M_XFF104M_DamagedLives_Finals",
+                "XFE4098M|XFF104M",
+            ),  # multi-match to pipe-delimited string case
+            (
+                "XVE779T_ZVE780T_OneNightStand_WorldOfLennyBruce_CaptureFiles_SD_2997FPS_YUV",
+                "XVE779T",
+            ),  # XVE is a valid prefix, but ZVE isn't, so only 1 valid inv # in input
+            (
+                "Max_From_DVD_H264",
+                "",
+            ),  # input has pattern look-alike (H264), but no valid inv #
+            (
+                "HARVEST3000AUDIOMAG",
+                "",
+            ),  # like last case, look-alike in middle, but no valid inv #
+            (
+                "M46293SanFernandoCLEANEXPORT3",
+                "M46293",
+            ),  # contains valid inv # (M46293), but also look-alike (T3)
+            # flake8 flagged escape seq (\T), hence raw strings in following cases
+            (
+                r"AAC424\T70123_50Years_Kids_Programming\T70123_50Years_T1",
+                "T70123",
+            ),  # per FTVA, inv #s have 2 or more digits, so T70123 is good, but T1 is invalid
+            (
+                r"AAC442\Title_T01ASYNC_Surround",
+                "",
+            ),  # known false positive--T01 is syntactically valid, but not actual inv #, per FTVA
+            # script should remove these
+            (
+                "4420_ZDV/FE2235T_FE2380TKTLA_SD_TAPE.mov",
+                "FE2235T|FE2380",
+            ),  # FTVA staff confirmed the second match should not include a suffix
+            # i.e. matching the sub-string FE2380TKTLA should yield FE2380 not FE2380T
+            (
+                "Scanner_01/FE3018TKTLAManson/FE3018T_KLTAManson",
+                "FE3018",
+            ),  # FTVA staff confirmed FE3018T in the last path segment as a false positive
+            (
+                "Scanner_01/FE3093TKTLA/FE3093KTLAsd",
+                "FE3093",
+            ),  # FTVA staff confimed FE3093TKTLA should not yield a suffix,
+            # so FE3093 is the valid inv no in this case
+            (
+                "M187774E4Harvest3000Textless/M1877741C4Harvest3000TextlessR1C_01",
+                "M187774",  # M and T prefixed inv nos should have 1 to 6 digits w/o suffix
+            ),
+            (
+                "M120455_Morpheus_In_hell_and_Re_Incarnation_M4v",
+                "M120455",
+            ),  # M4v creates a false positive, which is removed
+            (
+                "T165586_Give_Us_The_Children_Promo_WNBT4NY_FADED_COLOR_FINAL",
+                "T165586",
+            ),  # WNBT4NY should not yield a match
+            (
+                "M1_T2_M1234567_TESTM3TEST_M4",
+                "M1|T2|M123456",
+            ),  # contrived case to test single-letter prefixes
+        )
+
+    def test_regex(self):
+        for input, output in self.test_cases:
+            with self.subTest(input=input, output=output):
+                matches = re.findall(compile_regex(), input)
+                if matches:
+                    inventory_numbers = build_inventory_number_string(matches)
+                    self.assertEqual(inventory_numbers, output)
