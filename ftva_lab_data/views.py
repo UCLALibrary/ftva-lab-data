@@ -417,7 +417,7 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> list[dict]:
         # Extract the record ID and title, used for search results display
         record_dict["record_id"] = record.get("001").value()
         # Get relevant subfields from the 245 field for the title
-        title_subfields = ["a", "b", "p", "n"]
+        title_subfields = ["a", "b", "n", "p"]
         title_components = record.get("245").get_subfields(*title_subfields)
         record_dict["title"] = " ".join(
             [subfield for subfield in title_components if subfield]
