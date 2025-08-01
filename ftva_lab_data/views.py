@@ -399,7 +399,7 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
         return JsonResponse({"error": "Record not found"}, status=404)
 
 
-def get_alma_data(request: HttpRequest, inventory_number: str) -> list[dict]:
+def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     """Fetch Alma records using SRU client.
 
     :param request: The HTTP request object.
@@ -431,9 +431,15 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> list[dict]:
 
         full_data_dicts.append(record_dict)
 
-    # TODO: return a template with the records
-    # For now, just return the list of dictionaries
-    return full_data_dicts
+    return render(
+        request,
+        "external_search_results.html",
+        {
+            "records": full_data_dicts,
+            "inventory_number": inventory_number,
+            "search_type": "alma",
+        },
+    )
 
 
 def get_filemaker_data(request: HttpRequest, inventory_number: str) -> list[dict]:
@@ -491,3 +497,28 @@ def get_filemaker_data(request: HttpRequest, inventory_number: str) -> list[dict
     # TODO: return a template with the records
     # For now, just return the list of dictionaries
     return full_data_dicts
+
+
+def get_external_search_results(
+    request: HttpRequest, inventory_number: str, search_type: str
+) -> HttpResponse:
+    """Fetch external search results for a given inventory number.
+
+    :param request: The HTTP request object.
+    :param inventory_number: The inventory number to search for.
+    :return: Rendered HTML for the external search results.
+    """
+    if search_type == "alma":
+        return get_alma_data(request, inventory_number)
+
+    elif search_type == "fm":
+        # TODO: add Filemaker search view
+        return HttpResponse(
+            "FM search functionality is not yet implemented.",
+            status=501,
+        )
+    else:
+        return HttpResponse(
+            "Invalid search type specified.",
+            status=400,
+        )
