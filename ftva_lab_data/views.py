@@ -25,6 +25,7 @@ from .views_utils import (
     basic_auth_required,
     process_full_alma_data,
     get_specific_filemaker_fields,
+    transform_filemaker_field_name,
 )
 
 
@@ -451,7 +452,7 @@ def get_filemaker_data(request: HttpRequest, inventory_number: str) -> list[dict
     records = fm_client.search_by_inventory_number(inventory_number)
 
     # List of required fields, as defined by FTVA
-    filemaker_fields = [
+    specific_fields = [
         "type",
         "inventory_no",
         "inventory_id",
@@ -475,12 +476,15 @@ def get_filemaker_data(request: HttpRequest, inventory_number: str) -> list[dict
     full_data_dicts = []
 
     for record in records:
-        record = get_specific_filemaker_fields(record, filemaker_fields)
+        filemaker_fields = get_specific_filemaker_fields(record, specific_fields)
         data_dict = {}
 
-        data_dict["record_id"] = record.get("inventory_id", "NO INVENTORY ID")
-        data_dict["title"] = record.get("title", "NO TITLE")
-        data_dict["full_data"] = record
+        data_dict["record_id"] = filemaker_fields.get("inventory_id", "NO INVENTORY ID")
+        data_dict["title"] = filemaker_fields.get("title", "NO TITLE")
+        # Transform the raw FM field names to be cleaner and more consistent
+        data_dict["full_data"] = {
+            transform_filemaker_field_name(k): v for k, v in filemaker_fields.items()
+        }
 
         full_data_dicts.append(data_dict)
 

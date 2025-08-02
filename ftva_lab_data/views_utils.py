@@ -409,8 +409,26 @@ def get_specific_filemaker_fields(
     :return: A dict with the specific fields from the Filemaker Record.
     Fields are only included if they exist in the Record.
     """
+    record_fields = fm_record.to_dict()
     return {
-        field: fm_record[field]
-        for field in specific_fields
-        if field in fm_record.to_dict()
+        field: fm_record[field] for field in specific_fields if field in record_fields
     }
+
+
+def transform_filemaker_field_name(filemaker_field_name: str) -> str:
+    """Transforms a filemaker field name to be more friendly and consistent.
+
+    :param str filemaker_field_name: A Filemaker field name.
+    :return: The transformed field name.
+    """
+
+    # Certain field names are acronyms, so return them all caps.
+    # Otherwise, return sentence case with spaces rather than underscores.
+    to_uppercase = ["spac"]
+
+    if filemaker_field_name in to_uppercase:
+        filemaker_field_name = filemaker_field_name.upper()
+    else:
+        filemaker_field_name = filemaker_field_name.replace("_", " ").capitalize()
+
+    return filemaker_field_name
