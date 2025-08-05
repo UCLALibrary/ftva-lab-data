@@ -59,6 +59,8 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "title": item.title,
         "status": [str(status) for status in item.status.all()],
         "id": item.id,
+        # For use in external search links
+        "inventory_number": item.inventory_number,
     }
     storage_info = {
         "Hard Drive Name": item.hard_drive_name,
