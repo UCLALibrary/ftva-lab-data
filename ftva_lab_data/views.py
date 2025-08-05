@@ -442,7 +442,7 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     )
 
 
-def get_filemaker_data(request: HttpRequest, inventory_number: str) -> list[dict]:
+def get_filemaker_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     """Fetch records using FilemakerClient.
 
     :param request: The HTTP request object.
@@ -494,9 +494,15 @@ def get_filemaker_data(request: HttpRequest, inventory_number: str) -> list[dict
 
         full_data_dicts.append(data_dict)
 
-    # TODO: return a template with the records
-    # For now, just return the list of dictionaries
-    return full_data_dicts
+    return render(
+        request,
+        "external_search_results.html",
+        {
+            "records": full_data_dicts,
+            "inventory_number": inventory_number,
+            "search_type": "filemaker",
+        },
+    )
 
 
 def get_external_search_results(
@@ -512,11 +518,7 @@ def get_external_search_results(
         return get_alma_data(request, inventory_number)
 
     elif search_type == "fm":
-        # TODO: add Filemaker search view
-        return HttpResponse(
-            "FM search functionality is not yet implemented.",
-            status=501,
-        )
+        return get_filemaker_data(request, inventory_number)
     else:
         return HttpResponse(
             "Invalid search type specified.",
