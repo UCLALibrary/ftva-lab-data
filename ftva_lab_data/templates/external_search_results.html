@@ -30,9 +30,20 @@
                 <tr>
                     <td>{{ record.record_id }}</td>
                     <td>{{ record.title }}</td>
-                    <!--TODO: button should display external item details-->
-                    <td><a href=# class="btn btn-sm btn-primary">View Record</a></td> 
+                    <td>
+                        <button 
+                            type="button" 
+                            class="btn btn-sm btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#record-modal-{{ forloop.counter }}">
+                            View Record
+                        </button>
+                    </td> 
                 </tr>
+                {% comment %} Include a modal for each record, 
+                passing the record and the modal index as variables.
+                {% endcomment %}
+                {% include "partials/external_record_modal.html" with record=record modal_index=forloop.counter %}
                 {% endfor %}
             </tbody>
         </table>
