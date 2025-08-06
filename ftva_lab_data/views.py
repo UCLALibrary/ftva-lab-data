@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonRe
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
-from ftva_etl import AlmaSRUClient, FilemakerClient
+from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
 import pandas as pd
 import io
 
@@ -524,3 +524,49 @@ def get_external_search_results(
             "Invalid search type specified.",
             status=400,
         )
+
+
+def generate_metadata_json(
+    request: HttpRequest, record_id: int, inventory_number: str
+) -> JsonResponse | str:
+    """Generate a  JSON metadata record for a given inventory number,
+    by combining data from Alma, Filemaker, and Django.
+
+    :param request: The HTTP request object.
+    :param record_id: The ID of the Django record to use.
+    :param inventory_number: The inventory number to search for in Alma and Filemaker.
+    :return: A JSON record containing the combined metadata.
+    """
+
+    # Get Django record
+    django_record = SheetImport.objects.get(pk=record_id)
+    # Transform the Django record into a dict
+    django_record_data = {
+        field.name: getattr(django_record, field.name)
+        for field in django_record._meta.fields
+    }
+
+    # Get Alma records
+    sru_client = AlmaSRUClient()
+    bib_records = sru_client.search_by_call_number(inventory_number)
+
+    # Get Filemaker records
+    user = settings.FILEMAKER_USER
+    password = settings.FILEMAKER_PASSWORD
+    fm_client = FilemakerClient(user=user, password=password)
+    fm_records = fm_client.search_by_inventory_number(inventory_number)
+
+    # If Alma and FM records are unique, generate JSON metadata
+    if len(bib_records) == 1 and len(fm_records) == 1:
+        metadata = get_mams_metadata(bib_records[0], fm_records[0], django_record_data)
+        # TODO: render a template with the metadata. Returning JSON for now.
+        return JsonResponse(metadata)
+
+    # If either Alma or FM records are not unique, return a message
+    if len(bib_records) > 1 or len(fm_records) > 1:
+        message = (
+            f"Metadata not generated because the search for {inventory_number} "
+            "did not find unique records in Alma and/or Filemaker."
+        )
+        # TODO: render a template with the message. Returning JSON for now.
+        return JsonResponse({"message": message}, status=400)
