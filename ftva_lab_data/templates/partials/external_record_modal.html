@@ -1,0 +1,28 @@
+<div class="modal fade" id="record-modal-{{ modal_index }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="text-muted">Record ID: {{ record.record_id }}</h6>
+                <h5 class="mb-3">{{ record.title }}</h5>
+                
+                {% if record.full_data %}
+                    <dl class="row">
+                        {% for key, value in record.full_data.items %}
+                            <dt class="col-sm-4">{{ key }}</dt>
+                            <dd class="col-sm-8">{{ value }}</dd>
+                        {% endfor %}
+                    </dl>
+                {% else %}
+                    <p class="text-muted">No record details available.</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
