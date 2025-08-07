@@ -1,0 +1,32 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h1 class="modal-title">
+            {% if is_error %}
+            Metadata Error
+            {% else %}
+            JSON Metadata for {{ inventory_number }}
+            {% endif %}
+        </h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        {% if is_error %}
+        <div class="alert alert-danger">
+            <h6 class="alert-heading">Error</h6>
+            <p class="mb-0">{{ message }}</p>
+        </div>
+        {% else %}
+        <div class="mb-3">
+            <h6 class="text-muted">Record ID: {{ record_id }}</h6>
+            <h6 class="text-muted">Inventory Number: {{ inventory_number }}</h6>
+        </div>
+        <div class="bg-light p-3 rounded">
+            <pre class="mb-0"
+                style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em;">{{ metadata|pprint }}</pre>
+        </div>
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</div>
