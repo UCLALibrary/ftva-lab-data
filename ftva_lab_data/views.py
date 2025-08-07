@@ -10,6 +10,7 @@ from django.urls import reverse
 from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
 import pandas as pd
 import io
+import json
 
 from .forms import ItemForm
 from .models import SheetImport
@@ -532,7 +533,7 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
         message = f"No inventory number found for record {record_id}."
         return render(
             request,
-            "partials/metadata_modal.html",
+            "partials/metadata_modal_content.html",
             {
                 "message": message,
                 "is_error": True,
@@ -554,11 +555,13 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
     # If Alma and FM records are unique, generate JSON metadata
     if bib_records_count == 1 and fm_records_count == 1:
         metadata = get_mams_metadata(bib_records[0], fm_records[0], django_record_data)
+        # Format the metadata as JSON for display in the template
+        metadata_json = json.dumps(metadata, indent=2)
         return render(
             request,
-            "partials/metadata_modal.html",
+            "partials/metadata_modal_content.html",
             {
-                "metadata": metadata,
+                "metadata_json": metadata_json,
                 "inventory_number": inventory_number,
                 "record_id": record_id,
             },
@@ -573,6 +576,6 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
     # Render a template with the message.
     return render(
         request,
-        "partials/metadata_modal.html",
+        "partials/metadata_modal_content.html",
         {"message": message, "is_error": True},
     )

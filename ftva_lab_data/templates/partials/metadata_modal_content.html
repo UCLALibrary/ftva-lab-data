@@ -1,18 +1,18 @@
 <div class="modal-content">
     <div class="modal-header">
-        <h1 class="modal-title">
+        <h5 class="modal-title">
             {% if is_error %}
             Metadata Error
             {% else %}
-            JSON Metadata for {{ inventory_number }}
+            Metadata JSON for {{ inventory_number }}
             {% endif %}
-        </h1>
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
     </div>
     <div class="modal-body">
         {% if is_error %}
-        <div class="alert alert-danger">
-            <h6 class="alert-heading">Error</h6>
+        <div class="alert alert-warning">
+            <h6 class="alert-heading">Warning</h6>
             <p class="mb-0">{{ message }}</p>
         </div>
         {% else %}
@@ -22,7 +22,7 @@
         </div>
         <div class="bg-light p-3 rounded">
             <pre class="mb-0"
-                style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em;">{{ metadata|pprint }}</pre>
+                style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em;">{{ metadata_json }}</pre>
         </div>
         {% endif %}
     </div>
