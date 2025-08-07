@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: uclalibrary/ftva-lab-data
-  tag: v1.0.5
+  tag: v1.0.6
   pullPolicy: Always
 
 nameOverride: ""
@@ -58,6 +58,8 @@ django:
       # Application database used by django
       db_password: "/systems/prodrke01/ftva-lab-data/db_password"
       django_secret_key: "/systems/prodrke01/ftva-lab-data/django_secret_key"
+      filemaker_password: "/systems/prodrke01/ftva-lab-data/filemaker_password"
+      filemaker_user: "/systems/prodrke01/ftva-lab-data/filemaker_user"
 
 # Memory request and limit both set to 1Gi to deal with out of memory
 # errors when running full CSV export.
