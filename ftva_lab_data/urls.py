@@ -22,4 +22,9 @@ urlpatterns = [
         views.get_external_search_results,
         name="get_external_search_results",
     ),
+    path(
+        "metadata_json/<int:record_id>/",
+        views.generate_metadata_json,
+        name="generate_metadata_json",
+    ),
 ]

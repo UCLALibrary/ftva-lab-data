@@ -434,3 +434,27 @@ def transform_filemaker_field_name(filemaker_field_name: str) -> str:
         filemaker_field_name = filemaker_field_name.replace("_", " ").capitalize()
 
     return filemaker_field_name
+
+
+def transform_record_to_dict(record_id: int) -> dict:
+    """Transforms a Django record to a dictionary.
+
+    :param int record_id: The ID of the record to transform.
+    :return: A dictionary with the record data.
+    """
+
+    record = SheetImport.objects.get(id=record_id)
+    record_data = {
+        field.name: getattr(record, field.name) for field in record._meta.fields
+    }
+    # Add Status many-to-many field data
+    record_data["status"] = [status.status for status in record.status.all()]
+    # Add Assigned User data if it exists
+    if record.assigned_user:
+        record_data["assigned_user"] = {
+            "id": record.assigned_user.id,
+            "username": record.assigned_user.username,
+            "full_name": record.assigned_user.get_full_name(),
+        }
+
+    return record_data

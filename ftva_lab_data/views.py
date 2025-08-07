@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonRe
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
-from ftva_etl import AlmaSRUClient, FilemakerClient
+from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
 import pandas as pd
 import io
 
@@ -26,6 +26,7 @@ from .views_utils import (
     process_full_alma_data,
     get_specific_filemaker_fields,
     transform_filemaker_field_name,
+    transform_record_to_dict,
 )
 
 
@@ -381,19 +382,7 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
     :return: JSON response containing the record data.
     """
     try:
-        record = SheetImport.objects.get(id=record_id)
-        record_data = {
-            field.name: getattr(record, field.name) for field in record._meta.fields
-        }
-        # Add Status many-to-many field data
-        record_data["status"] = [status.status for status in record.status.all()]
-        # Add Assigned User data if it exists
-        if record.assigned_user:
-            record_data["assigned_user"] = {
-                "id": record.assigned_user.id,
-                "username": record.assigned_user.username,
-                "full_name": record.assigned_user.get_full_name(),
-            }
+        record_data = transform_record_to_dict(record_id)
         return JsonResponse(record_data)
     except SheetImport.DoesNotExist:
         return JsonResponse({"error": "Record not found"}, status=404)
@@ -524,3 +513,50 @@ def get_external_search_results(
             "Invalid search type specified.",
             status=400,
         )
+
+
+def generate_metadata_json(request: HttpRequest, record_id: int) -> JsonResponse | str:
+    """Generate a  JSON metadata record for a given inventory number,
+    by combining data from Alma, Filemaker, and Django.
+
+    :param request: The HTTP request object.
+    :param record_id: The ID of the Django record to use.
+    :return: A JSON record containing the combined metadata.
+    """
+
+    django_record_data = transform_record_to_dict(record_id)
+    inventory_number = django_record_data.get("inventory_number")
+    # The template should ensure that this function is only called for records
+    # with an inventory number, but adding a check to be sure.
+    if not inventory_number:
+        # TODO: render a template.
+        return JsonResponse(
+            {"message": f"No inventory number found for record {record_id}."}
+        )
+
+    # Get Alma records
+    sru_client = AlmaSRUClient()
+    bib_records = sru_client.search_by_call_number(inventory_number)
+    bib_records_count = len(bib_records)
+
+    # Get Filemaker records
+    user = settings.FILEMAKER_USER
+    password = settings.FILEMAKER_PASSWORD
+    fm_client = FilemakerClient(user=user, password=password)
+    fm_records = fm_client.search_by_inventory_number(inventory_number)
+    fm_records_count = len(fm_records)
+
+    # If Alma and FM records are unique, generate JSON metadata
+    if bib_records_count == 1 and fm_records_count == 1:
+        metadata = get_mams_metadata(bib_records[0], fm_records[0], django_record_data)
+        # TODO: render a template with the metadata. Returning JSON for now.
+        return JsonResponse(metadata)
+
+    # Otherwise, Alma and/or FM records are either not unique or not found,
+    # so return a message with the counts of records found
+    message = (
+        f"Metadata not generated because the search for inventory number {inventory_number} "
+        f"found {bib_records_count} Alma and {fm_records_count} Filemaker records."
+    )
+    # TODO: render a template with the message. Returning JSON for now.
+    return JsonResponse({"message": message})
