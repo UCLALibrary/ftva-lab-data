@@ -26,6 +26,7 @@ from .views_utils import (
     process_full_alma_data,
     get_specific_filemaker_fields,
     transform_filemaker_field_name,
+    transform_record_to_dict,
 )
 
 
@@ -381,19 +382,7 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
     :return: JSON response containing the record data.
     """
     try:
-        record = SheetImport.objects.get(id=record_id)
-        record_data = {
-            field.name: getattr(record, field.name) for field in record._meta.fields
-        }
-        # Add Status many-to-many field data
-        record_data["status"] = [status.status for status in record.status.all()]
-        # Add Assigned User data if it exists
-        if record.assigned_user:
-            record_data["assigned_user"] = {
-                "id": record.assigned_user.id,
-                "username": record.assigned_user.username,
-                "full_name": record.assigned_user.get_full_name(),
-            }
+        record_data = transform_record_to_dict(record_id)
         return JsonResponse(record_data)
     except SheetImport.DoesNotExist:
         return JsonResponse({"error": "Record not found"}, status=404)
@@ -526,25 +515,24 @@ def get_external_search_results(
         )
 
 
-def generate_metadata_json(
-    request: HttpRequest, record_id: int, inventory_number: str
-) -> JsonResponse | str:
+def generate_metadata_json(request: HttpRequest, record_id: int) -> JsonResponse | str:
     """Generate a  JSON metadata record for a given inventory number,
     by combining data from Alma, Filemaker, and Django.
 
     :param request: The HTTP request object.
     :param record_id: The ID of the Django record to use.
-    :param inventory_number: The inventory number to search for in Alma and Filemaker.
     :return: A JSON record containing the combined metadata.
     """
 
-    # Get Django record
-    django_record = SheetImport.objects.get(pk=record_id)
-    # Transform the Django record into a dict
-    django_record_data = {
-        field.name: getattr(django_record, field.name)
-        for field in django_record._meta.fields
-    }
+    django_record_data = transform_record_to_dict(record_id)
+    inventory_number = django_record_data.get("inventory_number")
+    # The template should ensure that this function is only called for records
+    # with an inventory number, but adding a check to be sure.
+    if not inventory_number:
+        # TODO: render a template.
+        return JsonResponse(
+            {"message": f"No inventory number found for record {record_id}."}
+        )
 
     # Get Alma records
     sru_client = AlmaSRUClient()
@@ -571,4 +559,4 @@ def generate_metadata_json(
         f"found {bib_records_count} Alma and {fm_records_count} Filemaker records."
     )
     # TODO: render a template with the message. Returning JSON for now.
-    return JsonResponse({"message": message}, status=400)
+    return JsonResponse({"message": message})
