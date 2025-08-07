@@ -549,24 +549,26 @@ def generate_metadata_json(
     # Get Alma records
     sru_client = AlmaSRUClient()
     bib_records = sru_client.search_by_call_number(inventory_number)
+    bib_records_count = len(bib_records)
 
     # Get Filemaker records
     user = settings.FILEMAKER_USER
     password = settings.FILEMAKER_PASSWORD
     fm_client = FilemakerClient(user=user, password=password)
     fm_records = fm_client.search_by_inventory_number(inventory_number)
+    fm_records_count = len(fm_records)
 
     # If Alma and FM records are unique, generate JSON metadata
-    if len(bib_records) == 1 and len(fm_records) == 1:
+    if bib_records_count == 1 and fm_records_count == 1:
         metadata = get_mams_metadata(bib_records[0], fm_records[0], django_record_data)
         # TODO: render a template with the metadata. Returning JSON for now.
         return JsonResponse(metadata)
 
-    # If either Alma or FM records are not unique, return a message
-    if len(bib_records) > 1 or len(fm_records) > 1:
-        message = (
-            f"Metadata not generated because the search for {inventory_number} "
-            "did not find unique records in Alma and/or Filemaker."
-        )
-        # TODO: render a template with the message. Returning JSON for now.
-        return JsonResponse({"message": message}, status=400)
+    # Otherwise, Alma and/or FM records are either not unique or not found,
+    # so return a message with the counts of records found
+    message = (
+        f"Metadata not generated because the search for inventory number {inventory_number} "
+        f"found {bib_records_count} Alma and {fm_records_count} Filemaker records."
+    )
+    # TODO: render a template with the message. Returning JSON for now.
+    return JsonResponse({"message": message}, status=400)
