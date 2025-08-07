@@ -56,7 +56,9 @@ django:
     # Include below if enabled: "true"
     #  db_password: ""
     #  django_secret_key: ""
-  
+    #  filemaker_password: ""
+    #  filemaker_user: ""
+
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

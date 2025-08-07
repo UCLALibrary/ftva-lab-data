@@ -10,6 +10,7 @@ from django.urls import reverse
 from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
 import pandas as pd
 import io
+import json
 
 from .forms import ItemForm
 from .models import SheetImport
@@ -515,7 +516,7 @@ def get_external_search_results(
         )
 
 
-def generate_metadata_json(request: HttpRequest, record_id: int) -> JsonResponse | str:
+def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse:
     """Generate a  JSON metadata record for a given inventory number,
     by combining data from Alma, Filemaker, and Django.
 
@@ -529,9 +530,14 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> JsonResponse
     # The template should ensure that this function is only called for records
     # with an inventory number, but adding a check to be sure.
     if not inventory_number:
-        # TODO: render a template.
-        return JsonResponse(
-            {"message": f"No inventory number found for record {record_id}."}
+        message = f"No inventory number found for record {record_id}."
+        return render(
+            request,
+            "partials/metadata_modal_content.html",
+            {
+                "message": message,
+                "is_error": True,
+            },
         )
 
     # Get Alma records
@@ -549,8 +555,17 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> JsonResponse
     # If Alma and FM records are unique, generate JSON metadata
     if bib_records_count == 1 and fm_records_count == 1:
         metadata = get_mams_metadata(bib_records[0], fm_records[0], django_record_data)
-        # TODO: render a template with the metadata. Returning JSON for now.
-        return JsonResponse(metadata)
+        # Format the metadata as JSON for display in the template
+        metadata_json = json.dumps(metadata, indent=2)
+        return render(
+            request,
+            "partials/metadata_modal_content.html",
+            {
+                "metadata_json": metadata_json,
+                "inventory_number": inventory_number,
+                "record_id": record_id,
+            },
+        )
 
     # Otherwise, Alma and/or FM records are either not unique or not found,
     # so return a message with the counts of records found
@@ -558,5 +573,9 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> JsonResponse
         f"Metadata not generated because the search for inventory number {inventory_number} "
         f"found {bib_records_count} Alma and {fm_records_count} Filemaker records."
     )
-    # TODO: render a template with the message. Returning JSON for now.
-    return JsonResponse({"message": message})
+    # Render a template with the message.
+    return render(
+        request,
+        "partials/metadata_modal_content.html",
+        {"message": message, "is_error": True},
+    )

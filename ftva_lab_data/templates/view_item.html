@@ -16,25 +16,35 @@
             <p class="fs-5 mb-1">{% if header_info.file_name %} File: {{ header_info.file_name }} {% endif %}</p>
             <p class="fs-5 mb-1">{% if header_info.title %} (Title: {{ header_info.title }}) {% endif %}</p>
             <p class="fs-5 mb-1">{% if header_info.id %} Record ID: {{ header_info.id }} {% endif %}</p>
-            <p class="fs-5 mb-1">{% if header_info.status %} Status: 
+            <p class="fs-5 mb-1">{% if header_info.status %} Status:
                 {% for status in header_info.status %}
-                    <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
+                <span class="badge rounded-pill bg-info text-dark m-1">{{ status }}</span>
                 {% endfor %}
-            {% endif %}</p>
+                {% endif %}
+            </p>
         </div>
         {% if header_info.inventory_number %}
-            <div class="d-flex flex-column align-items-end gap-2">
-                <a class="btn btn-secondary"
-                    href="{% url 'get_external_search_results' search_type='alma' inventory_number=header_info.inventory_number %}"
-                    target="_blank">
-                        View Alma Records
-                </a>
-                <a class="btn btn-secondary"
-                    href="{% url 'get_external_search_results' search_type='fm' inventory_number=header_info.inventory_number %}"
-                    target="_blank">
-                        View Filemaker Records
-                </a>
-            </div>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <a class="btn btn-secondary"
+                href="{% url 'get_external_search_results' search_type='alma' inventory_number=header_info.inventory_number %}"
+                target="_blank">
+                View Alma Records
+            </a>
+            <a class="btn btn-secondary"
+                href="{% url 'get_external_search_results' search_type='fm' inventory_number=header_info.inventory_number %}"
+                target="_blank">
+                View Filemaker Records
+            </a>
+            {% comment %}
+            This button uses Bootstrap to open the metadata modal
+            and HTMX to swap the modal content when the request completes.
+            {% endcomment %}
+            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#metadata-modal"
+                hx-get="{% url 'generate_metadata_json' header_info.id %}" hx-target="#metadata-modal-content"
+                hx-trigger="click">
+                View Metadata
+            </button>
+        </div>
         {% endif %}
 
     </div>
@@ -45,16 +55,14 @@
             <button id="toggle-advanced-fields" class="btn btn-secondary" type="button"
                 hx-on:click="toggleAdvancedFields(this)">Show Advanced Fields</button>
             {% if perms.ftva_lab_data.change_sheetimport %}
-            <a class="btn btn-primary"
-            href="{% url 'edit_item' header_info.id %}?{{ url_parameters }}">
-            Edit This Record
+            <a class="btn btn-primary" href="{% url 'edit_item' header_info.id %}?{{ url_parameters }}">
+                Edit This Record
             </a>
             {% endif %}
         </div>
 
-        <a class="btn btn-outline-secondary"
-        href="{% url 'search_results' %}?{{ url_parameters }}">
-        Back to Search
+        <a class="btn btn-outline-secondary" href="{% url 'search_results' %}?{{ url_parameters }}">
+            Back to Search
         </a>
     </div>
 
@@ -65,9 +73,9 @@
                 <div class="card-body">
                     <h5 class="card-title">Storage Information </h5>
                     {% for header, data in storage_info.items %}
-                        {% if data %}
-                            <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
-                        {% endif %}
+                    {% if data %}
+                    <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -78,10 +86,10 @@
                 <div class="card-body">
                     <h5 class="card-title">File Information</h5>
                     {% for header, data in file_info.items %}
-                        {% if data %}
-                            <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
-                        {% endif %}
-                    {% endfor %}    
+                    {% if data %}
+                    <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
+                    {% endif %}
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -91,9 +99,9 @@
                 <div class="card-body">
                     <h5 class="card-title">Inventory Information</h5>
                     {% for header, data in inventory_info.items %}
-                        {% if data %}
-                            <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
-                        {% endif %}
+                    {% if data %}
+                    <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -106,16 +114,39 @@
             <div class="card-body row">
                 <div class="col">
                     {% for header, data in advanced_info.items %}
-                        {% if data %}
-                            <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
-                        {% endif %}
-                        <!--- New div after 18 rows of data-->
-                        {% if forloop.counter == 19 %}
-                            </div>
-                            <div class="col">
-                        {% endif %}
+                    {% if data %}
+                    <p class="card-text"><strong>{{ header }}:</strong> {{ data }}</p>
+                    {% endif %}
+                    <!--- New div after 18 rows of data-->
+                    {% if forloop.counter == 19 %}
+                </div>
+                <div class="col">
+                    {% endif %}
                     {% endfor %}
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% comment %}
+The modal will show a loading state when first opened. 
+HTMX will swap `#metadata-modal-content` when the request completes.
+{% endcomment %}
+<div class="modal fade" id="metadata-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content" id="metadata-modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <div class="spinner-border"></div>
+                    <div>Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
