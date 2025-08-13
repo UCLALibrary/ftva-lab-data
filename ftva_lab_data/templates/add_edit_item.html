@@ -11,7 +11,8 @@
 <div class="container">
     <h1>{{ title }}</h1>
     {% if item %}
-        <p class="fs-5">Editing Item: {{ item.id }}</p>
+        <p class="fs-5 mb-0">Editing Item: {{ item.id }}</p>
+        <p><small class="text-muted">UUID: {{ item.uuid }}</small></p>
     {% endif %}
     <!-- Buttons -->
     <div class="d-flex justify-content-between mb-3">
