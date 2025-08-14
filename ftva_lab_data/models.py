@@ -77,6 +77,47 @@ class SheetImport(models.Model):
         related_name="sheet_imports",
     )
     date_of_ingest = models.DateField(blank=True, null=True)
+    file_type = models.CharField(
+        max_length=10,
+        blank=True,
+        choices=[
+            ("MOV", "MOV"),
+            ("DPX", "DPX"),
+            ("WAV", "WAV"),
+            ("DCP", "DCP"),
+            ("MP4", "MP4"),
+            ("AVI", "AVI"),
+            ("MKV", "MKV"),
+            ("FLV", "FLV"),
+            ("F4V", "F4V"),
+            ("MPEG-1", "MPEG-1"),
+            ("MPEG-2", "MPEG-2"),
+            ("M4V", "M4V"),
+            ("WMV", "WMV"),
+            ("MP3", "MP3"),
+            ("WEBM", "WEBM"),
+            ("VOB", "VOB"),
+            ("OGG", "OGG"),
+            ("DIRAC", "DIRAC"),
+            ("GIFV", "GIFV"),
+            ("MNG", "MNG"),
+            ("MTS", "MTS"),
+            ("M2TS", "M2TS"),
+            ("TS", "TS"),
+            ("YUV", "YUV"),
+            ("RM", "RM"),
+            ("RMVB", "RMVB"),
+            ("VIV", "VIV"),
+            ("ASF", "ASF"),
+            ("AMV", "AMV"),
+            ("SVI", "SVI"),
+            ("MXF", "MXF"),
+            ("ROQ", "ROQ"),
+            ("NSV", "NSV"),
+            ("3GPP", "3GPP"),
+            ("3GPP2", "3GPP2"),
+        ],
+    )
     history = HistoricalRecords()
 
     def __str__(self):
