@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from simple_history.models import HistoricalRecords
+from uuid import uuid4
 
 
 class SheetImport(models.Model):
@@ -119,6 +120,7 @@ class SheetImport(models.Model):
         ],
     )
     history = HistoricalRecords()
+    uuid = models.UUIDField(default=uuid4, editable=False)
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"

@@ -43,7 +43,8 @@ def _get_combined_field_data(record: SheetImport) -> str:
         [
             getattr(record, field.name)
             for field in record._meta.get_fields()
-            if field.name not in ("id", "assigned_user", "status", "date_of_ingest")
+            if field.name
+            not in ("id", "assigned_user", "status", "date_of_ingest", "uuid")
         ]
     )
     # Remove any leading/trailing spaces and return the result.

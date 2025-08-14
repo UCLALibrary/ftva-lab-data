@@ -77,6 +77,7 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     }
     inventory_info = {
         "Inventory Number": item.inventory_number,
+        "UUID": item.uuid,
         "Date of Ingest": item.date_of_ingest,
         "Source Barcode": item.source_barcode,
         "Notes": item.notes,
