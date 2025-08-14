@@ -40,7 +40,7 @@ def reverse_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("ftva_lab_data", "0009_historicalsheetimport_date_of_ingest_and_more"),
+        ("ftva_lab_data", "0010_historicalsheetimport_file_type_and_more"),
     ]
 
     operations = [
