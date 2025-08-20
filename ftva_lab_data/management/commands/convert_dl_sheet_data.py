@@ -27,6 +27,7 @@ def get_field_names(sheet_id: str) -> list[str]:
             "carrier_a_location",
             "carrier_b_location",
             "date_of_ingest",
+            "no_ingest_reason",
             "file_type",
             "asset_type",
         ]

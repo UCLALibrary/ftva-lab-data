@@ -21,6 +21,7 @@ class ItemForm(forms.ModelForm):
             "asset_type",
             "inventory_number",
             "date_of_ingest",
+            "no_ingest_reason",
             "source_inventory_number",
             "source_barcode",
             "title",
