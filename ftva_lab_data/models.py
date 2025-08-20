@@ -119,6 +119,20 @@ class SheetImport(models.Model):
             ("3GPP2", "3GPP2"),
         ],
     )
+    asset_type = models.CharField(
+        max_length=25,
+        blank=True,
+        choices=[
+            ("Raw", "Raw"),
+            ("Intermediate", "Intermediate"),
+            ("Final Version", "Final Version"),
+            ("Derivative", "Derivative"),
+            ("Exhibition Copy", "Exhibition Copy"),
+            ("Access", "Access"),
+            ("Proxy", "Proxy"),
+            ("Unknown", "Unknown"),
+        ],
+    )
     history = HistoricalRecords()
     uuid = models.UUIDField(default=uuid4, editable=False)
 

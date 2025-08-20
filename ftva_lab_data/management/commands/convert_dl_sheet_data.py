@@ -26,6 +26,9 @@ def get_field_names(sheet_id: str) -> list[str]:
             "assigned_user_id",
             "carrier_a_location",
             "carrier_b_location",
+            "date_of_ingest",
+            "file_type",
+            "asset_type",
         ]
 
         field_names = [
