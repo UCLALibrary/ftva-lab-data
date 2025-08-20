@@ -74,6 +74,7 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "Sub-Folder Name": item.sub_folder_name,
         "File Name": item.file_name,
         "File Type": item.file_type,
+        "Asset Type": item.asset_type,
     }
     inventory_info = {
         "Inventory Number": item.inventory_number,
@@ -150,6 +151,7 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
         "sub_folder_name",
         "file_name",
         "file_type",
+        "asset_type",
         "inventory_number",
         "date_of_ingest",
         "notes",

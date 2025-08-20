@@ -18,6 +18,7 @@ class ItemForm(forms.ModelForm):
             "sub_folder_name",
             "file_name",
             "file_type",
+            "asset_type",
             "inventory_number",
             "date_of_ingest",
             "source_inventory_number",
