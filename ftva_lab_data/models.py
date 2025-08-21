@@ -133,6 +133,21 @@ class SheetImport(models.Model):
             ("Unknown", "Unknown"),
         ],
     )
+    no_ingest_reason = models.CharField(
+        max_length=50,
+        blank=True,
+        choices=[
+            ("Unnecessary Deliverable Export", "Unnecessary Deliverable Export"),
+            ("Deposit/No Docs", "Deposit/No Docs"),
+            ("Gift/No Docs", "Gift/No Docs"),
+            ("Other Permission/No Docs", "Other Permission/No Docs"),
+            (
+                "Docs OK - Superseded by another version",
+                "Docs OK - Superseded by another version",
+            ),
+            ("Docs OK/Other - See Notes", "Docs OK/Other - See Notes"),
+        ],
+    )
     history = HistoricalRecords()
     uuid = models.UUIDField(default=uuid4, editable=False)
 
