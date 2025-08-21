@@ -463,5 +463,8 @@ def transform_record_to_dict(record_id: int) -> dict:
             "username": record.assigned_user.username,
             "full_name": record.assigned_user.get_full_name(),
         }
+    # Convert UUID to string, as UUID object is not JSON-serializable and
+    # will be needed for that later.
+    record_data["uuid"] = str(record_data["uuid"])
 
     return record_data

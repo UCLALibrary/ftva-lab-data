@@ -1,3 +1,4 @@
+import json
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User, Group
@@ -34,6 +35,7 @@ from ftva_lab_data.views_utils import (
     count_tags,
     get_tag_labels,
     process_full_alma_data,
+    transform_record_to_dict,
 )
 from ftva_lab_data.table_config import COLUMNS
 from ftva_lab_data.management.commands.extract_inventory_numbers import (
@@ -1048,3 +1050,26 @@ class ExtractInventoryNumbersTestCase(TestCase):
                 if matches:
                     inventory_numbers = build_inventory_number_string(matches)
                     self.assertEqual(inventory_numbers, output)
+
+
+class MetadataTestCase(TestCase):
+    """Tests associated with MAMS ETL metadata, from the Django perspective."""
+
+    def setUp(self):
+        self.item_for_metadata = SheetImport.objects.create(
+            file_name="Some file", inventory_number="inv_no"
+        )
+
+    def test_django_data_is_serializable(self):
+        django_data = transform_record_to_dict(self.item_for_metadata.pk)
+        # Make sure there's a UUID in the data, as a string, not a UUID().
+        uuid = django_data.get("uuid")
+        self.assertIsInstance(uuid, str)
+
+        # If it's not serializable to JSON, this will raise a TypeError.
+        # Here we're just confirming that the JSON conversion succeeds.
+        json_data = json.dumps(django_data)
+
+        # Double-check that the troublesome data
+        # ("uuid": "value unimportant") is in fact included.
+        self.assertIn('"uuid":', json_data)
