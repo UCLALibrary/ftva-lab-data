@@ -1,3 +1,4 @@
+from random import choices
 from django.db import models
 from django.conf import settings
 from simple_history.models import HistoricalRecords
@@ -150,6 +151,11 @@ class SheetImport(models.Model):
     )
     history = HistoricalRecords()
     uuid = models.UUIDField(default=uuid4, null=False, unique=True, editable=False)
+    media_type = models.CharField(
+        max_length=10,
+        blank=True,
+        choices=[("video", "video"), ("audio", "audio"), ("image", "image")],
+    )
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
