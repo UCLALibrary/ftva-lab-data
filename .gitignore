@@ -183,4 +183,9 @@ cython_debug/
 staticfiles/
 
 # Data files
+*.csv
 *.xlsx
+
+# Backup files
+*.tar
+*.tar.gz
