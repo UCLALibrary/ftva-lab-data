@@ -89,7 +89,20 @@ The container runs via `docker_scripts/entrypoint.sh`, which
 
    ```$ docker compose down```
 
+### Importing production database
+
+**Note**: This will fully replace your local development database.
+
+1. Get a copy of a recent database dump, either from a teammate or by opening a ticket with the Digital Infrastructure team.  The database dump is from nightly production backups, and is delivered as a compressed archive containing multiple files, like `pg_ftva-digital-data-2025-08-26.d.tar.gz`.  This file can be placed anywhere, like `/tmp/`, and does not need to be in your project directory.
+2. Start your development system, and wait for the database to be available: `docker compose up -d`
+3. Run: `docker_scripts/import_prod_db.sh /path/to/database_dump_file.tar.gz`
+4. Within a few seconds, you should see a long list of messages from `pg_restore`.  If no errors, all went correctly.
+
+This will copy the dump file to the database container, unpack it, and import it, replacing all content in the original database.
+
 ### Loading data
+
+**Note**: None of these steps are necessary for development.  These are scripts and Django management commands which were used for specific data transformations, documented here for reference.
 
 #### Converting data for import
 
