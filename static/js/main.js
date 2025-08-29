@@ -143,3 +143,44 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 });
+
+// Handle suggestions for carrier values on location update page
+document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("carrier-suggestion")) {
+        document.getElementById("carrier").value = e.target.textContent;
+        document.getElementById("carrier-suggestions").innerHTML = "";
+    }
+});
+
+// Carrier suggestion selection enforcement
+document.addEventListener("DOMContentLoaded", function () {
+    let carrierSelected = false;
+    const carrierInput = document.getElementById("carrier");
+    const suggestions = document.getElementById("carrier-suggestions");
+    const form = carrierInput?.closest("form");
+
+    if (carrierInput && suggestions && form) {
+        // Reset flag when user types
+        carrierInput.addEventListener("input", function () {
+            carrierSelected = false;
+        });
+
+        // Set flag when a suggestion is clicked
+        suggestions.addEventListener("click", function (e) {
+            if (e.target.classList.contains("carrier-suggestion")) {
+                carrierInput.value = e.target.textContent;
+                carrierSelected = true;
+                suggestions.innerHTML = "";
+            }
+        });
+
+        // Prevent form submit if not selected from suggestions
+        form.addEventListener("submit", function (e) {
+            if (!carrierSelected) {
+                e.preventDefault();
+                alert("Please select a carrier from the suggestions.");
+                carrierInput.focus();
+            }
+        });
+    }
+});
