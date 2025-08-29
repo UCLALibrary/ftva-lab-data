@@ -27,4 +27,8 @@ urlpatterns = [
         views.generate_metadata_json,
         name="generate_metadata_json",
     ),
+    path(
+        "set_carrier_location/", views.set_carrier_location, name="set_carrier_location"
+    ),
+    path("carrier-suggestions/", views.carrier_suggestions, name="carrier_suggestions"),
 ]
