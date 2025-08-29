@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+<div id="messages">
+    {% include "partials/messages.html" %}
+</div>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Set Carrier Location</h2>
+    <form method="post" action="{% url 'set_carrier_location' %}">
+        {% csrf_token %}
+        <div class="mb-3 position-relative">
+            <label for="carrier" class="form-label">Carrier</label>
+            <input type="text"
+                class="form-control"
+                id="carrier"
+                name="carrier"
+                required
+                autocomplete="off"
+                hx-get="{% url 'carrier_suggestions' %}"
+                hx-trigger="keyup changed delay:300ms"
+                hx-target="#carrier-suggestions"
+                hx-params="*">
+            <div id="carrier-suggestions"></div>
+        </div>
+        <div class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input type="text" class="form-control" id="location" name="location" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Set Location</button>
+    </form>
+    {% if message %}
+    <div class="alert alert-info mt-4" role="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

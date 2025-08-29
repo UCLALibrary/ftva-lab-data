@@ -579,3 +579,68 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
         "partials/metadata_modal_content.html",
         {"message": message, "is_error": True},
     )
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.change_sheetimport",
+    raise_exception=True,
+)
+def set_carrier_location(request: HttpRequest) -> HttpResponse:
+    """Set the carrier location for all items in the database.
+
+    :param request: The HTTP request object.
+    :return: Rendered template for setting carrier location.
+    """
+    if request.method == "POST":
+        new_location = request.POST.get("location", "").strip()
+        if new_location:
+            carrier = request.POST.get("carrier", "").strip()
+            carrier_a_objects = SheetImport.objects.filter(carrier_a=carrier)
+            carrier_b_objects = SheetImport.objects.filter(carrier_b=carrier)
+            carrier_a_objects.update(carrier_a_location=new_location)
+            carrier_b_objects.update(carrier_b_location=new_location)
+            messages.success(
+                request,
+                (
+                    f"Carrier locations updated successfully for "
+                    f"{carrier_a_objects.count() + carrier_b_objects.count()} items."
+                ),
+            )
+            return redirect("search_results")
+        else:
+            messages.error(request, "Please enter a carrier location.")
+            return render(request, "set_carrier_location.html")
+
+    return render(request, "set_carrier_location.html")
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.change_sheetimport",
+    raise_exception=True,
+)
+def carrier_suggestions(request):
+    query = request.GET.get("carrier", "")
+    # Don't show suggestions for empty query
+    if not query:
+        return HttpResponse("")
+
+    # Get matching carrier_a and carrier_b values
+    carrier_a_matches = SheetImport.objects.filter(
+        carrier_a__icontains=query
+    ).values_list("carrier_a", flat=True)
+    carrier_b_matches = SheetImport.objects.filter(
+        carrier_b__icontains=query
+    ).values_list("carrier_b", flat=True)
+
+    # Combine, deduplicate, and filter out empty values
+    # Take only first 10 matches for display
+    carrier_list = sorted(
+        set([carrier for carrier in list(carrier_a_matches) + list(carrier_b_matches)])
+    )[:10]
+
+    html = render_to_string(
+        "partials/carrier_suggestions.html", {"carriers": carrier_list}
+    )
+    return HttpResponse(html)
