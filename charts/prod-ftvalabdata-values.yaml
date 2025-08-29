@@ -49,6 +49,12 @@ django:
     db_user: "ftva-digital-data"
     db_host: "p-d-postgres.library.ucla.edu"
     db_port: 5432
+    email_backend: "django.core.mail.backends.smtp.EmailBackend"
+    email_smtp_server: "smtp.ucla.edu"
+    # UCLA smtp uses no authentication nor TLS
+    email_smtp_port: 25
+    email_from_address: "softwaredev-systems@library.ucla.edu"
+    email_password: ""
 
   externalSecrets:
     enabled: "true"
