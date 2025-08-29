@@ -11,6 +11,9 @@
             {% bootstrap_form form layout="horizontal" %}
             {% bootstrap_button button_type="submit" content="Log In" %}
         </form>
+        <p>
+            <a href="{% url 'password_reset' %}">Forgot your password?</a>
+        </p>
     </div>
 </div>
 {% endblock %}
