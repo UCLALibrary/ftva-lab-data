@@ -42,6 +42,9 @@ from ftva_lab_data.management.commands.extract_inventory_numbers import (
     compile_regex,
     build_inventory_number_string,
 )
+from ftva_lab_data.management.commands.set_hard_drive_location import (
+    set_hard_drive_location,
+)
 import re
 import base64
 from pymarc import Field, Indicators, Subfield
@@ -1073,8 +1076,76 @@ class MetadataTestCase(TestCase):
         # Double-check that the troublesome data
         # ("uuid": "value unimportant") is in fact included.
         self.assertIn('"uuid":', json_data)
+        
+class SetHardDriveLocationTestCase(TestCase):
+    """Tests the set_hard_drive_location management command."""
 
+    fixtures = ["item_statuses.json"]
 
+    def test_set_hard_drive_location_no_status(self):
+        # Create a SheetImport object without a status
+        item = SheetImport.objects.create(
+            file_name="test_file",
+            hard_drive_name="test_drive",
+        )
+
+        set_hard_drive_location()
+        item.refresh_from_db()
+
+        # Check that the hard drive location was set correctly
+        self.assertEqual(item.hard_drive_location, "217")
+
+    def test_set_hard_drive_location_with_status(self):
+        # Create a SheetImport object with a status
+        item = SheetImport.objects.create(
+            file_name="test_file",
+            hard_drive_name="test_drive",
+        )
+        item.status.add(ItemStatus.objects.get(status="Invalid vault"))
+
+        set_hard_drive_location()
+        item.refresh_from_db()
+
+        # Check that the hard drive location was set correctly
+        # and that the status was removed
+        self.assertEqual(item.hard_drive_location, "217")
+        self.assertFalse(item.status.filter(status="Invalid vault").exists())
+
+    def test_set_hard_drive_location_empty_name(self):
+        # Create a SheetImport object with a status but no hard drive name,
+        # and check that status is not removed
+        item = SheetImport.objects.create(
+            file_name="test_file",
+            hard_drive_name="",
+        )
+        item.status.add(ItemStatus.objects.get(status="Invalid vault"))
+
+        set_hard_drive_location()
+        item.refresh_from_db()
+
+        # Check that the hard drive location was not set
+        self.assertEqual(item.hard_drive_location, "")
+        # Check that the status was not removed
+        self.assertTrue(item.status.filter(status="Invalid vault").exists())
+
+    def test_set_hard_drive_location_existing_location(self):
+        # Create a SheetImport object with a status and a hard drive location,
+        # and check that the location is overwritten and status is removed
+        item = SheetImport.objects.create(
+            file_name="test_file",
+            hard_drive_name="test_drive",
+            hard_drive_location="test_location",
+        )
+        item.status.add(ItemStatus.objects.get(status="Invalid vault"))
+
+        set_hard_drive_location()
+        item.refresh_from_db()
+
+        # Check that the hard drive location was set correctly
+        self.assertEqual(item.hard_drive_location, "217")
+        # Check that the status was removed
+        self.assertFalse(item.status.filter(status="Invalid vault").exists())
+    
 class CarrierLocationTestCase(TestCase):
     """Tests for set_carrier_location and carrier_suggestions views."""
 
