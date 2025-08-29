@@ -634,8 +634,7 @@ def carrier_suggestions(request):
         carrier_b__icontains=query
     ).values_list("carrier_b", flat=True)
 
-    # Combine, deduplicate, and filter out empty values
-    # Take only first 10 matches for display
+    # Combine and sort values, taking only first 10 matches for display
     carrier_list = sorted(
         set([carrier for carrier in list(carrier_a_matches) + list(carrier_b_matches)])
     )[:10]
