@@ -16,4 +16,8 @@ data:
   DJANGO_DB_USER: {{ .Values.django.env.db_user }}
   DJANGO_DB_HOST: {{ .Values.django.env.db_host }}
   DJANGO_DB_PORT: {{ .Values.django.env.db_port | quote }}
+  DJANGO_EMAIL_SMTP_SERVER: {{ .Values.django.env.email_smtp_server }}
+  DJANGO_EMAIL_SMTP_PORT: {{ .Values.django.env.email_smtp_port | quote }}
+  DJANGO_EMAIL_FROM_ADDRESS: {{ .Values.django.env.email_from_address }}
+  DJANGO_EMAIL_PASSWORD: {{ .Values.django.env.email_password }}
   
