@@ -238,14 +238,14 @@ In addition to updating version in the Helm chart, update the Release Notes in `
 
 
 ### Configuring email
-To test email functionality as a developer, add the following to your local secrets `env` file:
+To test email functionality as a developer, add the following to your `.docker-compose_local_secrets.env` file:
 
 ```
 DJANGO_EMAIL_FROM_ADDRESS=your_email
 DJANGO_EMAIL_PASSWORD=your_email_password
 ```
 
-You can override the email host and port as well, as the default variables in the main Django `env` file assume use of Gmail:
+You can override the email host and port as well, as the default variables in `.docker-compose_django.env` assume use of Gmail:
 
 ```
 DJANGO_EMAIL_SMTP_SERVER=your_smtp_server

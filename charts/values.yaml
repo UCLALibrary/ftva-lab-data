@@ -43,7 +43,6 @@ django:
     db_user: ""
     db_host: ""
     db_port: ""
-    email_backend: ""
     email_smtp_server: ""
     email_smtp_port: ""
     email_from_address: ""
