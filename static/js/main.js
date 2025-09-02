@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
   function disableCarrierInputTrigger() {
-    // Remove HTMX trigger so Enter doesn't fetch suggestions again
+    // Remove all HTMX attributes so data isn't re-fetched after selection
     carrierInput.removeAttribute("hx-get");
     carrierInput.removeAttribute("hx-trigger");
     carrierInput.removeAttribute("hx-target");
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Set flag when a suggestion is clicked
+  // Handle suggestion click
   suggestions.addEventListener("click", function (e) {
     if (e.target.classList.contains("carrier-suggestion")) {
       carrierInput.value = e.target.textContent;
