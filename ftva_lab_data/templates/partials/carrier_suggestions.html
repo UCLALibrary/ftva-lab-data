@@ -1,5 +1,5 @@
 <ul class="list-group position-absolute w-100" style="z-index: 1000;">
     {% for carrier in carriers %}
-    <li class="list-group-item list-group-item-action carrier-suggestion" hx-get="javascript:void(0);" hx-trigger="click" hx-swap="none">{{ carrier }}</li>
+    <li class="list-group-item carrier-suggestion">{{ carrier }}</li>
     {% endfor %}
 </ul>
