@@ -1076,7 +1076,8 @@ class MetadataTestCase(TestCase):
         # Double-check that the troublesome data
         # ("uuid": "value unimportant") is in fact included.
         self.assertIn('"uuid":', json_data)
-        
+
+
 class SetHardDriveLocationTestCase(TestCase):
     """Tests the set_hard_drive_location management command."""
 
@@ -1145,7 +1146,8 @@ class SetHardDriveLocationTestCase(TestCase):
         self.assertEqual(item.hard_drive_location, "217")
         # Check that the status was removed
         self.assertFalse(item.status.filter(status="Invalid vault").exists())
-    
+
+
 class CarrierLocationTestCase(TestCase):
     """Tests for set_carrier_location and carrier_suggestions views."""
 
