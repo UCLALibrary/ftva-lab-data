@@ -1146,3 +1146,77 @@ class SetHardDriveLocationTestCase(TestCase):
         self.assertEqual(item.hard_drive_location, "217")
         # Check that the status was removed
         self.assertFalse(item.status.filter(status="Invalid vault").exists())
+
+
+class CarrierLocationTestCase(TestCase):
+    """Tests for set_carrier_location and carrier_suggestions views."""
+
+    fixtures = ["sample_data.json", "groups_and_permissions.json"]
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="authorized", password="testpassword"
+        )
+        group = Group.objects.get(name="editors")
+        self.user.groups.add(group)
+        self.client.login(username="authorized", password="testpassword")
+        # Create test items
+        self.item_a = SheetImport.objects.create(
+            file_name="fileA", carrier_a="AAA123", carrier_a_location=""
+        )
+        self.item_b = SheetImport.objects.create(
+            file_name="fileB", carrier_b="BBB456", carrier_b_location=""
+        )
+        self.item_c = SheetImport.objects.create(
+            file_name="fileC",
+            carrier_a="AAC789",
+            carrier_b="AAC789",
+            carrier_a_location="",
+            carrier_b_location="",
+        )
+
+    def test_post_set_carrier_location_updates_locations(self):
+        url = reverse("set_carrier_location")
+        # Update carrier_a location
+        response = self.client.post(url, {"carrier": "AAA123", "location": "Vault-1"})
+        self.assertEqual(response.status_code, 302)
+        self.item_a.refresh_from_db()
+        self.assertEqual(self.item_a.carrier_a_location, "Vault-1")
+        # Update carrier_b location
+        response = self.client.post(url, {"carrier": "BBB456", "location": "Vault-2"})
+        self.assertEqual(response.status_code, 302)
+        self.item_b.refresh_from_db()
+        self.assertEqual(self.item_b.carrier_b_location, "Vault-2")
+        # Update both carrier_a and carrier_b for same value
+        response = self.client.post(url, {"carrier": "AAC789", "location": "Vault-3"})
+        self.assertEqual(response.status_code, 302)
+        self.item_c.refresh_from_db()
+        self.assertEqual(self.item_c.carrier_a_location, "Vault-3")
+        self.assertEqual(self.item_c.carrier_b_location, "Vault-3")
+
+    def test_post_set_carrier_location_remove_location(self):
+        url = reverse("set_carrier_location")
+        response = self.client.post(url, {"carrier": "AAA123", "location": ""})
+        self.assertEqual(response.status_code, 302)
+        self.item_a.refresh_from_db()
+        self.assertEqual(self.item_a.carrier_a_location, "")
+
+    def test_carrier_suggestions_returns_matches(self):
+        url = reverse("carrier_suggestions")
+        # Should match both carrier_a and carrier_b
+        response = self.client.get(url, {"carrier": "AAC"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("AAC789", response.content.decode())
+        # Should match only carrier_a
+        response = self.client.get(url, {"carrier": "AAA"})
+        self.assertIn("AAA123", response.content.decode())
+        # Should match only carrier_b
+        response = self.client.get(url, {"carrier": "BBB"})
+        self.assertIn("BBB456", response.content.decode())
+
+    def test_carrier_suggestions_empty_query_returns_empty(self):
+        url = reverse("carrier_suggestions")
+        response = self.client.get(url, {"carrier": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode().strip(), "")

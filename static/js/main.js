@@ -143,3 +143,103 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 });
+
+
+// Set Carrier Location page
+// Support keyboard and mouse interaction, and form validation
+document.addEventListener("DOMContentLoaded", function () {
+  let carrierSelected = false;
+  const carrierInput = document.getElementById("carrier");
+  const suggestions = document.getElementById("carrier-suggestions");
+  const form = carrierInput?.closest("form");
+  let activeIndex = -1;
+
+  function updateHighlight() {
+    const items = suggestions.querySelectorAll(".carrier-suggestion");
+    items.forEach((item, index) => {
+      item.classList.toggle("active", index === activeIndex);
+    });
+  }
+
+  // Prevent HTMX from re-issuing a request after selection
+  carrierInput.addEventListener("htmx:beforeRequest", function (e) {
+    if (carrierSelected) {
+      e.preventDefault();
+    }
+  });
+
+  // Reset flag and highlight when user types
+  carrierInput.addEventListener("input", function () {
+    carrierSelected = false;
+    activeIndex = -1;
+    updateHighlight();
+  });
+
+  // Keyboard navigation
+  carrierInput.addEventListener("keydown", function (e) {
+    const items = suggestions.querySelectorAll(".carrier-suggestion");
+    // if no suggestions, do nothing
+    if (!items.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeIndex = (activeIndex + 1) % items.length;
+      updateHighlight();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeIndex = (activeIndex - 1 + items.length) % items.length;
+      updateHighlight();
+    } else if (e.key === "Enter") {
+      // Check that we've selected a valid item
+      if (activeIndex >= 0 && activeIndex < items.length) {
+        e.preventDefault();
+        e.stopImmediatePropagation(); // Prevent HTMX from seeing this event
+        carrierInput.value = items[activeIndex].textContent;
+        carrierSelected = true;
+        suggestions.innerHTML = "";
+        return false; // Stop further event handling
+      }
+    }
+  });
+
+  // Handle suggestion click
+  suggestions.addEventListener("click", function (e) {
+    if (e.target.classList.contains("carrier-suggestion")) {
+      carrierInput.value = e.target.textContent;
+      carrierSelected = true;
+      suggestions.innerHTML = "";
+    }
+  });
+
+  // Mouse hover highlights
+  suggestions.addEventListener("mouseover", function (e) {
+    const items = Array.from(suggestions.querySelectorAll(".carrier-suggestion"));
+    const idx = items.indexOf(e.target);
+    if (idx !== -1) {
+      activeIndex = idx;
+      updateHighlight();
+    }
+  });
+
+  // Prevent form submit if not selected from suggestions
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      if (!carrierSelected) {
+        e.preventDefault();
+        alert("Please select a carrier from the suggestions.");
+        carrierInput.focus();
+      }
+      // If loaction is blank, confirm user wants to clear location data
+      const locationField = document.getElementById("location");
+      if (locationField.value.trim() === "") {
+        const confirmed = confirm(
+          "Are you sure you want to clear the location data for this carrier?"
+        );
+        if (!confirmed) {
+          e.preventDefault();
+          locationField.focus();
+        }
+      }
+    });
+  }
+});

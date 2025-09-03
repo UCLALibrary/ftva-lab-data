@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonRe
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from simple_history.utils import bulk_update_with_history
 from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
 import pandas as pd
 import io
@@ -579,3 +580,69 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
         "partials/metadata_modal_content.html",
         {"message": message, "is_error": True},
     )
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.change_sheetimport",
+    raise_exception=True,
+)
+def set_carrier_location(request: HttpRequest) -> HttpResponse:
+    """Set the carrier location for all items in the database.
+
+    :param request: The HTTP request object.
+    :return: Rendered template for setting carrier location.
+    """
+    if request.method == "POST":
+        new_location = request.POST.get("location", "").strip()
+        carrier = request.POST.get("carrier", "").strip()
+        carrier_a_objects = SheetImport.objects.filter(carrier_a=carrier)
+        carrier_b_objects = SheetImport.objects.filter(carrier_b=carrier)
+        # Update the carrier location for the matching objects
+        for obj in carrier_a_objects:
+            obj.carrier_a_location = new_location
+        for obj in carrier_b_objects:
+            obj.carrier_b_location = new_location
+        # Use history-aware bulk update to preserve change history
+        bulk_update_with_history(carrier_a_objects, SheetImport, ["carrier_a_location"])
+        bulk_update_with_history(carrier_b_objects, SheetImport, ["carrier_b_location"])
+        messages.success(
+            request,
+            (
+                f"Carrier locations updated successfully for "
+                f"{carrier_a_objects.count() + carrier_b_objects.count()} items."
+            ),
+        )
+        return redirect("search_results")
+
+    return render(request, "set_carrier_location.html")
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.change_sheetimport",
+    raise_exception=True,
+)
+def carrier_suggestions(request):
+    query = request.GET.get("carrier", "")
+    # Don't show suggestions for empty query
+    if not query:
+        return HttpResponse("")
+
+    # Get matching carrier_a and carrier_b values
+    carrier_a_matches = SheetImport.objects.filter(
+        carrier_a__icontains=query
+    ).values_list("carrier_a", flat=True)
+    carrier_b_matches = SheetImport.objects.filter(
+        carrier_b__icontains=query
+    ).values_list("carrier_b", flat=True)
+
+    # Combine and sort values, taking only first 10 matches for display
+    carrier_list = sorted(
+        set([carrier for carrier in list(carrier_a_matches) + list(carrier_b_matches)])
+    )[:10]
+
+    html = render_to_string(
+        "partials/carrier_suggestions.html", {"carriers": carrier_list}
+    )
+    return HttpResponse(html)
