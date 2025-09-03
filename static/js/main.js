@@ -160,32 +160,19 @@ document.addEventListener("DOMContentLoaded", function () {
       item.classList.toggle("active", index === activeIndex);
     });
   }
-  function disableCarrierInputTrigger() {
-    // Remove all HTMX attributes so data isn't re-fetched after selection
-    carrierInput.removeAttribute("hx-get");
-    carrierInput.removeAttribute("hx-trigger");
-    carrierInput.removeAttribute("hx-target");
-    carrierInput.removeAttribute("hx-params");
-  }
 
-  function enableCarrierInputTrigger() {
-    // Resume HTMX operations
-    // Restore values to defaults from template, plus saved hx-get URL
-    carrierInput.setAttribute("hx-get", carrierInput.dataset.suggestionsUrl);
-    carrierInput.setAttribute("hx-trigger", "keyup changed delay:300ms");
-    carrierInput.setAttribute("hx-target", "#carrier-suggestions");
-    carrierInput.setAttribute("hx-params", "*");
-  }
+  // Prevent HTMX from re-issuing a request after selection
+  carrierInput.addEventListener("htmx:beforeRequest", function (e) {
+    if (carrierSelected) {
+      e.preventDefault();
+    }
+  });
 
-  // Save the suggestions URL for re-enabling
-  carrierInput.dataset.suggestionsUrl = carrierInput.getAttribute("hx-get");
-
-  // Reset flag and highlight when user types, and re-enable HTMX input
+  // Reset flag and highlight when user types
   carrierInput.addEventListener("input", function () {
     carrierSelected = false;
     activeIndex = -1;
     updateHighlight();
-    enableCarrierInputTrigger();
   });
 
   // Keyboard navigation
@@ -210,7 +197,6 @@ document.addEventListener("DOMContentLoaded", function () {
         carrierInput.value = items[activeIndex].textContent;
         carrierSelected = true;
         suggestions.innerHTML = "";
-        disableCarrierInputTrigger();
         return false; // Stop further event handling
       }
     }
@@ -222,7 +208,6 @@ document.addEventListener("DOMContentLoaded", function () {
       carrierInput.value = e.target.textContent;
       carrierSelected = true;
       suggestions.innerHTML = "";
-      disableCarrierInputTrigger();
     }
   });
 
@@ -243,6 +228,17 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
         alert("Please select a carrier from the suggestions.");
         carrierInput.focus();
+      }
+      // If loaction is blank, confirm user wants to clear location data
+      const locationField = document.getElementById("location");
+      if (locationField.value.trim() === "") {
+        const confirmed = confirm(
+          "Are you sure you want to clear the location data for this carrier?"
+        );
+        if (!confirmed) {
+          e.preventDefault();
+          locationField.focus();
+        }
       }
     });
   }

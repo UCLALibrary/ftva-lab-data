@@ -1195,11 +1195,12 @@ class CarrierLocationTestCase(TestCase):
         self.assertEqual(self.item_c.carrier_a_location, "Vault-3")
         self.assertEqual(self.item_c.carrier_b_location, "Vault-3")
 
-    def test_post_set_carrier_location_missing_location(self):
+    def test_post_set_carrier_location_remove_location(self):
         url = reverse("set_carrier_location")
         response = self.client.post(url, {"carrier": "AAA123", "location": ""})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Please enter a carrier location.")
+        self.assertEqual(response.status_code, 302)
+        self.item_a.refresh_from_db()
+        self.assertEqual(self.item_a.carrier_a_location, "")
 
     def test_carrier_suggestions_returns_matches(self):
         url = reverse("carrier_suggestions")

@@ -594,23 +594,19 @@ def set_carrier_location(request: HttpRequest) -> HttpResponse:
     """
     if request.method == "POST":
         new_location = request.POST.get("location", "").strip()
-        if new_location:
-            carrier = request.POST.get("carrier", "").strip()
-            carrier_a_objects = SheetImport.objects.filter(carrier_a=carrier)
-            carrier_b_objects = SheetImport.objects.filter(carrier_b=carrier)
-            carrier_a_objects.update(carrier_a_location=new_location)
-            carrier_b_objects.update(carrier_b_location=new_location)
-            messages.success(
-                request,
-                (
-                    f"Carrier locations updated successfully for "
-                    f"{carrier_a_objects.count() + carrier_b_objects.count()} items."
-                ),
-            )
-            return redirect("search_results")
-        else:
-            messages.error(request, "Please enter a carrier location.")
-            return render(request, "set_carrier_location.html")
+        carrier = request.POST.get("carrier", "").strip()
+        carrier_a_objects = SheetImport.objects.filter(carrier_a=carrier)
+        carrier_b_objects = SheetImport.objects.filter(carrier_b=carrier)
+        carrier_a_objects.update(carrier_a_location=new_location)
+        carrier_b_objects.update(carrier_b_location=new_location)
+        messages.success(
+            request,
+            (
+                f"Carrier locations updated successfully for "
+                f"{carrier_a_objects.count() + carrier_b_objects.count()} items."
+            ),
+        )
+        return redirect("search_results")
 
     return render(request, "set_carrier_location.html")
 
