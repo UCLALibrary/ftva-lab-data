@@ -154,7 +154,7 @@ if not os.path.isdir(STATIC_ROOT):
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 # Logging
@@ -197,3 +197,12 @@ LOGGING = {
 # Credentials for accessing Filemaker API
 FILEMAKER_USER = os.getenv("FILEMAKER_USER")
 FILEMAKER_PASSWORD = os.getenv("FILEMAKER_PASSWORD")
+
+# Email configuration
+# See https://docs.djangoproject.com/en/5.2/topics/email/#smtp-backend
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("DJANGO_EMAIL_SMTP_SERVER")
+EMAIL_PORT = os.getenv("DJANGO_EMAIL_SMTP_PORT")
+EMAIL_USE_TLS = os.getenv("DJANGO_EMAIL_USE_TLS")
+EMAIL_HOST_USER = os.getenv("DJANGO_EMAIL_FROM_ADDRESS")
+EMAIL_HOST_PASSWORD = os.getenv("DJANGO_EMAIL_PASSWORD")

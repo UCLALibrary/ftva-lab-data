@@ -235,3 +235,21 @@ Our deployment system is triggered by changes to the Helm chart.  Typically, thi
 * Breaking changes: update major level (e.g., `v1.0.1` to `v2.0.0`)
 
 In addition to updating version in the Helm chart, update the Release Notes in `release_notes.html`.  Put the latest changes first, following the established format.
+
+
+### Configuring email
+To test email functionality as a developer, add the following to your `.docker-compose_local_secrets.env` file:
+
+```
+DJANGO_EMAIL_FROM_ADDRESS=your_email
+DJANGO_EMAIL_PASSWORD=your_email_password
+```
+
+You can override the email host and port as well, as the default variables in `.docker-compose_django.env` assume use of Gmail:
+
+```
+DJANGO_EMAIL_SMTP_SERVER=your_smtp_server
+DJANGO_EMAIL_SMTP_PORT=your_smtp_port
+```
+
+If using Gmail, set up an app password for your account (see https://support.google.com/mail/answer/185833?hl=en). This will allow emails to go through your personal Gmail account, for development and testing purposes.
