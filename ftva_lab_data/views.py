@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonRe
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from simple_history.utils import bulk_update_with_history
 from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
 import pandas as pd
 import io
@@ -597,8 +598,14 @@ def set_carrier_location(request: HttpRequest) -> HttpResponse:
         carrier = request.POST.get("carrier", "").strip()
         carrier_a_objects = SheetImport.objects.filter(carrier_a=carrier)
         carrier_b_objects = SheetImport.objects.filter(carrier_b=carrier)
-        carrier_a_objects.update(carrier_a_location=new_location)
-        carrier_b_objects.update(carrier_b_location=new_location)
+        # Update the carrier location for the matching objects
+        for obj in carrier_a_objects:
+            obj.carrier_a_location = new_location
+        for obj in carrier_b_objects:
+            obj.carrier_b_location = new_location
+        # Use history-aware bulk update to preserve change history
+        bulk_update_with_history(carrier_a_objects, SheetImport, ["carrier_a_location"])
+        bulk_update_with_history(carrier_b_objects, SheetImport, ["carrier_b_location"])
         messages.success(
             request,
             (
