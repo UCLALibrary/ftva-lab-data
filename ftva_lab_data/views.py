@@ -390,6 +390,21 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
         return JsonResponse({"error": "Record not found"}, status=404)
 
 
+@basic_auth_required
+def get_record_by_uuid(request: HttpRequest, uuid: str) -> JsonResponse:
+    """Retrieve a specific record by UUID as JSON, intended for API use.
+
+    :param request: The HTTP request object.
+    :param uuid: The UUID of the record to retrieve.
+    :return: JSON response containing the record data.
+    """
+    try:
+        record_data = transform_record_to_dict(uuid=uuid)
+        return JsonResponse(record_data)
+    except SheetImport.DoesNotExist:
+        return JsonResponse({"error": "Record not found"}, status=404)
+
+
 def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     """Fetch Alma records using SRU client.
 

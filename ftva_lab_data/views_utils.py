@@ -445,14 +445,21 @@ def transform_filemaker_field_name(filemaker_field_name: str) -> str:
     return filemaker_field_name
 
 
-def transform_record_to_dict(record_id: int) -> dict:
+def transform_record_to_dict(
+    record_id: int | None = None, uuid: str | None = None
+) -> dict:
     """Transforms a Django record to a dictionary.
 
-    :param int record_id: The ID of the record to transform.
+    :param int | None record_id: The ID of the record to transform.
+    :param str | None uuid: The UUID of the record to transform.
     :return: A dictionary with the record data.
     """
+    # If a UUID is provided, use it to get the record. Otherwise, use the ID.
+    if uuid:
+        record = SheetImport.objects.get(uuid=uuid)
+    else:
+        record = SheetImport.objects.get(id=record_id)
 
-    record = SheetImport.objects.get(id=record_id)
     record_data = {
         field.name: getattr(record, field.name) for field in record._meta.fields
     }
