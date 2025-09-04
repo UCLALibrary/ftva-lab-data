@@ -384,7 +384,24 @@ def get_record(request: HttpRequest, record_id: int) -> JsonResponse:
     :return: JSON response containing the record data.
     """
     try:
-        record_data = transform_record_to_dict(record_id)
+        record = SheetImport.objects.get(id=record_id)
+        record_data = transform_record_to_dict(record)
+        return JsonResponse(record_data)
+    except SheetImport.DoesNotExist:
+        return JsonResponse({"error": "Record not found"}, status=404)
+
+
+@basic_auth_required
+def get_record_by_uuid(request: HttpRequest, uuid: str) -> JsonResponse:
+    """Retrieve a specific record by UUID as JSON, intended for API use.
+
+    :param request: The HTTP request object.
+    :param uuid: The UUID of the record to retrieve.
+    :return: JSON response containing the record data.
+    """
+    try:
+        record = SheetImport.objects.get(uuid=uuid)
+        record_data = transform_record_to_dict(record)
         return JsonResponse(record_data)
     except SheetImport.DoesNotExist:
         return JsonResponse({"error": "Record not found"}, status=404)
@@ -525,8 +542,8 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
     :param record_id: The ID of the Django record to use.
     :return: A JSON record containing the combined metadata.
     """
-
-    django_record_data = transform_record_to_dict(record_id)
+    django_record = SheetImport.objects.get(id=record_id)
+    django_record_data = transform_record_to_dict(django_record)
     inventory_number = django_record_data.get("inventory_number")
     # The template should ensure that this function is only called for records
     # with an inventory number, but adding a check to be sure.

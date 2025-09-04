@@ -1064,7 +1064,7 @@ class MetadataTestCase(TestCase):
         )
 
     def test_django_data_is_serializable(self):
-        django_data = transform_record_to_dict(self.item_for_metadata.pk)
+        django_data = transform_record_to_dict(self.item_for_metadata)
         # Make sure there's a UUID in the data, as a string, not a UUID().
         uuid = django_data.get("uuid")
         self.assertIsInstance(uuid, str)
