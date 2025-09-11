@@ -147,6 +147,7 @@ class SheetImport(models.Model):
                 "Docs OK - Superseded by another version",
             ),
             ("Docs OK/Other - See Notes", "Docs OK/Other - See Notes"),
+            ("File for Programming", "File for Programming"),
         ],
     )
     history = HistoricalRecords()
