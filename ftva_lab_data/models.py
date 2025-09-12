@@ -5,6 +5,54 @@ from simple_history.models import HistoricalRecords
 from uuid import uuid4
 
 
+class FileType(models.Model):
+
+    file_type = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.file_type
+
+    class Meta:
+        verbose_name_plural = "File types"
+        ordering = ["pk"]
+
+
+class AssetType(models.Model):
+
+    asset_type = models.CharField(max_length=25, unique=True)
+
+    def __str__(self):
+        return self.asset_type
+
+    class Meta:
+        verbose_name_plural = "Asset types"
+        ordering = ["pk"]
+
+
+class NoIngestReason(models.Model):
+
+    no_ingest_reason = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.no_ingest_reason
+
+    class Meta:
+        verbose_name_plural = "No ingest reasons"
+        ordering = ["pk"]
+
+
+class MediaType(models.Model):
+
+    media_type = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.media_type
+
+    class Meta:
+        verbose_name_plural = "Media types"
+        ordering = ["pk"]
+
+
 class SheetImport(models.Model):
     """Represents rows of the original DL Google Sheet.
     By design, this model does not attempt to validate data;

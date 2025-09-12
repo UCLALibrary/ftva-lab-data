@@ -1,0 +1,373 @@
+[
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 1,
+    "fields": {
+        "asset_type": "Raw"
+    }
+},
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 2,
+    "fields": {
+        "asset_type": "Intermediate"
+    }
+},
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 3,
+    "fields": {
+        "asset_type": "Final Version"
+    }
+},
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 4,
+    "fields": {
+        "asset_type": "Derivative"
+    }
+},
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 5,
+    "fields": {
+        "asset_type": "Exhibition Copy"
+    }
+},
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 6,
+    "fields": {
+        "asset_type": "Access"
+    }
+},
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 7,
+    "fields": {
+        "asset_type": "Proxy"
+    }
+},
+{
+    "model": "ftva_lab_data.assettype",
+    "pk": 8,
+    "fields": {
+        "asset_type": "Unknown"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 1,
+    "fields": {
+        "file_type": "MOV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 2,
+    "fields": {
+        "file_type": "DPX"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 3,
+    "fields": {
+        "file_type": "WAV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 4,
+    "fields": {
+        "file_type": "DCP"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 5,
+    "fields": {
+        "file_type": "MP4"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 6,
+    "fields": {
+        "file_type": "AVI"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 7,
+    "fields": {
+        "file_type": "MKV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 8,
+    "fields": {
+        "file_type": "FLV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 9,
+    "fields": {
+        "file_type": "F4V"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 10,
+    "fields": {
+        "file_type": "MPEG-1"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 11,
+    "fields": {
+        "file_type": "MPEG-2"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 12,
+    "fields": {
+        "file_type": "M4V"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 13,
+    "fields": {
+        "file_type": "WMV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 14,
+    "fields": {
+        "file_type": "MP3"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 15,
+    "fields": {
+        "file_type": "WEBM"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 16,
+    "fields": {
+        "file_type": "VOB"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 17,
+    "fields": {
+        "file_type": "OGG"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 18,
+    "fields": {
+        "file_type": "DIRAC"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 19,
+    "fields": {
+        "file_type": "GIFV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 20,
+    "fields": {
+        "file_type": "MNG"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 21,
+    "fields": {
+        "file_type": "MTS"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 22,
+    "fields": {
+        "file_type": "M2TS"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 23,
+    "fields": {
+        "file_type": "TS"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 24,
+    "fields": {
+        "file_type": "YUV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 25,
+    "fields": {
+        "file_type": "RM"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 26,
+    "fields": {
+        "file_type": "RMVB"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 27,
+    "fields": {
+        "file_type": "VIV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 28,
+    "fields": {
+        "file_type": "ASF"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 29,
+    "fields": {
+        "file_type": "AMV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 30,
+    "fields": {
+        "file_type": "SVI"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 31,
+    "fields": {
+        "file_type": "MXF"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 32,
+    "fields": {
+        "file_type": "ROQ"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 33,
+    "fields": {
+        "file_type": "NSV"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 34,
+    "fields": {
+        "file_type": "3GPP"
+    }
+},
+{
+    "model": "ftva_lab_data.filetype",
+    "pk": 35,
+    "fields": {
+        "file_type": "3GPP2"
+    }
+},
+{
+    "model": "ftva_lab_data.mediatype",
+    "pk": 1,
+    "fields": {
+        "media_type": "video"
+    }
+},
+{
+    "model": "ftva_lab_data.mediatype",
+    "pk": 2,
+    "fields": {
+        "media_type": "audio"
+    }
+},
+{
+    "model": "ftva_lab_data.mediatype",
+    "pk": 3,
+    "fields": {
+        "media_type": "image"
+    }
+},
+{
+    "model": "ftva_lab_data.noingestreason",
+    "pk": 1,
+    "fields": {
+        "no_ingest_reason": "Unnecessary Deliverable Export"
+    }
+},
+{
+    "model": "ftva_lab_data.noingestreason",
+    "pk": 2,
+    "fields": {
+        "no_ingest_reason": "Deposit/No Docs"
+    }
+},
+{
+    "model": "ftva_lab_data.noingestreason",
+    "pk": 3,
+    "fields": {
+        "no_ingest_reason": "Gift/No Docs"
+    }
+},
+{
+    "model": "ftva_lab_data.noingestreason",
+    "pk": 4,
+    "fields": {
+        "no_ingest_reason": "Other Permission/No Docs"
+    }
+},
+{
+    "model": "ftva_lab_data.noingestreason",
+    "pk": 5,
+    "fields": {
+        "no_ingest_reason": "Docs OK - Superseded by another version"
+    }
+},
+{
+    "model": "ftva_lab_data.noingestreason",
+    "pk": 6,
+    "fields": {
+        "no_ingest_reason": "Docs OK/Other - See Notes"
+    }
+},
+{
+    "model": "ftva_lab_data.noingestreason",
+    "pk": 7,
+    "fields": {
+        "no_ingest_reason": "File for Programming"
+    }
+}
+]
