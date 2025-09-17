@@ -28,8 +28,8 @@ def migrate_data_to_foreign_key_fields(apps, schema_editor):
             record.media_type_temp = MediaType.objects.get(media_type=record.media_type)
         if record.no_ingest_reason:
             record.no_ingest_reason_temp = NoIngestReason.objects.get(
-            no_ingest_reason=record.no_ingest_reason
-        )
+                no_ingest_reason=record.no_ingest_reason
+            )
         records_to_update.append(record)
 
     SheetImport.objects.bulk_update(
@@ -143,6 +143,9 @@ class Migration(migrations.Migration):
                 to="ftva_lab_data.noingestreason",
             ),
         ),
-        # Migrate data from the existing `CharField` fields on `SheetImport` to the new `ForeignKey` fields
-        migrations.RunPython(migrate_data_to_foreign_key_fields, migrations.RunPython.noop),
+        # Migrate data from the existing `CharField` fields on `SheetImport`
+        # to the new `ForeignKey` fields
+        migrations.RunPython(
+            migrate_data_to_foreign_key_fields, migrations.RunPython.noop
+        ),
     ]

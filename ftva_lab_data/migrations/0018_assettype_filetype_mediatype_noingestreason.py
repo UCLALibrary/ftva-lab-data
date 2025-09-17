@@ -2,6 +2,7 @@
 
 from django.db import migrations, models
 
+
 def create_dropdown_model_instances(apps, schema_editor):
     """Create instances of the new dropdown models
     for each existing choice value on the corresponding `SheetImport` fields,
@@ -24,7 +25,7 @@ def create_dropdown_model_instances(apps, schema_editor):
     # Create an AssetType object for each choice in the `asset_type` field on `SheetImport`...
     for value, _ in asset_type_choices:
         AssetType.objects.create(asset_type=value)
-    # ...and so on for the other new models.    
+    # ...and so on for the other new models.
     for value, _ in file_type_choices:
         FileType.objects.create(file_type=value)
     for value, _ in media_type_choices:
@@ -32,57 +33,93 @@ def create_dropdown_model_instances(apps, schema_editor):
     for value, _ in no_ingest_reason_choices:
         NoIngestReason.objects.create(no_ingest_reason=value)
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ftva_lab_data', '0017_alter_historicalsheetimport_no_ingest_reason_and_more'),
+        ("ftva_lab_data", "0017_alter_historicalsheetimport_no_ingest_reason_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AssetType',
+            name="AssetType",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('asset_type', models.CharField(unique=True, max_length=25)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("asset_type", models.CharField(unique=True, max_length=25)),
             ],
             options={
-                'verbose_name_plural': 'Asset types',
-                'ordering': ['pk'],
+                "verbose_name_plural": "Asset types",
+                "ordering": ["pk"],
             },
         ),
         migrations.CreateModel(
-            name='FileType',
+            name="FileType",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file_type', models.CharField(unique=True, max_length=10)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("file_type", models.CharField(unique=True, max_length=10)),
             ],
             options={
-                'verbose_name_plural': 'File types',
-                'ordering': ['pk'],
+                "verbose_name_plural": "File types",
+                "ordering": ["pk"],
             },
         ),
         migrations.CreateModel(
-            name='MediaType',
+            name="MediaType",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('media_type', models.CharField(unique=True, max_length=10)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("media_type", models.CharField(unique=True, max_length=10)),
             ],
             options={
-                'verbose_name_plural': 'Media types',
-                'ordering': ['pk'],
+                "verbose_name_plural": "Media types",
+                "ordering": ["pk"],
             },
         ),
         migrations.CreateModel(
-            name='NoIngestReason',
+            name="NoIngestReason",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('no_ingest_reason', models.CharField(unique=True, max_length=50)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("no_ingest_reason", models.CharField(unique=True, max_length=50)),
             ],
             options={
-                'verbose_name_plural': 'No ingest reasons',
-                'ordering': ['pk'],
+                "verbose_name_plural": "No ingest reasons",
+                "ordering": ["pk"],
             },
         ),
-        # Create instances of the new dropdown models for each of the choices in the existing `CharField` fields on `SheetImport`
-        migrations.RunPython(create_dropdown_model_instances, migrations.RunPython.noop),
+        # Create instances of the new dropdown models for each of the choices
+        # in the existing `CharField` fields on `SheetImport`
+        migrations.RunPython(
+            create_dropdown_model_instances, migrations.RunPython.noop
+        ),
     ]
