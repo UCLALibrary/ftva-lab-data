@@ -21,7 +21,14 @@ from ftva_lab_data.management.commands.clean_imported_data import (
     set_file_folder_names,
     set_hard_drive_names,
 )
-from ftva_lab_data.models import ItemStatus, SheetImport
+from ftva_lab_data.models import (
+    ItemStatus,
+    SheetImport,
+    AssetType,
+    FileType,
+    MediaType,
+    NoIngestReason,
+)
 from ftva_lab_data.management.commands.import_status_and_inventory_numbers import (
     parse_status_info,
 )
@@ -1220,3 +1227,162 @@ class CarrierLocationTestCase(TestCase):
         response = self.client.get(url, {"carrier": ""})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode().strip(), "")
+
+
+class DropdownFieldsTestCase(TestCase):
+    """Tests for the dropdown fields, which relate to the
+    `AssetType`, `FileType`, `MediaType`, and `NoIngestReason` models.
+    """
+
+    fixtures = [
+        "sample_data.json",
+        "groups_and_permissions.json",
+        "dropdown_fields.json",
+    ]
+
+    def setUp(self):
+        self.client = Client()
+
+        self.user = User.objects.create_user(
+            username="authorized", password="testpassword"
+        )
+        group = Group.objects.get(name="editors")
+        self.user.groups.add(group)
+        self.client.login(username="authorized", password="testpassword")
+
+        # Create a test object with all the dropdown fields set
+        # to the first object on their respective models
+        self.test_object = SheetImport.objects.create(
+            file_name="Test Object",
+            asset_type=AssetType.objects.get(pk=1),
+            file_type=FileType.objects.get(pk=1),
+            media_type=MediaType.objects.get(pk=1),
+            no_ingest_reason=NoIngestReason.objects.get(pk=1),
+        )
+
+    def test_dropdown_choices_include_all_objects(self):
+        # The choices on the dropdown fields in the edit item form
+        # should include all objects for their respective models.
+        all_asset_types = AssetType.objects.all()
+        all_file_types = FileType.objects.all()
+        all_media_types = MediaType.objects.all()
+        all_no_ingest_reasons = NoIngestReason.objects.all()
+
+        # This should also cover the add item form,
+        # as the two views use the same template.
+        url = reverse("edit_item", args=[self.test_object.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+
+        test_cases = [
+            ("asset_type", all_asset_types),
+            ("file_type", all_file_types),
+            ("media_type", all_media_types),
+            ("no_ingest_reason", all_no_ingest_reasons),
+        ]
+        for field_name, all_objs in test_cases:
+            choices = [choice[0] for choice in form.fields[field_name].choices]
+            for obj in all_objs:
+                with self.subTest(obj=obj, choices=choices):
+                    self.assertIn(obj.pk, choices)
+
+    def test_new_dropdown_objects_appear_in_choices(self):
+        # Newly created objects on the dropdown models
+        # should appear in the choices of the dropdown fields.
+        new_asset_type = AssetType.objects.create(asset_type="Test Asset Type")
+        new_file_type = FileType.objects.create(file_type="Test")  # 10 char limit
+        new_media_type = MediaType.objects.create(media_type="Test")  # 10 char limit
+        new_no_ingest_reason = NoIngestReason.objects.create(
+            no_ingest_reason="Test No Ingest Reason"
+        )
+
+        url = reverse("edit_item", args=[self.test_object.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+
+        test_cases = [
+            ("asset_type", new_asset_type),
+            ("file_type", new_file_type),
+            ("media_type", new_media_type),
+            ("no_ingest_reason", new_no_ingest_reason),
+        ]
+        for field_name, new_obj in test_cases:
+            choices = [choice[0] for choice in form.fields[field_name].choices]
+            with self.subTest(new_obj=new_obj, choices=choices):
+                self.assertIn(new_obj.pk, choices)
+
+    def test_updated_dropdown_objects_appear_in_choices(self):
+        # Updated objects on the dropdown models
+        # should be reflected in the choices of the dropdown fields.
+        updated_asset_type = AssetType.objects.get(pk=1)
+        updated_asset_type.asset_type = "Updated Asset Type"
+        updated_asset_type.save()
+
+        updated_file_type = FileType.objects.get(pk=1)
+        updated_file_type.file_type = "Updated"  # 10 char limit
+        updated_file_type.save()
+
+        updated_media_type = MediaType.objects.get(pk=1)
+        updated_media_type.media_type = "Updated"  # 10 char limit
+        updated_media_type.save()
+
+        updated_no_ingest_reason = NoIngestReason.objects.get(pk=1)
+        updated_no_ingest_reason.no_ingest_reason = "Updated No Ingest Reason"
+        updated_no_ingest_reason.save()
+
+        url = reverse("edit_item", args=[self.test_object.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+
+        test_cases = [
+            ("asset_type", updated_asset_type),
+            ("file_type", updated_file_type),
+            ("media_type", updated_media_type),
+            ("no_ingest_reason", updated_no_ingest_reason),
+        ]
+        for field_name, updated_obj in test_cases:
+            choices = [choice[0] for choice in form.fields[field_name].choices]
+            with self.subTest(updated_obj=updated_obj, choices=choices):
+                self.assertIn(updated_obj.pk, choices)
+
+    def test_deleted_dropdown_objects_do_not_appear_in_choices(self):
+        # Deleted objects on the dropdown models
+        # should not appear in the choices of the dropdown fields.
+        deleted_asset_type = AssetType.objects.order_by("pk").last()
+        if deleted_asset_type:
+            deleted_asset_type.delete()
+
+        deleted_file_type = FileType.objects.order_by("pk").last()
+        if deleted_file_type:
+            deleted_file_type.delete()
+
+        deleted_media_type = MediaType.objects.order_by("pk").last()
+        if deleted_media_type:
+            deleted_media_type.delete()
+
+        deleted_no_ingest_reason = NoIngestReason.objects.order_by("pk").last()
+        if deleted_no_ingest_reason:
+            deleted_no_ingest_reason.delete()
+
+        url = reverse("edit_item", args=[self.test_object.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        form = response.context["form"]
+
+        test_cases = [
+            ("asset_type", deleted_asset_type),
+            ("file_type", deleted_file_type),
+            ("media_type", deleted_media_type),
+            ("no_ingest_reason", deleted_no_ingest_reason),
+        ]
+        for field_name, deleted_obj in test_cases:
+            choices = [choice[0] for choice in form.fields[field_name].choices]
+            with self.subTest(deleted_obj=deleted_obj, choices=choices):
+                self.assertNotIn(deleted_obj.pk, choices)

@@ -36,7 +36,8 @@ def _get_combined_field_data(record: SheetImport) -> str:
     :return str:
     """
     # All SheetImport fields are string (CharField) except the system-assigned id
-    # and the foreign key relations to assigned_user and status (which does not matter
+    # and the foreign key relations to assigned_user, status, asset_type,
+    # file_type, media_type, and no_ingest_reason (which do not matter
     # at this stage for imported, empty records).
     # Combine all of these string fields into one big string.
     combined_field_data = "".join(
@@ -44,7 +45,17 @@ def _get_combined_field_data(record: SheetImport) -> str:
             getattr(record, field.name)
             for field in record._meta.get_fields()
             if field.name
-            not in ("id", "assigned_user", "status", "date_of_ingest", "uuid")
+            not in (
+                "id",
+                "assigned_user",
+                "status",
+                "date_of_ingest",
+                "uuid",
+                "asset_type",
+                "file_type",
+                "media_type",
+                "no_ingest_reason",
+            )
         ]
     )
     # Remove any leading/trailing spaces and return the result.

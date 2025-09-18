@@ -445,9 +445,7 @@ def transform_filemaker_field_name(filemaker_field_name: str) -> str:
     return filemaker_field_name
 
 
-def transform_record_to_dict(
-    record: SheetImport
-) -> dict:
+def transform_record_to_dict(record: SheetImport) -> dict:
     """Transforms a Django record to a dictionary.
 
     :param record: The record to transform.
@@ -468,5 +466,10 @@ def transform_record_to_dict(
     # Convert UUID to string, as UUID object is not JSON-serializable and
     # will be needed for that later.
     record_data["uuid"] = str(record_data["uuid"])
+
+    # Convert ForeignKey fields to strings for JSON serialization.
+    for key in ["asset_type", "file_type", "media_type", "no_ingest_reason"]:
+        # or "" to avoid serializing None to "None"
+        record_data[key] = str(record_data.get(key) or "")
 
     return record_data

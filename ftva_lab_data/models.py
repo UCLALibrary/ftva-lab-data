@@ -5,6 +5,54 @@ from simple_history.models import HistoricalRecords
 from uuid import uuid4
 
 
+class FileType(models.Model):
+
+    file_type = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.file_type
+
+    class Meta:
+        verbose_name_plural = "File types"
+        ordering = ["pk"]
+
+
+class AssetType(models.Model):
+
+    asset_type = models.CharField(max_length=25, unique=True)
+
+    def __str__(self):
+        return self.asset_type
+
+    class Meta:
+        verbose_name_plural = "Asset types"
+        ordering = ["pk"]
+
+
+class NoIngestReason(models.Model):
+
+    no_ingest_reason = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.no_ingest_reason
+
+    class Meta:
+        verbose_name_plural = "No ingest reasons"
+        ordering = ["pk"]
+
+
+class MediaType(models.Model):
+
+    media_type = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.media_type
+
+    class Meta:
+        verbose_name_plural = "Media types"
+        ordering = ["pk"]
+
+
 class SheetImport(models.Model):
     """Represents rows of the original DL Google Sheet.
     By design, this model does not attempt to validate data;
@@ -79,83 +127,35 @@ class SheetImport(models.Model):
         related_name="sheet_imports",
     )
     date_of_ingest = models.DateField(blank=True, null=True)
-    file_type = models.CharField(
-        max_length=10,
-        blank=True,
-        choices=[
-            ("MOV", "MOV"),
-            ("DPX", "DPX"),
-            ("WAV", "WAV"),
-            ("DCP", "DCP"),
-            ("MP4", "MP4"),
-            ("AVI", "AVI"),
-            ("MKV", "MKV"),
-            ("FLV", "FLV"),
-            ("F4V", "F4V"),
-            ("MPEG-1", "MPEG-1"),
-            ("MPEG-2", "MPEG-2"),
-            ("M4V", "M4V"),
-            ("WMV", "WMV"),
-            ("MP3", "MP3"),
-            ("WEBM", "WEBM"),
-            ("VOB", "VOB"),
-            ("OGG", "OGG"),
-            ("DIRAC", "DIRAC"),
-            ("GIFV", "GIFV"),
-            ("MNG", "MNG"),
-            ("MTS", "MTS"),
-            ("M2TS", "M2TS"),
-            ("TS", "TS"),
-            ("YUV", "YUV"),
-            ("RM", "RM"),
-            ("RMVB", "RMVB"),
-            ("VIV", "VIV"),
-            ("ASF", "ASF"),
-            ("AMV", "AMV"),
-            ("SVI", "SVI"),
-            ("MXF", "MXF"),
-            ("ROQ", "ROQ"),
-            ("NSV", "NSV"),
-            ("3GPP", "3GPP"),
-            ("3GPP2", "3GPP2"),
-        ],
-    )
-    asset_type = models.CharField(
-        max_length=25,
-        blank=True,
-        choices=[
-            ("Raw", "Raw"),
-            ("Intermediate", "Intermediate"),
-            ("Final Version", "Final Version"),
-            ("Derivative", "Derivative"),
-            ("Exhibition Copy", "Exhibition Copy"),
-            ("Access", "Access"),
-            ("Proxy", "Proxy"),
-            ("Unknown", "Unknown"),
-        ],
-    )
-    no_ingest_reason = models.CharField(
-        max_length=50,
-        blank=True,
-        choices=[
-            ("Unnecessary Deliverable Export", "Unnecessary Deliverable Export"),
-            ("Deposit/No Docs", "Deposit/No Docs"),
-            ("Gift/No Docs", "Gift/No Docs"),
-            ("Other Permission/No Docs", "Other Permission/No Docs"),
-            (
-                "Docs OK - Superseded by another version",
-                "Docs OK - Superseded by another version",
-            ),
-            ("Docs OK/Other - See Notes", "Docs OK/Other - See Notes"),
-            ("File for Programming", "File for Programming"),
-        ],
-    )
     history = HistoricalRecords()
     uuid = models.UUIDField(default=uuid4, null=False, unique=True, editable=False)
-    media_type = models.CharField(
-        max_length=10,
+    file_type = models.ForeignKey(
+        FileType,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        choices=[("video", "video"), ("audio", "audio"), ("image", "image")],
+        related_name="sheet_imports",
+    )
+    asset_type = models.ForeignKey(
+        AssetType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sheet_imports",
+    )
+    no_ingest_reason = models.ForeignKey(
+        NoIngestReason,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sheet_imports",
+    )
+    media_type = models.ForeignKey(
+        MediaType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sheet_imports",
     )
 
     def __str__(self):
