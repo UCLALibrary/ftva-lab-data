@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: uclalibrary/ftva-lab-data
-  tag: v1.0.16
+  tag: v1.0.17
   pullPolicy: Always
 
 nameOverride: ""
@@ -71,7 +71,7 @@ django:
 # errors when running full CSV export.
 resources:
   limits:
-    cpu: 500m
+    cpu: 2
     memory: 1Gi
   requests:
     cpu: 250m
