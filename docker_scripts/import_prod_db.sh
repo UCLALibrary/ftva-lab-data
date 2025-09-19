@@ -19,8 +19,9 @@ UNTAR_COMMAND="cd /tmp && tar xf ${DB_FILE}"
 # DB_FILE variable value must be passed to docker compose.
 docker compose exec -e DB_FILE="${DB_FILE}" db bash -c "${UNTAR_COMMAND}"
 
+# Directory name is the first entry in the tar archive.
+DB_DIR=`tar tf "${DB_FILE}" | head -1`
 # Build command to run inside container.
-DB_DIR=`basename "${DB_FILE}" .tar.gz`
 PG_COMMAND="pg_restore --verbose --if-exists --clean -U ${POSTGRES_USER} -d ${POSTGRES_DB} /tmp/${DB_DIR}"
 # DB_DIR variable value must be passed to docker compose.
 docker compose exec -e DB_DIR="${DB_DIR}" db bash -c "${PG_COMMAND}"
