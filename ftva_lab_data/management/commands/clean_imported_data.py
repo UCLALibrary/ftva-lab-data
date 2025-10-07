@@ -55,6 +55,7 @@ def _get_combined_field_data(record: SheetImport) -> str:
                 "file_type",
                 "media_type",
                 "no_ingest_reason",
+                "audio_class",
             )
         ]
     )
