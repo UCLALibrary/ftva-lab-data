@@ -7,6 +7,7 @@ from .models import (
     FileType,
     MediaType,
     NoIngestReason,
+    AudioClass,
 )
 
 
@@ -43,3 +44,9 @@ class MediaTypeAdmin(admin.ModelAdmin):
 class NoIngestReasonAdmin(admin.ModelAdmin):
     list_display = ("no_ingest_reason",)
     search_fields = ("no_ingest_reason",)
+
+
+@admin.register(AudioClass)
+class AudioClassAdmin(admin.ModelAdmin):
+    list_display = ("audio_class",)
+    search_fields = ("audio_class",)
