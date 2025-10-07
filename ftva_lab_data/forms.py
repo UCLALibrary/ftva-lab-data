@@ -20,6 +20,7 @@ class ItemForm(forms.ModelForm):
             "file_type",
             "media_type",
             "asset_type",
+            "audio_class",
             "inventory_number",
             "date_of_ingest",
             "no_ingest_reason",
