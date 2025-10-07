@@ -76,6 +76,7 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "File Type": item.file_type,
         "Media Type": item.media_type,
         "Asset Type": item.asset_type,
+        "Audio Class": item.audio_class,
     }
     inventory_info = {
         "Inventory Number": item.inventory_number,
@@ -155,6 +156,7 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
         "file_type",
         "media_type",
         "asset_type",
+        "audio_class",
         "inventory_number",
         "date_of_ingest",
         "no_ingest_reason",

@@ -1,4 +1,3 @@
-from random import choices
 from django.db import models
 from django.conf import settings
 from simple_history.models import HistoricalRecords
@@ -157,6 +156,13 @@ class SheetImport(models.Model):
         blank=True,
         related_name="sheet_imports",
     )
+    audio_class = models.ForeignKey(
+        "AudioClass",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sheet_imports",
+    )
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
@@ -196,3 +202,15 @@ class ItemStatus(models.Model):
     class Meta:
         verbose_name_plural = "Item statuses"
         ordering = ["status"]
+
+
+class AudioClass(models.Model):
+
+    audio_class = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.audio_class
+
+    class Meta:
+        verbose_name_plural = "Audio classes"
+        ordering = ["audio_class"]
