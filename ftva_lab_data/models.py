@@ -208,6 +208,9 @@ class AudioClass(models.Model):
 
     audio_class = models.CharField(max_length=50, unique=True)
 
+    def __str__(self):
+        return self.audio_class
+
     class Meta:
         verbose_name_plural = "Audio classes"
         ordering = ["audio_class"]
