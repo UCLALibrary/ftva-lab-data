@@ -470,7 +470,13 @@ def transform_record_to_dict(record: SheetImport) -> dict:
     record_data["uuid"] = str(record_data["uuid"])
 
     # Convert ForeignKey fields to strings for JSON serialization.
-    for key in ["asset_type", "file_type", "media_type", "no_ingest_reason"]:
+    for key in [
+        "asset_type",
+        "audio_class",
+        "file_type",
+        "media_type",
+        "no_ingest_reason",
+    ]:
         # or "" to avoid serializing None to "None"
         record_data[key] = str(record_data.get(key) or "")
 
