@@ -22,6 +22,7 @@ from ftva_lab_data.management.commands.clean_imported_data import (
     set_hard_drive_names,
 )
 from ftva_lab_data.models import (
+    AudioClass,
     ItemStatus,
     SheetImport,
     AssetType,
@@ -1065,13 +1066,35 @@ class ExtractInventoryNumbersTestCase(TestCase):
 class MetadataTestCase(TestCase):
     """Tests associated with MAMS ETL metadata, from the Django perspective."""
 
+    fixtures = ["audio_classes.json"]
+
     def setUp(self):
+        # General data is not important. However, related objects like AudioClass
+        # are not directly serializable into JSON. Nor is uuid, which is set
+        # automatically on SheetImport creation.
         self.item_for_metadata = SheetImport.objects.create(
-            file_name="Some file", inventory_number="inv_no"
+            file_name="Some file",
+            inventory_number="inv_no",
+            audio_class=AudioClass.objects.get(pk=1),
         )
 
     def test_django_data_is_serializable(self):
+        # This covers the general case, where ForeignKey fields are added to
+        # the SheetImport model but not handled correctly in transform_record_to_dict().
+        # No need to test every possible field explicitly; the test item
+        # created in setUp() has one example, AudioClass, which is enough.
         django_data = transform_record_to_dict(self.item_for_metadata)
+
+        # If it's not serializable to JSON, this will raise a TypeError.
+        # Here we're just confirming that the JSON conversion succeeds,
+        # or the test fails, indicating a programming error.
+        json.dumps(django_data)
+
+    def test_uuid_is_serializable(self):
+        # This covers a specific case, UUID, which as a data type is not
+        # serializable.
+        django_data = transform_record_to_dict(self.item_for_metadata)
+
         # Make sure there's a UUID in the data, as a string, not a UUID().
         uuid = django_data.get("uuid")
         self.assertIsInstance(uuid, str)
