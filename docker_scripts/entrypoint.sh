@@ -33,7 +33,7 @@ if [ "$DJANGO_RUN_ENV" = "dev" ]; then
 
   # Load fixtures, only in dev environment.
   # Don't load sample_data.json, better to work with the full set of data.
-  python manage.py loaddata groups_and_permissions.json item_statuses.json dropdown_fields.json audio_classes.json
+  python manage.py loaddata groups_and_permissions.json item_statuses.json dropdown_fields.json
 fi
 
 if [ "$DJANGO_RUN_ENV" = "dev" ]; then

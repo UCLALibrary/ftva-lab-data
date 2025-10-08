@@ -1066,7 +1066,7 @@ class ExtractInventoryNumbersTestCase(TestCase):
 class MetadataTestCase(TestCase):
     """Tests associated with MAMS ETL metadata, from the Django perspective."""
 
-    fixtures = ["audio_classes.json"]
+    fixtures = ["dropdown_fields.json"]
 
     def setUp(self):
         # General data is not important. However, related objects like AudioClass
