@@ -22,6 +22,7 @@ from ftva_lab_data.management.commands.clean_imported_data import (
     set_hard_drive_names,
 )
 from ftva_lab_data.models import (
+    AudioClass,
     ItemStatus,
     SheetImport,
     AssetType,
@@ -1065,13 +1066,35 @@ class ExtractInventoryNumbersTestCase(TestCase):
 class MetadataTestCase(TestCase):
     """Tests associated with MAMS ETL metadata, from the Django perspective."""
 
+    fixtures = ["dropdown_fields.json"]
+
     def setUp(self):
+        # General data is not important. However, related objects like AudioClass
+        # are not directly serializable into JSON. Nor is uuid, which is set
+        # automatically on SheetImport creation.
         self.item_for_metadata = SheetImport.objects.create(
-            file_name="Some file", inventory_number="inv_no"
+            file_name="Some file",
+            inventory_number="inv_no",
+            audio_class=AudioClass.objects.get(pk=1),
         )
 
     def test_django_data_is_serializable(self):
+        # This covers the general case, where ForeignKey fields are added to
+        # the SheetImport model but not handled correctly in transform_record_to_dict().
+        # No need to test every possible field explicitly; the test item
+        # created in setUp() has one example, AudioClass, which is enough.
         django_data = transform_record_to_dict(self.item_for_metadata)
+
+        # If it's not serializable to JSON, this will raise a TypeError.
+        # Here we're just confirming that the JSON conversion succeeds,
+        # or the test fails, indicating a programming error.
+        json.dumps(django_data)
+
+    def test_uuid_is_serializable(self):
+        # This covers a specific case, UUID, which as a data type is not
+        # serializable.
+        django_data = transform_record_to_dict(self.item_for_metadata)
+
         # Make sure there's a UUID in the data, as a string, not a UUID().
         uuid = django_data.get("uuid")
         self.assertIsInstance(uuid, str)
@@ -1231,7 +1254,7 @@ class CarrierLocationTestCase(TestCase):
 
 class DropdownFieldsTestCase(TestCase):
     """Tests for the dropdown fields, which relate to the
-    `AssetType`, `FileType`, `MediaType`, and `NoIngestReason` models.
+    `AssetType`, `AudioClass`, `FileType`, `MediaType`, and `NoIngestReason` models.
     """
 
     fixtures = [
@@ -1255,6 +1278,7 @@ class DropdownFieldsTestCase(TestCase):
         self.test_object = SheetImport.objects.create(
             file_name="Test Object",
             asset_type=AssetType.objects.get(pk=1),
+            audio_class=AudioClass.objects.get(pk=1),
             file_type=FileType.objects.get(pk=1),
             media_type=MediaType.objects.get(pk=1),
             no_ingest_reason=NoIngestReason.objects.get(pk=1),
@@ -1264,6 +1288,7 @@ class DropdownFieldsTestCase(TestCase):
         # The choices on the dropdown fields in the edit item form
         # should include all objects for their respective models.
         all_asset_types = AssetType.objects.all()
+        all_audio_classes = AudioClass.objects.all()
         all_file_types = FileType.objects.all()
         all_media_types = MediaType.objects.all()
         all_no_ingest_reasons = NoIngestReason.objects.all()
@@ -1278,6 +1303,7 @@ class DropdownFieldsTestCase(TestCase):
 
         test_cases = [
             ("asset_type", all_asset_types),
+            ("audio_class", all_audio_classes),
             ("file_type", all_file_types),
             ("media_type", all_media_types),
             ("no_ingest_reason", all_no_ingest_reasons),
@@ -1292,6 +1318,7 @@ class DropdownFieldsTestCase(TestCase):
         # Newly created objects on the dropdown models
         # should appear in the choices of the dropdown fields.
         new_asset_type = AssetType.objects.create(asset_type="Test Asset Type")
+        new_audio_class = AudioClass.objects.create(audio_class="Test Audio Class")
         new_file_type = FileType.objects.create(file_type="Test")  # 10 char limit
         new_media_type = MediaType.objects.create(media_type="Test")  # 10 char limit
         new_no_ingest_reason = NoIngestReason.objects.create(
@@ -1306,6 +1333,7 @@ class DropdownFieldsTestCase(TestCase):
 
         test_cases = [
             ("asset_type", new_asset_type),
+            ("audio_class", new_audio_class),
             ("file_type", new_file_type),
             ("media_type", new_media_type),
             ("no_ingest_reason", new_no_ingest_reason),
@@ -1321,6 +1349,10 @@ class DropdownFieldsTestCase(TestCase):
         updated_asset_type = AssetType.objects.get(pk=1)
         updated_asset_type.asset_type = "Updated Asset Type"
         updated_asset_type.save()
+
+        updated_audio_class = AudioClass.objects.get(pk=1)
+        updated_audio_class.audio_class = "Updated Audio Class"
+        updated_audio_class.save()
 
         updated_file_type = FileType.objects.get(pk=1)
         updated_file_type.file_type = "Updated"  # 10 char limit
@@ -1342,6 +1374,7 @@ class DropdownFieldsTestCase(TestCase):
 
         test_cases = [
             ("asset_type", updated_asset_type),
+            ("audio_class", updated_audio_class),
             ("file_type", updated_file_type),
             ("media_type", updated_media_type),
             ("no_ingest_reason", updated_no_ingest_reason),
@@ -1357,6 +1390,10 @@ class DropdownFieldsTestCase(TestCase):
         deleted_asset_type = AssetType.objects.order_by("pk").last()
         if deleted_asset_type:
             deleted_asset_type.delete()
+
+        deleted_audio_class = AudioClass.objects.order_by("pk").last()
+        if deleted_audio_class:
+            deleted_audio_class.delete()
 
         deleted_file_type = FileType.objects.order_by("pk").last()
         if deleted_file_type:
@@ -1378,6 +1415,7 @@ class DropdownFieldsTestCase(TestCase):
 
         test_cases = [
             ("asset_type", deleted_asset_type),
+            ("audio_class", deleted_audio_class),
             ("file_type", deleted_file_type),
             ("media_type", deleted_media_type),
             ("no_ingest_reason", deleted_no_ingest_reason),
