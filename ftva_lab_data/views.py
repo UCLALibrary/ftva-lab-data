@@ -29,6 +29,7 @@ from .views_utils import (
     get_specific_filemaker_fields,
     transform_filemaker_field_name,
     transform_record_to_dict,
+    get_filtered_alma_records,
 )
 
 
@@ -415,8 +416,9 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     :return: a list of dictionaries containing Alma record data, each with keys
         "record_id", "title", and "full_data".
     """
+
     sru_client = AlmaSRUClient()
-    records = sru_client.search_by_call_number(inventory_number)
+    records = get_filtered_alma_records(inventory_number)
 
     # List of required fields, as defined by FTVA
     marc_fields = ["001", "008", "245", "246", "260", "655"]
@@ -559,8 +561,7 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
         )
 
     # Get Alma records
-    sru_client = AlmaSRUClient()
-    bib_records = sru_client.search_by_call_number(inventory_number)
+    bib_records = get_filtered_alma_records(inventory_number)
     bib_records_count = len(bib_records)
 
     # Get Filemaker records

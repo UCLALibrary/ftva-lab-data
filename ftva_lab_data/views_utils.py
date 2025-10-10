@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 from .models import SheetImport
 from .forms import ItemForm
 from fmrest.record import Record
+from ftva_etl import AlmaSRUClient
 
 
 # Recursive implementation adapted from:
@@ -481,3 +482,33 @@ def transform_record_to_dict(record: SheetImport) -> dict:
         record_data[key] = str(record_data.get(key) or "")
 
     return record_data
+
+
+def get_filtered_alma_records(inventory_number: str) -> list:
+    """Retrieves Alma records matching the provided inventory_number from the SRU client,
+    then filters them to only include FTVA records with an exactly-matching inventory number.
+
+    :param inventory_number: The inventory number to match.
+    :return: A list of pymarc Records from the FTVA library with matching
+    inventory number.
+    """
+
+    sru_client = AlmaSRUClient()
+    records = sru_client.search_by_call_number(inventory_number)
+
+    filtered_records = []
+    for record in records:
+        # There may be multiple AVA fields (one for each holding record), so get them all
+        fields_ava = record.get_fields("AVA")
+        for field_ava in fields_ava:
+            # $b is the library code, which should be "ftva" for FTVA records
+            subfield_b = field_ava.get_subfields("b")
+            # $d is Call Number, which should match inventory_number
+            subfield_d = field_ava.get_subfields("d")
+            # get_subfields() returns a list, but there should only be one $b and $d,
+            # so just check the first one of each
+            if "ftva" in subfield_b[0].lower() and subfield_d[0] == inventory_number:
+                filtered_records.append(record)
+                break  # No need to check other AVA fields for this record
+
+    return filtered_records
