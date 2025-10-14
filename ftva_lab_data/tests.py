@@ -44,6 +44,7 @@ from ftva_lab_data.views_utils import (
     get_tag_labels,
     process_full_alma_data,
     transform_record_to_dict,
+    is_inventory_number_match,
 )
 from ftva_lab_data.table_config import COLUMNS
 from ftva_lab_data.management.commands.extract_inventory_numbers import (
@@ -1106,6 +1107,24 @@ class MetadataTestCase(TestCase):
         # Double-check that the troublesome data
         # ("uuid": "value unimportant") is in fact included.
         self.assertIn('"uuid":', json_data)
+
+    def test_call_inv_number_match_exact(self):
+        # Tests is_inventory_number_match() with exact matches
+        inventory_number = "ABC"
+        call_number = "ABC"
+        self.assertTrue(is_inventory_number_match(inventory_number, call_number))
+
+    def test_call_inv_number_no_match(self):
+        # Tests is_inventory_number_match() with no match
+        inventory_number = "DEF"
+        call_number = "ABC"
+        self.assertFalse(is_inventory_number_match(inventory_number, call_number))
+
+    def test_call_inv_number_match_affixes(self):
+        # Tests is_inventory_number_match() with prefix ("VA") and suffix (" T")
+        inventory_number = "VA15789"
+        call_number = "VA15789 T"
+        self.assertTrue(is_inventory_number_match(inventory_number, call_number))
 
 
 class SetHardDriveLocationTestCase(TestCase):

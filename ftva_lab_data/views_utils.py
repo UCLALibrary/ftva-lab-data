@@ -486,7 +486,7 @@ def transform_record_to_dict(record: SheetImport) -> dict:
 
 def get_filtered_alma_records(inventory_number: str) -> list:
     """Retrieves Alma records matching the provided inventory_number from the SRU client,
-    then filters them to only include FTVA records with an exactly-matching inventory number.
+    then filters them to only include FTVA records with matching inventory number.
 
     :param inventory_number: The inventory number to match.
     :return: A list of pymarc Records from the FTVA library with matching
@@ -501,14 +501,45 @@ def get_filtered_alma_records(inventory_number: str) -> list:
         # There may be multiple AVA fields (one for each holding record), so get them all
         fields_ava = record.get_fields("AVA")
         for field_ava in fields_ava:
-            # $b is the library code, which should be "ftva" for FTVA records
-            subfield_b = field_ava.get_subfields("b")
-            # $d is Call Number, which should match inventory_number
-            subfield_d = field_ava.get_subfields("d")
+            # $b is the library code, which should be "ftva" for FTVA records.
             # get_subfields() returns a list, but there should only be one $b and $d,
-            # so just check the first one of each
-            if "ftva" in subfield_b[0].lower() and subfield_d[0] == inventory_number:
+            # so just check the first one of each.
+            library_code = field_ava.get_subfields("b")[0].lower()
+            # $d is Call Number
+            call_number = field_ava.get_subfields("d")[0]
+
+            if library_code == "ftva" and is_inventory_number_match(
+                inventory_number, call_number
+            ):
                 filtered_records.append(record)
                 break  # No need to check other AVA fields for this record
 
     return filtered_records
+
+
+def is_inventory_number_match(inventory_number: str, call_number: str) -> bool:
+    """Given an inventory number (sourced from FTVA database) and a call number (sourced from
+    Alma), return True if the Call Number matches the inventory number using guidelines provided
+    by FTVA.
+
+    :param inventory_number: The inventory number to check for.
+    :param call_number: The call number of a bib record.
+    :return: True if the inventory number matches the call number, False otherwise.
+    """
+
+    inv_no_prefixes = ["VA", "DVD", "VD", "XFE", "XFF", "XVE", "HFA", "ZVB"]
+    call_no_suffixes = [" T", " M", " R"]
+
+    # Exact match is always a match
+    if inventory_number == call_number:
+        return True
+
+    # If inventory number starts with a known prefix, check if it matches call number
+    # with any added suffixes.
+    for prefix in inv_no_prefixes:
+        if inventory_number.startswith(prefix):
+            for suffix in call_no_suffixes:
+                if inventory_number + suffix == call_number:
+                    return True
+
+    return False
