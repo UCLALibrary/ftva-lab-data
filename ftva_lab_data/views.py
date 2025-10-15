@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from simple_history.utils import bulk_update_with_history
 from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
-from urllib.parse import urlencode
 import pandas as pd
 import io
 import json
@@ -18,6 +17,7 @@ from .forms import ItemForm
 from .models import SheetImport
 from .table_config import COLUMNS
 from .views_utils import (
+    get_airtable_url,
     get_item_display_dicts,
     get_add_edit_item_fields,
     get_search_result_data,
@@ -497,14 +497,9 @@ def get_filemaker_data(request: HttpRequest, inventory_number: str) -> HttpRespo
         data_dict["record_id"] = filemaker_fields.get("inventory_id", "NO INVENTORY ID")
         data_dict["title"] = filemaker_fields.get("title", "NO TITLE")
 
-        # Construct URL for Airtable acquisition database, using the Donor Code field as a filter.
-        # Airtable accepts filters via URL query in the format "filter_{field_name}={value}",
-        # so here we construct the query parameters as a dict and then URL-encode it.
-        query_parameters = {"filter_Donor Code": filemaker_fields.get("donor_code", "")}
-        data_dict["airtable_url_donor_query"] = (
-            f"{settings.AIRTABLE_URL}"  # base URL
-            f"?{urlencode(query_parameters)}"  # query parameters
-        )
+        # Construct Airtable URL using donor code from Filemaker record
+        donor_code = filemaker_fields.get("donor_code", "")
+        data_dict["airtable_url_donor_query"] = get_airtable_url(donor_code)
 
         # Transform the raw FM field names to be cleaner and more consistent
         data_dict["full_data"] = {
