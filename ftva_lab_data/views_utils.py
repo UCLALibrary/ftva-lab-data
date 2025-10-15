@@ -2,6 +2,7 @@ import base64
 import binascii
 from typing import Any
 from pymarc import Field
+from django.conf import settings
 from django.db.models import Model, Q
 from django.db.models.query import QuerySet
 from django.contrib.auth import authenticate, login
@@ -481,3 +482,19 @@ def transform_record_to_dict(record: SheetImport) -> dict:
         record_data[key] = str(record_data.get(key) or "")
 
     return record_data
+
+
+def get_airtable_url(donor_code: str) -> str:
+    """Constructs an Airtable URL to FTVA's acquisitions database,
+    using the donor code field from a Filemaker record.
+
+    Airtable accepts filters via URL query in the format "filter_{field_name}={value}".
+
+    :param donor_code: The donor code to use as a filter.
+    :return: The Airtable URL.
+    """
+    query_parameters = {"filter_Donor Code": donor_code}
+    return (
+        f"{settings.AIRTABLE_URL}"  # base URL
+        f"?{urlencode(query_parameters)}"  # query parameters
+    )

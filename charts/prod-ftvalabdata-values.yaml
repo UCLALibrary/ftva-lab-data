@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: uclalibrary/ftva-lab-data
-  tag: v1.0.20
+  tag: v1.0.21
   pullPolicy: Always
 
 nameOverride: ""
@@ -66,6 +66,8 @@ django:
       django_secret_key: "/systems/prodrke01/ftva-lab-data/django_secret_key"
       filemaker_password: "/systems/prodrke01/ftva-lab-data/filemaker_password"
       filemaker_user: "/systems/prodrke01/ftva-lab-data/filemaker_user"
+      airtable_app_id: "/systems/prodrke01/ftva-lab-data/airtable_app_id"
+      airtable_share_id: "/systems/prodrke01/ftva-lab-data/airtable_share_id"
 
 # Memory request and limit both set to 1Gi to deal with out of memory
 # errors when running full CSV export.
