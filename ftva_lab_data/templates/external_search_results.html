@@ -10,7 +10,7 @@
     {% endif %}
 </div>
 
-<div class ="d-flex align-items-stretch gap-2 mb-3 w-75 mx-auto">
+<div class="d-flex align-items-stretch gap-2 mb-3 w-75 mx-auto">
     <div class="w-100">
         <p>Your search for "{{ inventory_number }}" returned {{ records|length }} {{ search_type|title }} records.</p>
     </div>
@@ -31,16 +31,22 @@
                     <td>{{ record.record_id }}</td>
                     <td>{{ record.title }}</td>
                     <td>
-                        <button 
-                            type="button" 
-                            class="btn btn-sm btn-primary"
-                            data-bs-toggle="modal"
+                        {% comment %} For Filemaker records, link to FTVA's acquisitions database in Airtable,
+                        using the donor code as a filter. {% endcomment %}
+                        {% if search_type == "filemaker" %}
+                        <a class="btn btn-sm btn-secondary" href="{{ record.airtable_url_donor_query|urlencode }}"
+                            target="_blank" data-bs-toggle="tooltip"
+                            title="View acquisition information in Airtable">View
+                            Acquisition
+                            Info</a>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
                             data-bs-target="#record-modal-{{ forloop.counter }}">
                             View Record
                         </button>
-                    </td> 
+                    </td>
                 </tr>
-                {% comment %} Include a modal for each record, 
+                {% comment %} Include a modal for each record,
                 passing the record and the modal index as variables.
                 {% endcomment %}
                 {% include "partials/external_record_modal.html" with record=record modal_index=forloop.counter %}

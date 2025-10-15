@@ -495,6 +495,14 @@ def get_filemaker_data(request: HttpRequest, inventory_number: str) -> HttpRespo
 
         data_dict["record_id"] = filemaker_fields.get("inventory_id", "NO INVENTORY ID")
         data_dict["title"] = filemaker_fields.get("title", "NO TITLE")
+
+        # Construct URL for Airtable acquisition database, using the Donor Code field as a filter
+        airtable_field_name = "Donor Code"
+        data_dict["airtable_url_donor_query"] = (
+            f"{settings.AIRTABLE_URL}"  # URL base
+            f'?filter_{airtable_field_name}={filemaker_fields.get("donor_code", "")}'  # query str
+        )
+
         # Transform the raw FM field names to be cleaner and more consistent
         data_dict["full_data"] = {
             transform_filemaker_field_name(k): v for k, v in filemaker_fields.items()
