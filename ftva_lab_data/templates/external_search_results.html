@@ -30,20 +30,22 @@
                 <tr>
                     <td>{{ record.record_id }}</td>
                     <td>{{ record.title }}</td>
-                    <td>
-                        {% comment %} For Filemaker records, link to FTVA's acquisitions database in Airtable,
-                        using the donor code as a filter. {% endcomment %}
-                        {% if search_type == "filemaker" %}
-                        <a class="btn btn-sm btn-secondary" href="{{ record.airtable_url_donor_query|urlencode }}"
-                            target="_blank" data-bs-toggle="tooltip"
-                            title="View acquisition information in Airtable">View
-                            Acquisition
-                            Info</a>
-                        {% endif %}
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                            data-bs-target="#record-modal-{{ forloop.counter }}">
-                            View Record
-                        </button>
+                    <td class="text-nowrap">
+                        <div class="d-flex gap-2">
+                            {% comment %} For Filemaker records, link to FTVA's acquisitions database in Airtable,
+                            using the donor code as a filter. {% endcomment %}
+                            {% if search_type == "filemaker" %}
+                            <a class="btn btn-sm btn-secondary flex-shrink-0"
+                                href="{{ record.airtable_url_donor_query }}" target="_blank" data-bs-toggle="tooltip"
+                                title="View acquisition information in Airtable">View
+                                Acquisition
+                                Info</a>
+                            {% endif %}
+                            <button type="button" class="btn btn-sm btn-primary flex-shrink-0" data-bs-toggle="modal"
+                                data-bs-target="#record-modal-{{ forloop.counter }}">
+                                View Record
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% comment %} Include a modal for each record,
