@@ -8,7 +8,12 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from simple_history.utils import bulk_update_with_history
-from ftva_etl import AlmaSRUClient, FilemakerClient, get_mams_metadata
+from ftva_etl import (
+    AlmaSRUClient,
+    FilemakerClient,
+    get_mams_metadata,
+)
+from ftva_etl.metadata.utils import filter_by_inventory_number_and_library
 import pandas as pd
 import io
 import json
@@ -418,12 +423,13 @@ def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     """
     sru_client = AlmaSRUClient()
     records = sru_client.search_by_call_number(inventory_number)
+    filtered_records = filter_by_inventory_number_and_library(records, inventory_number)
 
     # List of required fields, as defined by FTVA
     marc_fields = ["001", "008", "245", "246", "260", "655"]
     full_data_dicts = []
 
-    for record in records:
+    for record in filtered_records:
         record_dict = {}
         # Extract the record ID and title, used for search results display
         record_dict["record_id"] = record.get("001").value()
@@ -567,7 +573,10 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
     # Get Alma records
     sru_client = AlmaSRUClient()
     bib_records = sru_client.search_by_call_number(inventory_number)
-    bib_records_count = len(bib_records)
+    filtered_bib_records = filter_by_inventory_number_and_library(
+        bib_records, inventory_number
+    )
+    bib_records_count = len(filtered_bib_records)
 
     # Get Filemaker records
     user = settings.FILEMAKER_USER
@@ -578,7 +587,9 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
 
     # If Alma and FM records are unique, generate JSON metadata
     if bib_records_count == 1 and fm_records_count == 1:
-        metadata = get_mams_metadata(bib_records[0], fm_records[0], django_record_data)
+        metadata = get_mams_metadata(
+            filtered_bib_records[0], fm_records[0], django_record_data
+        )
         # Format the metadata as JSON for display in the template
         metadata_json = json.dumps(metadata, indent=2)
         return render(
