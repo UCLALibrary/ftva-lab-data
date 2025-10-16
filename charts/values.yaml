@@ -47,6 +47,8 @@ django:
     email_smtp_port: ""
     email_from_address: ""
     email_password: ""
+    airtable_app_id: ""
+    airtable_share_id: ""
     # Include if externalSecrets enabled: "false"
     #db_password: ""
     log_level: ""

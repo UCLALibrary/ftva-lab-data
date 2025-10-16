@@ -22,6 +22,7 @@ from .forms import ItemForm
 from .models import SheetImport
 from .table_config import COLUMNS
 from .views_utils import (
+    get_airtable_url,
     get_item_display_dicts,
     get_add_edit_item_fields,
     get_search_result_data,
@@ -501,6 +502,11 @@ def get_filemaker_data(request: HttpRequest, inventory_number: str) -> HttpRespo
 
         data_dict["record_id"] = filemaker_fields.get("inventory_id", "NO INVENTORY ID")
         data_dict["title"] = filemaker_fields.get("title", "NO TITLE")
+
+        # Construct Airtable URL using donor code from Filemaker record
+        donor_code = filemaker_fields.get("donor_code", "")
+        data_dict["airtable_url_donor_query"] = get_airtable_url(donor_code)
+
         # Transform the raw FM field names to be cleaner and more consistent
         data_dict["full_data"] = {
             transform_filemaker_field_name(k): v for k, v in filemaker_fields.items()
