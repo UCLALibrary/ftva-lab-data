@@ -1424,3 +1424,63 @@ class DropdownFieldsTestCase(TestCase):
             choices = [choice[0] for choice in form.fields[field_name].choices]
             with self.subTest(deleted_obj=deleted_obj, choices=choices):
                 self.assertNotIn(deleted_obj.pk, choices)
+
+
+class GetAllRecordsTestCase(TestCase):
+    """Tests for the get_all_records view."""
+
+    fixtures = ["sample_data.json", "groups_and_permissions.json"]
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="authorized", password="testpassword"
+        )
+        group = Group.objects.get(name="editors")
+        self.user.groups.add(group)
+        # Create client using basic auth
+        credentials = "authorized:testpassword"
+        base64_credentials = base64.b64encode(credentials.encode()).decode()
+        http_auth_string = f"Basic {base64_credentials}"
+        self.client = Client(HTTP_AUTHORIZATION=http_auth_string)
+
+        # Create 200 test records
+        for i in range(200):
+            SheetImport.objects.create(file_name=f"test_file_{i}")
+
+    def test_get_all_records_default(self):
+        url = reverse("get_all_records")
+        first_record = SheetImport.objects.order_by("id").first()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # First result should be the first record from database
+        self.assertEqual(response.json()["records"][0]["id"], first_record.id)
+        # Should return 100 records by default
+        self.assertEqual(len(response.json()["records"]), 100)
+
+    def test_get_all_records_with_offset_and_limit(self):
+        offset = 50
+        limit = 100
+        url = reverse("get_all_records")
+        test_record = (
+            SheetImport.objects.all().order_by("id")[offset : offset + limit].first()
+        )
+        response = self.client.get(url, {"offset": offset, "limit": limit})
+        self.assertEqual(response.status_code, 200)
+
+        # First result should be the 51st record from database
+        self.assertEqual(response.json()["records"][0]["id"], test_record.id)
+        # Should return 100 records starting from the 51st record
+        self.assertEqual(len(response.json()["records"]), 100)
+
+    def test_get_all_records_correct_order(self):
+        url = reverse("get_all_records")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Should return records in ascending order by ID
+        result_ids = [record["id"] for record in response.json()["records"]]
+        expected_ids = [
+            record.id for record in SheetImport.objects.all().order_by("id")[0:100]
+        ]
+        self.assertEqual(result_ids, expected_ids)
