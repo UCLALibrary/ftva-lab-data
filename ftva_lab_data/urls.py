@@ -16,6 +16,7 @@ urlpatterns = [
     path("logs/", views.show_log, name="show_log"),
     path("logs/<int:line_count>", views.show_log, name="show_log"),
     path("release_notes/", views.release_notes, name="release_notes"),
+    path("records/", views.get_all_records, name="get_all_records"),
     path("records/<int:record_id>", views.get_record, name="get_record"),
     path(
         "records/uuid/<str:uuid>", views.get_record_by_uuid, name="get_record_by_uuid"
