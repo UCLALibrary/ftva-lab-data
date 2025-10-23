@@ -424,7 +424,7 @@ def get_all_records(request: HttpRequest) -> JsonResponse:
     # Offset and limit set via query parameters
     offset = int(request.GET.get("offset", 0))
     limit = int(request.GET.get("limit", 100))
-    records = SheetImport.objects.all()[offset : offset + limit]
+    records = SheetImport.objects.all().order_by("id")[offset : offset + limit]
     records_data = [transform_record_to_dict(record) for record in records]
     response_data = {
         "records": records_data,
