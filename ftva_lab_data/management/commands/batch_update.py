@@ -47,7 +47,11 @@ def validate_input_data(records: list[dict]) -> None:
             if field not in model_fields:
                 fields_not_found.append(field)
             if field == "id":
-                if not SheetImport.objects.get(id=record["id"]):
+                # Need a `try-except` here, since `get()` raises a `DoesNotExist` exception
+                # if the record is not found, rather than returning `None`.
+                try:
+                    SheetImport.objects.get(id=record["id"])
+                except SheetImport.DoesNotExist:
                     ids_not_found.append(record["id"])
     if fields_not_found:
         raise ValueError(f"Fields {fields_not_found} not found on SheetImport model")
@@ -91,17 +95,28 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                 if current_value != related_object:
                     has_changes = True
                     setattr(record, field, related_object)
+                    print(
+                        f"Record {row['id']} updated: "
+                        f"{field} changed from {current_value} to {related_object}"
+                    )
 
+            # Else if the field is a ManyToManyField,
+            # get the related object and add it to the many-to-many relationship.
             elif isinstance(field_object, ManyToManyField):
                 related_object = field_object.related_model.objects.get(
                     **{f"{field}__istartswith": value}
                 )
-                # Can't use setattr() directly on a ManyToManyField,
-                # so using getattr() to get the field object and then add the related object.
                 current_related_objects = getattr(record, field).all()
                 if related_object not in current_related_objects:
                     has_changes = True
+                    # Need to use `getattr().add()` here rather than `setattr()`,
+                    # since we're adding an object to a many-to-many relationship,
+                    # rather than setting a single foreign key as we do above.
                     getattr(record, field).add(related_object)
+                    print(
+                        f"Record {row['id']} updated: "
+                        f"added {related_object} to {field}"
+                    )
 
             # Otherwise, just set the value directly
             else:
@@ -112,6 +127,10 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                 if current_value != value:
                     has_changes = True
                     setattr(record, field, value)
+                    print(
+                        f"Record {row['id']} updated: "
+                        f"{field} changed from {current_value} to {value}"
+                    )
 
         # Compare the original record to the updated record
         if not has_changes:
@@ -120,13 +139,12 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
         if not dry_run:
             record.save()
         records_updated += 1
-        print(f"Updated record {row['id']}")
 
     return records_updated
 
 
 class Command(BaseCommand):
-    help = "Runs a batch updates on the SheetImport model, "
+    help = "Runs a batch update on the SheetImport model, "
     "using a spreadsheet as input."
 
     def add_arguments(self, parser) -> None:
@@ -149,20 +167,22 @@ class Command(BaseCommand):
         input_file = options["input_file"]
         input_data = load_input_data(input_file)
 
+        dry_run = options["dry_run"]
+
         print(
             f"{'#' * 20} STARTING BATCH UPDATE "
-            f"{'(DRY RUN)' if options['dry_run'] else ''}{'#' * 20}"
+            f"{'(DRY RUN)' if dry_run else ''}{'#' * 20}"
         )
         print(f"Loaded {len(input_data)} sheets from {input_file}")
         total_records_updated = 0
-        for i, sheet_data in enumerate(input_data):
-            sheet_number = f"{i + 1} of {len(input_data)}"
+        for i, sheet_data in enumerate(input_data, start=1):
+            sheet_number = f"{i} of {len(input_data)}"
             try:
                 print(f"Validating input data for sheet {sheet_number}")
                 validate_input_data(sheet_data)
 
                 print(f"Applying updates from sheet {sheet_number}")
-                records_updated = batch_update(sheet_data, options["dry_run"])
+                records_updated = batch_update(sheet_data, dry_run)
 
                 print(f"Updated {records_updated} records from sheet {sheet_number}")
                 total_records_updated += records_updated
@@ -172,5 +192,5 @@ class Command(BaseCommand):
         print(f"Total records updated: {total_records_updated}")
         print(
             f"{'#' * 20} BATCH UPDATE COMPLETE "
-            f"{'(DRY RUN)' if options['dry_run'] else ''}{'#' * 20}"
+            f"{'(DRY RUN)' if dry_run else ''}{'#' * 20}"
         )
