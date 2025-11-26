@@ -112,7 +112,10 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                     # Need to use `getattr().add()` here rather than `setattr()`,
                     # since we're adding an object to a many-to-many relationship,
                     # rather than setting a single foreign key as we do above.
-                    getattr(record, field).add(related_object)
+                    # `add()` immediately saves the change to the database though,
+                    # so we need an additional `dry_run` check.
+                    if not dry_run:
+                        getattr(record, field).add(related_object)
                     print(
                         f"Record {row['id']} updated: "
                         f"added {related_object} to {field}"
