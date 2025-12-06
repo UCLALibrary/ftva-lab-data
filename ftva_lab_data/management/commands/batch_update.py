@@ -54,9 +54,11 @@ def validate_input_data(records: list[dict]) -> None:
                 except SheetImport.DoesNotExist:
                     ids_not_found.append(record["id"])
     if fields_not_found:
-        raise ValueError(f"Fields {fields_not_found} not found on SheetImport model")
+        raise ValueError(
+            f"Fields {set(fields_not_found)} not found on SheetImport model"
+        )
     if ids_not_found:
-        raise ValueError(f"Record IDs {ids_not_found} not found in database")
+        raise ValueError(f"Record IDs {set(ids_not_found)} not found in database")
     return
 
 
