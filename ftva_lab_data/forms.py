@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import FileExtensionValidator
 from .models import SheetImport
 
 
@@ -81,3 +82,20 @@ class ItemForm(forms.ModelForm):
                 attrs={"type": "date", "class": "form-control"}
             ),
         }
+
+
+class BatchUpdateForm(forms.Form):
+    file = forms.FileField(
+        label="Select an XLSX file to import",
+        required=True,
+        validators=[FileExtensionValidator(allowed_extensions=["xlsx"])],
+        widget=forms.FileInput(
+            attrs={
+                "class": "form-control",
+                "accept": (
+                    ".xlsx,"
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ),
+            }
+        ),
+    )

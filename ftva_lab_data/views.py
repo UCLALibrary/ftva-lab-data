@@ -18,7 +18,7 @@ import pandas as pd
 import io
 import json
 
-from .forms import ItemForm
+from .forms import ItemForm, BatchUpdateForm
 from .models import SheetImport
 from .table_config import COLUMNS
 from .views_utils import (
@@ -36,6 +36,7 @@ from .views_utils import (
     transform_filemaker_field_name,
     transform_record_to_dict,
 )
+from .management.commands.batch_update import validate_input_data
 
 
 @login_required
@@ -433,7 +434,6 @@ def get_all_records(request: HttpRequest) -> JsonResponse:
     return JsonResponse(response_data)
 
 
-
 def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     """Fetch Alma records using SRU client.
 
@@ -701,3 +701,46 @@ def carrier_suggestions(request):
         "partials/carrier_suggestions.html", {"carriers": carrier_list}
     )
     return HttpResponse(html)
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.change_sheetimport",
+    raise_exception=True,
+)
+def batch_update(request: HttpRequest) -> HttpResponse:
+    """Batch import records from an XLSX file.
+
+    :param request: The HTTP request object.
+    :return: Rendered template for batch importing records.
+    """
+    if request.method == "POST":
+        form = BatchUpdateForm(request.POST, request.FILES)
+        if form.is_valid():
+            # TODO: handle uploaded file
+            file = form.cleaned_data["file"]
+            sheets = pd.read_excel(file, sheet_name=None)
+            records = [
+                sheet_data.fillna("").to_dict(orient="records")
+                for sheet_data in sheets.values()
+            ]
+            for record in records:
+                try:
+                    validate_input_data(record)
+                except ValueError as e:
+                    return render(
+                        request,
+                        "partials/batch_update_modal_content.html",
+                        {"form": form, "error": str(e)},
+                    )
+            return render(
+                request,
+                "partials/batch_update_modal_content.html",
+                {
+                    "form": form,
+                    "success": "Spreadsheet validated successfully! Applying batch updates...",
+                },
+            )
+    else:
+        form = BatchUpdateForm()
+    return render(request, "partials/batch_update_modal_content.html", {"form": form})
