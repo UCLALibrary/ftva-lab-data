@@ -14,16 +14,18 @@
     {% comment %} HTMX will listen for triggers from enclosed controls,
     then issue GET requests to 'render_table' URL
     and replace content of #table-container with result {% endcomment %}
-    <form id="table-filters-form" class="d-flex gap-2 align-items-stretch w-50" hx-get="{% url 'render_table' %}" hx-target="#table-container"
+    <form id="table-filters-form" class="d-flex gap-2 align-items-stretch w-50" hx-get="{% url 'render_table' %}"
+        hx-target="#table-container"
         hx-trigger="change from:find select, keyup changed delay:300ms from:find input, clear from:find input">
         <select name="search_column" class="form-select form-select-md">
             <option value="">All columns</option>
             {% for field, label in columns %}
-            <option value="{{ field }}" {% if field == search_column %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ field }}" {% if field == search_column %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
         <div class="input-group input-group-md">
-            <input id="search-input" class="form-control form-control-md" type="text" name="search" placeholder="Enter search term..." value="{{ search }}">
+            <input id="search-input" class="form-control form-control-md" type="text" name="search"
+                placeholder="Enter search term..." value="{{ search }}">
             <span class="input-group-text">
                 <button class="btn p-0 border-0" type="button" hx-on:click="clearSearchInput()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -38,7 +40,8 @@
     </form>
 
     {% if perms.ftva_lab_data.assign_user %}
-    <form id="assigned-users-form" method="post" hx-post="{% url 'assign_to_user' %}" hx-target="#table-container" class="d-flex gap-2 align-items-stretch w-50">
+    <form id="assigned-users-form" method="post" hx-post="{% url 'assign_to_user' %}" hx-target="#table-container"
+        class="d-flex gap-2 align-items-stretch w-50">
         {% csrf_token %}
         <select name="user_id" class="form-select form-select-md" required>
             <option value="">Assign to...</option>
@@ -51,14 +54,13 @@
     </form>
     {% endif %}
 
-    <div class="mb-3">
-        <button
-            type="button" 
-            class="btn btn-outline-success h-100" 
-            id="export-button"
-            hx-on:click="handleExportSearchResults(this, event)"
-            >Export to CSV
-                <span id="export-spinner"></span>
+    <div class="d-flex gap-2 mb-3">
+        <button type="button" class="btn btn-outline-secondary h-100" data-bs-toggle="modal"
+            data-bs-target="#batch-import-modal" hx-get="{% url 'batch_update' %}"
+            hx-target="#batch-import-modal-content" hx-trigger="click">Import from XLSX</button>
+        <button type="button" class="btn btn-outline-success h-100" id="export-button"
+            hx-on:click="handleExportSearchResults(this, event)">Export to CSV
+            <span id="export-spinner"></span>
         </button>
     </div>
 </div>
@@ -68,10 +70,31 @@
 and inserts the resulting HTML within div. HTMX includes the child fields of
 `table-filters-form` from above, but since the state of `page` is managed
 elsewhere, it is included in the URL query string here. {% endcomment %}
-<div id="table-container" class="table-responsive container-fluid p-4"
-     hx-get="{% url 'render_table' %}?page={{ page }}"
-     hx-include="#table-filters-form"
-     hx-trigger="load">
+<div id="table-container" class="table-responsive container-fluid p-4" hx-get="{% url 'render_table' %}?page={{ page }}"
+    hx-include="#table-filters-form" hx-trigger="load">
+</div>
+
+{% comment %}
+This modal will show a loading state when first opened.
+HTMX will swap `#batch-import-modal-content` when the request completes.
+{% endcomment %}
+<div class="modal fade" id="batch-import-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content" id="batch-import-modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <div class="spinner-border"></div>
+                    <div>Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

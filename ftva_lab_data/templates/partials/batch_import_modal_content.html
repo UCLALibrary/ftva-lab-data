@@ -1,0 +1,33 @@
+{% load django_bootstrap5 %}
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">
+            Batch Import
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        {% if error %}
+        <div class="alert alert-danger text-center" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+        {% if success %}
+        <div class="alert alert-success text-center" role="alert">
+            {{ success }}
+        </div>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data" id="batch-import-form" hx-post="{% url 'batch_update' %}"
+            hx-target=".modal-content" hx-trigger="submit" hx-indicator=".loading-indicator"
+            hx-disabled-elt=".modal-content button">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" form="batch-import-form" class="btn btn-primary">Import
+            <div class="spinner-border spinner-border-sm loading-indicator"></div>
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    </div>
+</div>
