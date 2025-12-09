@@ -87,29 +87,38 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
 
             # If the field is a ForeignKey, get the related object and set it
             if isinstance(field_object, ForeignKey):
-                related_object = field_object.related_model.objects.get(
-                    # Using case-insensitive startswith because
-                    # input data may not exactly match the database value.
-                    # Same below for ManyToManyField.
-                    **{f"{field}__istartswith": value}
-                )
                 current_value = getattr(record, field)
-                if current_value != related_object:
+                # Empty string should nullify ForeignKey field
+                if value == "":
+                    update = None
+                else:
+                    update = field_object.related_model.objects.get(
+                        # Using case-insensitive startswith because
+                        # input data may not exactly match the database value.
+                        # Same below for ManyToManyField.
+                        **{f"{field}__istartswith": value}
+                    )
+                if current_value != update:
                     has_changes = True
-                    setattr(record, field, related_object)
+                    setattr(record, field, update)
                     print(
                         f"Record {row['id']} updated: "
-                        f"{field} changed from {current_value} to {related_object}"
+                        f"{field} changed from {current_value} to {update}"
                     )
 
             # Else if the field is a ManyToManyField,
             # get the related object and add it to the many-to-many relationship.
             elif isinstance(field_object, ManyToManyField):
-                related_object = field_object.related_model.objects.get(
-                    **{f"{field}__istartswith": value}
-                )
                 current_related_objects = getattr(record, field).all()
-                if related_object not in current_related_objects:
+                # Nothing should be done for empty string values on ManyToMany fields
+                if value == "":
+                    update = None
+                else:
+                    update = field_object.related_model.objects.get(
+                        **{f"{field}__istartswith": value}
+                    )
+                # Only apply update if there is one and it's not already in the m2m relationship
+                if update and update not in current_related_objects:
                     has_changes = True
                     # Need to use `getattr().add()` here rather than `setattr()`,
                     # since we're adding an object to a many-to-many relationship,
@@ -117,11 +126,8 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                     # `add()` immediately saves the change to the database though,
                     # so we need an additional `dry_run` check.
                     if not dry_run:
-                        getattr(record, field).add(related_object)
-                    print(
-                        f"Record {row['id']} updated: "
-                        f"added {related_object} to {field}"
-                    )
+                        getattr(record, field).add(update)
+                    print(f"Record {row['id']} updated: " f"added {update} to {field}")
 
             # Otherwise, just set the value directly
             else:

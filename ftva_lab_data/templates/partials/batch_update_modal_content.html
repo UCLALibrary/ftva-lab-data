@@ -14,7 +14,13 @@
         {% endif %}
         {% if success %}
         <div class="alert alert-success text-center" role="alert">
-            {{ success }}
+            <p class="fw-bold">Batch update successful!</p>
+            <dl class="row">
+                {% for label, count in records_updated_counts.items %}
+                <dt class="col-sm-6 text-end">{{ label }}</dt>
+                <dd class="col-sm-6 text-start">{{ count }} records updated</dd>
+                {% endfor %}
+            </dl>
         </div>
         {% endif %}
         <form method="post" enctype="multipart/form-data" id="batch-import-form" hx-post="{% url 'batch_update' %}"

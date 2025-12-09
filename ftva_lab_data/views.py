@@ -36,7 +36,10 @@ from .views_utils import (
     transform_filemaker_field_name,
     transform_record_to_dict,
 )
-from .management.commands.batch_update import validate_input_data
+from .management.commands.batch_update import (
+    validate_input_data,
+    batch_update as batch_update_command,
+)
 
 
 @login_required
@@ -720,13 +723,19 @@ def batch_update(request: HttpRequest) -> HttpResponse:
             # TODO: handle uploaded file
             file = form.cleaned_data["file"]
             sheets = pd.read_excel(file, sheet_name=None)
-            records = [
+            # Convert each sheet to a list of dicts, each representing a row of input data
+            sheets_data = [
                 sheet_data.fillna("").to_dict(orient="records")
                 for sheet_data in sheets.values()
             ]
-            for record in records:
+            records_updated_counts = {"Total": 0}
+            for i, sheet in enumerate(sheets_data, start=1):
                 try:
-                    validate_input_data(record)
+                    validate_input_data(sheet)
+                    sheet_number = f"Sheet {i} of {len(sheets_data)}"
+                    records_updated = batch_update_command(sheet, dry_run=True)
+                    records_updated_counts[sheet_number] = records_updated
+                    records_updated_counts["Total"] += records_updated
                 except ValueError as e:
                     return render(
                         request,
@@ -738,7 +747,10 @@ def batch_update(request: HttpRequest) -> HttpResponse:
                 "partials/batch_update_modal_content.html",
                 {
                     "form": form,
-                    "success": "Spreadsheet validated successfully! Applying batch updates...",
+                    "success": True,
+                    "records_updated_counts": dict(
+                        sorted(records_updated_counts.items())
+                    ),
                 },
             )
     else:
