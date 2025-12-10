@@ -86,7 +86,7 @@ class ItemForm(forms.ModelForm):
 
 class BatchUpdateForm(forms.Form):
     file = forms.FileField(
-        label="Select an XLSX file to import",
+        label="Select an XLSX file to upload",
         required=True,
         validators=[FileExtensionValidator(allowed_extensions=["xlsx"])],
         widget=forms.FileInput(

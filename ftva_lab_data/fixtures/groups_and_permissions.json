@@ -364,6 +364,11 @@
           "assign_user",
           "ftva_lab_data",
           "sheetimport"
+        ],
+        [
+          "change_sheetimport",
+          "ftva_lab_data",
+          "sheetimport"
         ]
       ]
     }

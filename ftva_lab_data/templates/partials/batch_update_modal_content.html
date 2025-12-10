@@ -2,16 +2,11 @@
 <div class="modal-content">
     <div class="modal-header">
         <h5 class="modal-title">
-            Batch Import
+            Batch Update
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
     </div>
     <div class="modal-body">
-        {% if error %}
-        <div class="alert alert-danger text-center" role="alert">
-            {{ error }}
-        </div>
-        {% endif %}
         {% if success %}
         <div class="alert alert-success text-center" role="alert">
             <p class="fw-bold">Batch update successful!</p>
@@ -31,7 +26,7 @@
         </form>
     </div>
     <div class="modal-footer">
-        <button type="submit" form="batch-import-form" class="btn btn-primary">Import
+        <button type="submit" form="batch-import-form" class="btn btn-primary">Apply Updates
             <div class="spinner-border spinner-border-sm loading-indicator"></div>
         </button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

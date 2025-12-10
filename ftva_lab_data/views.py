@@ -733,14 +733,16 @@ def batch_update(request: HttpRequest) -> HttpResponse:
                 try:
                     validate_input_data(sheet)
                     sheet_number = f"Sheet {i} of {len(sheets_data)}"
-                    records_updated = batch_update_command(sheet, dry_run=True)
+                    records_updated = batch_update_command(sheet, dry_run=False)
                     records_updated_counts[sheet_number] = records_updated
                     records_updated_counts["Total"] += records_updated
                 except ValueError as e:
+                    # This results in the error message rendering on the file input field
+                    form.add_error("file", str(e))
                     return render(
                         request,
                         "partials/batch_update_modal_content.html",
-                        {"form": form, "error": str(e)},
+                        {"form": form},
                     )
             return render(
                 request,
