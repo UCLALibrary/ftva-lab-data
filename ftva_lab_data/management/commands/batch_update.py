@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from pathlib import Path
 from ftva_lab_data.models import SheetImport
 from django.db.models import ForeignKey, ManyToManyField
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def load_input_data(input_file: str) -> list[list[dict]]:
@@ -89,63 +90,71 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
             # Now get the field object itself
             field_object = SheetImport._meta.get_field(field)
 
-            # If the field is a ForeignKey, get the related object and set it
-            if isinstance(field_object, ForeignKey):
-                current_value = getattr(record, field)
-                # Empty string should nullify ForeignKey field
-                if value == "":
-                    update = None
-                else:
-                    update = field_object.related_model.objects.get(
-                        # Using case-insensitive startswith because
-                        # input data may not exactly match the database value.
-                        # Same below for ManyToManyField.
-                        **{f"{field}__istartswith": value}
-                    )
-                if current_value != update:
-                    has_changes = True
-                    setattr(record, field, update)
-                    print(
-                        f"Record {row['id']} updated: "
-                        f"{field} changed from {current_value} to {update}"
-                    )
+            try:
+                # If the field is a ForeignKey, get the related object and set it
+                if isinstance(field_object, ForeignKey):
+                    current_value = getattr(record, field)
+                    # Empty string should nullify ForeignKey field
+                    if value == "":
+                        update = None
+                    else:
+                        update = field_object.related_model.objects.get(
+                            # Using case-insensitive startswith because
+                            # input data may not exactly match the database value.
+                            # Same below for ManyToManyField.
+                            **{f"{field}__istartswith": value}
+                        )
+                    if current_value != update:
+                        has_changes = True
+                        setattr(record, field, update)
+                        print(
+                            f"Record {row['id']} updated: "
+                            f"{field} changed from {current_value} to {update}"
+                        )
 
-            # Else if the field is a ManyToManyField,
-            # get the related object and add it to the many-to-many relationship.
-            elif isinstance(field_object, ManyToManyField):
-                current_related_objects = getattr(record, field).all()
-                # Nothing should be done for empty string values on ManyToMany fields
-                if value == "":
-                    update = None
-                else:
-                    update = field_object.related_model.objects.get(
-                        **{f"{field}__istartswith": value}
-                    )
-                # Only apply update if there is one and it's not already in the m2m relationship
-                if update and update not in current_related_objects:
-                    has_changes = True
-                    # Need to use `getattr().add()` here rather than `setattr()`,
-                    # since we're adding an object to a many-to-many relationship,
-                    # rather than setting a single foreign key as we do above.
-                    # `add()` immediately saves the change to the database though,
-                    # so we need an additional `dry_run` check.
-                    if not dry_run:
-                        getattr(record, field).add(update)
-                    print(f"Record {row['id']} updated: " f"added {update} to {field}")
+                # Else if the field is a ManyToManyField,
+                # get the related object and add it to the many-to-many relationship.
+                elif isinstance(field_object, ManyToManyField):
+                    current_related_objects = getattr(record, field).all()
+                    # Nothing should be done for empty string values on ManyToMany fields
+                    if value == "":
+                        update = None
+                    else:
+                        update = field_object.related_model.objects.get(
+                            **{f"{field}__istartswith": value}
+                        )
+                    # Only apply update if there is one and it's not already in the m2m relationship
+                    if update and update not in current_related_objects:
+                        has_changes = True
+                        # Need to use `getattr().add()` here rather than `setattr()`,
+                        # since we're adding an object to a many-to-many relationship,
+                        # rather than setting a single foreign key as we do above.
+                        # `add()` immediately saves the change to the database though,
+                        # so we need an additional `dry_run` check.
+                        if not dry_run:
+                            getattr(record, field).add(update)
+                        print(
+                            f"Record {row['id']} updated: " f"added {update} to {field}"
+                        )
 
-            # Otherwise, just set the value directly
-            else:
-                # Replace any empty strings in `file_name` with "NO FILE NAME"
-                if field == "file_name" and value == "":
-                    value = "NO FILE NAME"
-                current_value = getattr(record, field)
-                if current_value != value:
-                    has_changes = True
-                    setattr(record, field, value)
-                    print(
-                        f"Record {row['id']} updated: "
-                        f"{field} changed from {current_value} to {value}"
-                    )
+                # Otherwise, just set the value directly
+                else:
+                    # Replace any empty strings in `file_name` with "NO FILE NAME"
+                    if field == "file_name" and value == "":
+                        value = "NO FILE NAME"
+                    current_value = getattr(record, field)
+                    if current_value != value:
+                        has_changes = True
+                        setattr(record, field, value)
+                        print(
+                            f"Record {row['id']} updated: "
+                            f"{field} changed from {current_value} to {value}"
+                        )
+            except ObjectDoesNotExist as e:
+                # Handler expects a ValueError
+                raise ValueError(
+                    f"Error applying value {value} to field {field} on record {row['id']}: {e}"
+                )
 
         # Compare the original record to the updated record
         if not has_changes:

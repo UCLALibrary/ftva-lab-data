@@ -720,7 +720,6 @@ def batch_update(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = BatchUpdateForm(request.POST, request.FILES)
         if form.is_valid():
-            # TODO: handle uploaded file
             file = form.cleaned_data["file"]
             sheets = pd.read_excel(file, sheet_name=None)
             # Convert each sheet to a list of dicts, each representing a row of input data
@@ -736,6 +735,7 @@ def batch_update(request: HttpRequest) -> HttpResponse:
                     records_updated = batch_update_command(sheet, dry_run=False)
                     records_updated_counts[sheet_number] = records_updated
                     records_updated_counts["Total"] += records_updated
+                # Imprecise, but treating everything as a ValueError for now
                 except ValueError as e:
                     # This results in the error message rendering on the file input field
                     form.add_error("file", str(e))
