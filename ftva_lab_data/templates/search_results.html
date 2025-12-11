@@ -55,7 +55,7 @@
     {% endif %}
 
     <div class="d-flex gap-2 mb-3">
-        {% if perms.ftva_lab_data.change_sheetimport %}
+        {% if perms.ftva_lab_data.batch_update %}
         <button type="button" class="btn btn-outline-secondary h-100" data-bs-toggle="modal"
             data-bs-target="#batch-import-modal" hx-get="{% url 'batch_update' %}"
             hx-target="#batch-import-modal-content" hx-trigger="click">Batch Update</button>

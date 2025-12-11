@@ -708,7 +708,7 @@ def carrier_suggestions(request):
 
 @login_required
 @permission_required(
-    "ftva_lab_data.change_sheetimport",
+    "ftva_lab_data.batch_update",
     raise_exception=True,
 )
 def batch_update(request: HttpRequest) -> HttpResponse:

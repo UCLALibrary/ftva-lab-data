@@ -188,7 +188,10 @@ class SheetImport(models.Model):
         )
 
     class Meta:
-        permissions = [("assign_user", "Can assign user to SheetImport")]
+        permissions = [
+            ("assign_user", "Can assign user to SheetImport"),
+            ("batch_update", "Can apply batch updates to SheetImport"),
+        ]
 
 
 class ItemStatus(models.Model):

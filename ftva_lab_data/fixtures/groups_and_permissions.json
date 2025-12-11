@@ -366,7 +366,7 @@
           "sheetimport"
         ],
         [
-          "change_sheetimport",
+          "batch_update",
           "ftva_lab_data",
           "sheetimport"
         ]
