@@ -73,6 +73,8 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
     :param input_data: A list of dicts, each representing a row of input data.
     :param dry_run: If True, runs the update but does not save the changes to the database.
     :return: The number of records updated.
+    :raises ValueError: If a related object does not exist in the database,
+    or if no updates were made to any records.
     """
     records_updated = 0
     for row in input_data:
@@ -164,6 +166,8 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
             record.save()
         records_updated += 1
 
+    if records_updated == 0:
+        raise ValueError("All inputs match existing records; no updates to apply.")
     return records_updated
 
 

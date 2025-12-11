@@ -7,8 +7,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
     </div>
     <div class="modal-body">
-        {% if success %}
-        <div class="alert alert-success text-center" role="alert">
+        {% if show_success %}
+        <div class="alert alert-success text-center">
             <p class="fw-bold">Batch update successful!</p>
             <dl class="row">
                 {% for label, count in records_updated_counts.items %}
@@ -17,18 +17,44 @@
                 {% endfor %}
             </dl>
         </div>
-        {% endif %}
-        <form method="post" enctype="multipart/form-data" id="batch-import-form" hx-post="{% url 'batch_update' %}"
+        {% elif show_confirmation %}
+        <div class="alert alert-info text-center">
+            <p class="fw-bold">Are you sure you want to apply the batch update?</p>
+            <dl class="row">
+                {% for label, count in records_updated_counts.items %}
+                <dt class="col-sm-6 text-end">{{ label }}</dt>
+                <dd class="col-sm-6 text-start">{{ count }} records will be updated</dd>
+                {% endfor %}
+            </dl>
+        </div>
+        <form method="post" id="batch-update-confirmation-form" hx-post="{% url 'batch_update' %}"
+            hx-target=".modal-content" hx-trigger="submit" hx-indicator=".loading-indicator"
+            hx-disabled-elt=".modal-content button">
+            {% csrf_token %}
+            <input type="hidden" name="is_confirmed" value="true">
+        </form>
+        {% else %}
+        <form method="post" enctype="multipart/form-data" id="batch-update-form" hx-post="{% url 'batch_update' %}"
             hx-target=".modal-content" hx-trigger="submit" hx-indicator=".loading-indicator"
             hx-disabled-elt=".modal-content button">
             {% csrf_token %}
             {% bootstrap_form form %}
         </form>
+        {% endif %}
     </div>
     <div class="modal-footer">
-        <button type="submit" form="batch-import-form" class="btn btn-primary">Apply Updates
+        {% if show_success %}
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        {% elif show_confirmation %}
+        <button type="submit" form="batch-update-confirmation-form" class="btn btn-primary">Confirm
+            <div class="spinner-border spinner-border-sm loading-indicator"></div>
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" form="batch-update-form">Cancel</button>
+        {% else %}
+        <button type="submit" form="batch-update-form" class="btn btn-primary">Apply Updates
             <div class="spinner-border spinner-border-sm loading-indicator"></div>
         </button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        {% endif %}
     </div>
 </div>
