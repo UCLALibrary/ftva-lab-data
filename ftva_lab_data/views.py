@@ -778,19 +778,19 @@ def batch_update(request: HttpRequest) -> HttpResponse:
         else:
             form = BatchUpdateForm(request.POST, request.FILES)
             if form.is_valid():
-                file = form.cleaned_data["file"]
-                sheets = pd.read_excel(file, sheet_name=None)
-                # Convert each sheet to a list of dicts, each representing a row of input data
-                sheets_data = [
-                    sheet_data.fillna("").to_dict(orient="records")
-                    for sheet_data in sheets.values()
-                ]
+                try:
+                    file = form.cleaned_data["file"]
+                    sheets = pd.read_excel(file, sheet_name=None)
+                    # Convert each sheet to a list of dicts, each representing a row of input data
+                    sheets_data = [
+                        sheet_data.fillna("").to_dict(orient="records")
+                        for sheet_data in sheets.values()
+                    ]
 
-                # Validate and run dry_run to get counts
-                records_updated_counts = {}
-                records_updated_counts["Total"] = 0
-                for i, sheet in enumerate(sheets_data, start=1):
-                    try:
+                    # Validate and run dry_run to get counts
+                    records_updated_counts = {}
+                    records_updated_counts["Total"] = 0
+                    for i, sheet in enumerate(sheets_data, start=1):
                         validate_input_data(sheet)
                         sheet_number = f"Sheet {i} of {len(sheets_data)}"
                         records_updated = batch_update_command(sheet, dry_run=True)
@@ -798,15 +798,25 @@ def batch_update(request: HttpRequest) -> HttpResponse:
                             f"{records_updated} of {len(sheet)}"
                         )
                         records_updated_counts["Total"] += records_updated
-                    # Imprecise, but treating everything as a ValueError for now
-                    except ValueError as e:
-                        # This results in the error message rendering on the file input field
-                        form.add_error("file", str(e))
-                        return render(
-                            request,
-                            "partials/batch_update_modal_content.html",
-                            {"form": form},
+                # Imprecise, but treating everything as a ValueError for now
+                except ValueError as e:
+                    if str(e) == (
+                        "Excel file format cannot be determined, "
+                        "you must specify an engine manually."
+                    ):
+                        # Overwriting the error message to be friendlier
+                        error_message = (
+                            "The file you uploaded is not a valid Excel file. "
+                            "Please upload a valid XLSX file."
                         )
+                        e = ValueError(error_message)
+                    # This results in the error message rendering on the file input field
+                    form.add_error("file", str(e))
+                    return render(
+                        request,
+                        "partials/batch_update_modal_content.html",
+                        {"form": form},
+                    )
 
                 # Store sheets_data in session for confirmation step
                 request.session["batch_update_file_data"] = json.dumps(sheets_data)
