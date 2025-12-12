@@ -18,7 +18,7 @@ import pandas as pd
 import io
 import json
 
-from .forms import ItemForm
+from .forms import ItemForm, BatchUpdateForm
 from .models import SheetImport
 from .table_config import COLUMNS
 from .views_utils import (
@@ -35,6 +35,10 @@ from .views_utils import (
     get_specific_filemaker_fields,
     transform_filemaker_field_name,
     transform_record_to_dict,
+)
+from .management.commands.batch_update import (
+    validate_input_data,
+    batch_update as batch_update_command,
 )
 
 
@@ -433,7 +437,6 @@ def get_all_records(request: HttpRequest) -> JsonResponse:
     return JsonResponse(response_data)
 
 
-
 def get_alma_data(request: HttpRequest, inventory_number: str) -> HttpResponse:
     """Fetch Alma records using SRU client.
 
@@ -701,3 +704,137 @@ def carrier_suggestions(request):
         "partials/carrier_suggestions.html", {"carriers": carrier_list}
     )
     return HttpResponse(html)
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.batch_update",
+    raise_exception=True,
+)
+def batch_update(request: HttpRequest) -> HttpResponse:
+    """Batch import records from an XLSX file.
+
+    :param request: The HTTP request object.
+    :return: Rendered template for batch importing records.
+    """
+    if request.method == "POST":
+        # Parse is_confirmed from query parameter
+        is_confirmed = request.POST.get("is_confirmed", "").lower() == "true"
+
+        # User has confirmed the updates, so this block will apply them
+        if is_confirmed:
+            # Check if the file data is still in session
+            if "batch_update_file_data" not in request.session:
+                form = BatchUpdateForm()
+                form.add_error("file", "Session expired. Please upload the file again.")
+                return render(
+                    request,
+                    "partials/batch_update_modal_content.html",
+                    {"form": form},
+                )
+
+            # Retrieve the file data from session
+            sheets_data = json.loads(request.session["batch_update_file_data"])
+
+            records_updated_counts = {}
+            records_updated_counts["Total"] = 0
+            for i, sheet in enumerate(sheets_data, start=1):
+                try:
+                    validate_input_data(sheet)
+                    sheet_number = f"Sheet {i} of {len(sheets_data)}"
+                    records_updated = batch_update_command(sheet, dry_run=False)
+                    records_updated_counts[sheet_number] = (
+                        f"{records_updated} of {len(sheet)}"
+                    )
+                    records_updated_counts["Total"] += records_updated
+                # Imprecise, but treating everything as a ValueError for now
+                except ValueError as e:
+                    form = BatchUpdateForm()
+                    form.add_error("file", str(e))
+                    # Clear session on error
+                    del request.session["batch_update_file_data"]
+                    return render(
+                        request,
+                        "partials/batch_update_modal_content.html",
+                        {"form": form},
+                    )
+
+            # Clear session after successful update
+            del request.session["batch_update_file_data"]
+
+            return render(
+                request,
+                "partials/batch_update_modal_content.html",
+                {
+                    "form": BatchUpdateForm(),  # Clean form
+                    "show_success": True,
+                    "records_updated_counts": dict(
+                        sorted(records_updated_counts.items())
+                    ),
+                },
+            )
+
+        # Else we're at initial submission, so validate and run dry_run
+        else:
+            form = BatchUpdateForm(request.POST, request.FILES)
+            if form.is_valid():
+                try:
+                    file = form.cleaned_data["file"]
+                    sheets = pd.read_excel(file, sheet_name=None)
+                    # Convert each sheet to a list of dicts, each representing a row of input data
+                    sheets_data = [
+                        sheet_data.fillna("").to_dict(orient="records")
+                        for sheet_data in sheets.values()
+                    ]
+
+                    # Validate and run dry_run to get counts
+                    records_updated_counts = {}
+                    records_updated_counts["Total"] = 0
+                    for i, sheet in enumerate(sheets_data, start=1):
+                        validate_input_data(sheet)
+                        sheet_number = f"Sheet {i} of {len(sheets_data)}"
+                        records_updated = batch_update_command(sheet, dry_run=True)
+                        records_updated_counts[sheet_number] = (
+                            f"{records_updated} of {len(sheet)}"
+                        )
+                        records_updated_counts["Total"] += records_updated
+                # Imprecise, but treating everything as a ValueError for now
+                except ValueError as e:
+                    if str(e) == (
+                        "Excel file format cannot be determined, "
+                        "you must specify an engine manually."
+                    ):
+                        # Overwriting the error message to be friendlier
+                        error_message = (
+                            "The file you uploaded is not a valid Excel file. "
+                            "Please upload a valid XLSX file."
+                        )
+                        e = ValueError(error_message)
+                    # This results in the error message rendering on the file input field
+                    form.add_error("file", str(e))
+                    return render(
+                        request,
+                        "partials/batch_update_modal_content.html",
+                        {"form": form},
+                    )
+
+                # Store sheets_data in session for confirmation step
+                request.session["batch_update_file_data"] = json.dumps(sheets_data)
+
+                return render(
+                    request,
+                    "partials/batch_update_modal_content.html",
+                    {
+                        "form": form,
+                        "show_confirmation": True,
+                        "records_updated_counts": dict(
+                            sorted(records_updated_counts.items())
+                        ),
+                    },
+                )
+    else:
+        form = BatchUpdateForm()
+        # Clear any existing session data on GET
+        if "batch_update_file_data" in request.session:
+            del request.session["batch_update_file_data"]
+    return render(request, "partials/batch_update_modal_content.html", {"form": form})

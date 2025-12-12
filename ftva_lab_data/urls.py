@@ -35,4 +35,5 @@ urlpatterns = [
         "set_carrier_location/", views.set_carrier_location, name="set_carrier_location"
     ),
     path("carrier-suggestions/", views.carrier_suggestions, name="carrier_suggestions"),
+    path("batch_update/", views.batch_update, name="batch_update"),
 ]

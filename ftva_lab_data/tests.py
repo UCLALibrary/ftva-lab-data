@@ -244,6 +244,35 @@ class UserAccessTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
+    def test_unauthorized_user_cannot_batch_update(self):
+        """Asserts that an unauthorized user receives 403
+        when trying to GET and POST to the `batch_update` view.
+        """
+        self.client.login(username="unauthorized", password="testpassword")
+        url = reverse("batch_update")
+        # GET request
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        # POST request
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_authorized_user_can_batch_update(self):
+        """Asserts that an authorized user can GET and POST to the `batch_update` view."""
+        self.client.login(username="authorized", password="testpassword")
+        url = reverse("batch_update")
+        # POST request with no form should result in form error
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(form.errors["file"], ["This field is required."])
+
+        # GET request should result in clean form
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(form.errors, {})
+
 
 class TablePaginationTestCase(TestCase):
     """Tests pagination functionality in the search results table."""

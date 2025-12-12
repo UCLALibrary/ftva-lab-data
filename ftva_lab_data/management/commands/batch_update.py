@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from pathlib import Path
 from ftva_lab_data.models import SheetImport
 from django.db.models import ForeignKey, ManyToManyField
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def load_input_data(input_file: str) -> list[list[dict]]:
@@ -54,9 +55,15 @@ def validate_input_data(records: list[dict]) -> None:
                 except SheetImport.DoesNotExist:
                     ids_not_found.append(record["id"])
     if fields_not_found:
-        raise ValueError(f"Fields {fields_not_found} not found on SheetImport model")
+        raise ValueError(
+            f"Input validation failed: "
+            f"fields {', '.join(set(fields_not_found))} do not exist in database."
+        )
     if ids_not_found:
-        raise ValueError(f"Record IDs {ids_not_found} not found in database")
+        raise ValueError(
+            f"Input validation failed: "
+            f"record IDs {', '.join(set(ids_not_found))} do not exist in database."
+        )
     return
 
 
@@ -66,6 +73,8 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
     :param input_data: A list of dicts, each representing a row of input data.
     :param dry_run: If True, runs the update but does not save the changes to the database.
     :return: The number of records updated.
+    :raises ValueError: If a related object does not exist in the database,
+    or if no updates were made to any records.
     """
     records_updated = 0
     for row in input_data:
@@ -83,57 +92,71 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
             # Now get the field object itself
             field_object = SheetImport._meta.get_field(field)
 
-            # If the field is a ForeignKey, get the related object and set it
-            if isinstance(field_object, ForeignKey):
-                related_object = field_object.related_model.objects.get(
-                    # Using case-insensitive startswith because
-                    # input data may not exactly match the database value.
-                    # Same below for ManyToManyField.
-                    **{f"{field}__istartswith": value}
-                )
-                current_value = getattr(record, field)
-                if current_value != related_object:
-                    has_changes = True
-                    setattr(record, field, related_object)
-                    print(
-                        f"Record {row['id']} updated: "
-                        f"{field} changed from {current_value} to {related_object}"
-                    )
+            try:
+                # If the field is a ForeignKey, get the related object and set it
+                if isinstance(field_object, ForeignKey):
+                    current_value = getattr(record, field)
+                    # Empty string should nullify ForeignKey field
+                    if value == "":
+                        update = None
+                    else:
+                        update = field_object.related_model.objects.get(
+                            # Using case-insensitive startswith because
+                            # input data may not exactly match the database value.
+                            # Same below for ManyToManyField.
+                            **{f"{field}__istartswith": value}
+                        )
+                    if current_value != update:
+                        has_changes = True
+                        setattr(record, field, update)
+                        print(
+                            f"Record {row['id']} updated: "
+                            f"{field} changed from {current_value} to {update}"
+                        )
 
-            # Else if the field is a ManyToManyField,
-            # get the related object and add it to the many-to-many relationship.
-            elif isinstance(field_object, ManyToManyField):
-                related_object = field_object.related_model.objects.get(
-                    **{f"{field}__istartswith": value}
-                )
-                current_related_objects = getattr(record, field).all()
-                if related_object not in current_related_objects:
-                    has_changes = True
-                    # Need to use `getattr().add()` here rather than `setattr()`,
-                    # since we're adding an object to a many-to-many relationship,
-                    # rather than setting a single foreign key as we do above.
-                    # `add()` immediately saves the change to the database though,
-                    # so we need an additional `dry_run` check.
-                    if not dry_run:
-                        getattr(record, field).add(related_object)
-                    print(
-                        f"Record {row['id']} updated: "
-                        f"added {related_object} to {field}"
-                    )
+                # Else if the field is a ManyToManyField,
+                # get the related object and add it to the many-to-many relationship.
+                elif isinstance(field_object, ManyToManyField):
+                    current_related_objects = getattr(record, field).all()
+                    # Nothing should be done for empty string values on ManyToMany fields
+                    if value == "":
+                        update = None
+                    else:
+                        update = field_object.related_model.objects.get(
+                            **{f"{field}__istartswith": value}
+                        )
+                    # Only apply update if there is one and it's not already in the m2m relationship
+                    if update and update not in current_related_objects:
+                        has_changes = True
+                        # Need to use `getattr().add()` here rather than `setattr()`,
+                        # since we're adding an object to a many-to-many relationship,
+                        # rather than setting a single foreign key as we do above.
+                        # `add()` immediately saves the change to the database though,
+                        # so we need an additional `dry_run` check.
+                        if not dry_run:
+                            getattr(record, field).add(update)
+                        print(
+                            f"Record {row['id']} updated: " f"added {update} to {field}"
+                        )
 
-            # Otherwise, just set the value directly
-            else:
-                # Replace any empty strings in `file_name` with "NO FILE NAME"
-                if field == "file_name" and value == "":
-                    value = "NO FILE NAME"
-                current_value = getattr(record, field)
-                if current_value != value:
-                    has_changes = True
-                    setattr(record, field, value)
-                    print(
-                        f"Record {row['id']} updated: "
-                        f"{field} changed from {current_value} to {value}"
-                    )
+                # Otherwise, just set the value directly
+                else:
+                    # Replace any empty strings in `file_name` with "NO FILE NAME"
+                    if field == "file_name" and value == "":
+                        value = "NO FILE NAME"
+                    current_value = getattr(record, field)
+                    if current_value != value:
+                        has_changes = True
+                        setattr(record, field, value)
+                        print(
+                            f"Record {row['id']} updated: "
+                            f"{field} changed from {current_value} to {value}"
+                        )
+            except ObjectDoesNotExist as e:
+                # Handler expects a ValueError
+                raise ValueError(
+                    f"Error applying value {value} to field {field} on record {row['id']}: {e}"
+                )
 
         # Compare the original record to the updated record
         if not has_changes:
@@ -143,6 +166,8 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
             record.save()
         records_updated += 1
 
+    if records_updated == 0:
+        raise ValueError("All inputs match existing records; no updates to apply.")
     return records_updated
 
 

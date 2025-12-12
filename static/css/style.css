@@ -12,3 +12,15 @@ label.required-field-label::after {
   content: " *";
   color: red;
 }
+
+/* Used to show spinners 
+or other loading indicators
+while HTMX requests are in flight*/
+.loading-indicator {
+  display: none;
+}
+
+.htmx-request .loading-indicator,
+.htmx-request.loading-indicator {
+  display: inline-block;
+}
