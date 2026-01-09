@@ -5,6 +5,8 @@ psycopg==3.2.9
 gunicorn==23.0.0
 whitenoise==6.9.0
 pandas==2.2.3
+# Pin numpy to 2.3.5 for now, see DIGINF-262
+numpy==2.3.5
 openpyxl==3.1.5
 # Local package for Alma & Filemaker integration.
 git+https://github.com/UCLALibrary/ftva-etl.git
