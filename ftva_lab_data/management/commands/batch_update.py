@@ -5,21 +5,42 @@ from pathlib import Path
 from ftva_lab_data.models import SheetImport
 from django.db.models import ForeignKey, ManyToManyField
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
-def load_input_data(input_file: str) -> list[list[dict]]:
+def _stringify_dates(sheets: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Stringify dates in the DataFrames loaded from input spreadsheet.
+
+    :param sheets: A dictionary of sheet names and DataFrames.
+    :return: The input dictionary of sheets, with dates stringified.
+    """
+    for sheet_data in sheets.values():
+        datetime_cols = sheet_data.select_dtypes(include=["datetime64[ns]"]).columns
+        sheet_data[datetime_cols] = sheet_data[datetime_cols].apply(
+            lambda s: s.dt.strftime("%Y-%m-%d")
+        )
+    return sheets
+
+
+def load_input_data(input_file: str | InMemoryUploadedFile) -> list[list[dict]]:
     """Load input data from the input file into a list of sheets,
     as an input file may contain multiple sheets .
 
-    :param input_file: Path to the spreadsheet containing records to update, as an XLSX file.
+    :param input_file: Path to the spreadsheet containing records to update, as an XLSX file,
+        or an InMemoryUploadedFile object passed from a Django form.
     :return: A list of lists of dicts, each representing a sheet with rows of input data.
     :raises ValueError: If the input file is not an XLSX file.
     """
-    input_suffix = Path(input_file).suffix
-    if input_suffix != ".xlsx":
-        raise ValueError(f"Unsupported file type: {input_suffix}")
+    # Check extension if input_file is a string path
+    if isinstance(input_file, str):
+        input_suffix = Path(input_file).suffix
+        if input_suffix != ".xlsx":
+            raise ValueError(f"Unsupported file type: {input_suffix}")
     # `sheet_name=None` reads all sheets
     sheets = pd.read_excel(input_file, sheet_name=None)
+    # Stringify dates in the DataFrames loaded from input spreadsheet
+    sheets = _stringify_dates(sheets)
+
     # Convert each sheet DataFrame to a list of dicts, each representing a sheet of input data,
     # filling NA with empty string to avoid type issues with Django
     return [

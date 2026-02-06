@@ -37,6 +37,7 @@ from .views_utils import (
     transform_record_to_dict,
 )
 from .management.commands.batch_update import (
+    load_input_data,
     validate_input_data,
     batch_update as batch_update_command,
 )
@@ -780,12 +781,7 @@ def batch_update(request: HttpRequest) -> HttpResponse:
             if form.is_valid():
                 try:
                     file = form.cleaned_data["file"]
-                    sheets = pd.read_excel(file, sheet_name=None)
-                    # Convert each sheet to a list of dicts, each representing a row of input data
-                    sheets_data = [
-                        sheet_data.fillna("").to_dict(orient="records")
-                        for sheet_data in sheets.values()
-                    ]
+                    sheets_data = load_input_data(file)
 
                     # Validate and run dry_run to get counts
                     records_updated_counts = {}
