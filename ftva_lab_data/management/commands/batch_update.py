@@ -165,7 +165,8 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                     # Replace any empty strings in `file_name` with "NO FILE NAME"
                     if field == "file_name" and value == "":
                         value = "NO FILE NAME"
-                    current_value = getattr(record, field)
+                    # Coerce current database value to string for comparison
+                    current_value = str(getattr(record, field))
                     if current_value != value:
                         has_changes = True
                         setattr(record, field, value)
