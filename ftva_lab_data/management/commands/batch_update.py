@@ -3,23 +3,9 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 from pathlib import Path
 from ftva_lab_data.models import SheetImport
-from django.db.models import ForeignKey, ManyToManyField
+from django.db.models import ForeignKey, ManyToManyField, DateField
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
-
-
-def _stringify_dates(sheets: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    """Stringify dates in the DataFrames loaded from input spreadsheet.
-
-    :param sheets: A dictionary of sheet names and DataFrames.
-    :return: The input dictionary of sheets, with dates stringified.
-    """
-    for sheet_data in sheets.values():
-        datetime_cols = sheet_data.select_dtypes(include=["datetime64[ns]"]).columns
-        sheet_data[datetime_cols] = sheet_data[datetime_cols].apply(
-            lambda s: s.dt.strftime("%Y-%m-%d")
-        )
-    return sheets
 
 
 def load_input_data(input_file: str | InMemoryUploadedFile) -> list[list[dict]]:
@@ -38,8 +24,6 @@ def load_input_data(input_file: str | InMemoryUploadedFile) -> list[list[dict]]:
             raise ValueError(f"Unsupported file type: {input_suffix}")
     # `sheet_name=None` reads all sheets
     sheets = pd.read_excel(input_file, sheet_name=None)
-    # Stringify dates in the DataFrames loaded from input spreadsheet
-    sheets = _stringify_dates(sheets)
 
     # Convert each sheet DataFrame to a list of dicts, each representing a sheet of input data,
     # filling NA with empty string to avoid type issues with Django
@@ -160,6 +144,24 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                             f"Record {row['id']} updated: " f"added {update} to {field}"
                         )
 
+                # Else if the field is a DateField,
+                # try parsing the value as a date, and raise a ValueError if it's invalid.
+                elif isinstance(field_object, DateField):
+                    current_value = getattr(record, field)
+                    if value == "":
+                        update = None
+                    else:
+                        try:
+                            update = pd.to_datetime(value).date()
+                        except ValueError:
+                            raise ValueError(f"Invalid date in field {field}: {value}")
+                    if current_value != update:
+                        has_changes = True
+                        setattr(record, field, update)
+                        print(
+                            f"Record {row['id']} updated: "
+                            f"{field} changed from {current_value} to {update}"
+                        )
                 # Otherwise, just set the value directly
                 else:
                     # Replace any empty strings in `file_name` with "NO FILE NAME"

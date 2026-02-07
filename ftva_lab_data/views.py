@@ -814,8 +814,11 @@ def batch_update(request: HttpRequest) -> HttpResponse:
                         {"form": form},
                     )
 
-                # Store sheets_data in session for confirmation step
-                request.session["batch_update_file_data"] = json.dumps(sheets_data)
+                # Store sheets_data in session for confirmation step,
+                # using `default=str` for date serialization.
+                request.session["batch_update_file_data"] = json.dumps(
+                    sheets_data, default=str
+                )
 
                 return render(
                     request,
