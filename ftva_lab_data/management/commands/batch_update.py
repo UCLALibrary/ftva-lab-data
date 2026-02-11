@@ -3,23 +3,31 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 from pathlib import Path
 from ftva_lab_data.models import SheetImport
-from django.db.models import ForeignKey, ManyToManyField
+from django.db.models import ForeignKey, ManyToManyField, DateField
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from typing import TypeAlias, Any
+
+ChangeDetails: TypeAlias = list[dict[str, Any]]
 
 
-def load_input_data(input_file: str) -> list[list[dict]]:
+def load_input_data(input_file: str | InMemoryUploadedFile) -> list[list[dict]]:
     """Load input data from the input file into a list of sheets,
     as an input file may contain multiple sheets .
 
-    :param input_file: Path to the spreadsheet containing records to update, as an XLSX file.
+    :param input_file: Path to the spreadsheet containing records to update, as an XLSX file,
+        or an InMemoryUploadedFile object passed from a Django form.
     :return: A list of lists of dicts, each representing a sheet with rows of input data.
     :raises ValueError: If the input file is not an XLSX file.
     """
-    input_suffix = Path(input_file).suffix
-    if input_suffix != ".xlsx":
-        raise ValueError(f"Unsupported file type: {input_suffix}")
+    # Check extension if input_file is a string path
+    if isinstance(input_file, str):
+        input_suffix = Path(input_file).suffix
+        if input_suffix != ".xlsx":
+            raise ValueError(f"Unsupported file type: {input_suffix}")
     # `sheet_name=None` reads all sheets
     sheets = pd.read_excel(input_file, sheet_name=None)
+
     # Convert each sheet DataFrame to a list of dicts, each representing a sheet of input data,
     # filling NA with empty string to avoid type issues with Django
     return [
@@ -77,9 +85,11 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
     or if no updates were made to any records.
     """
     records_updated = 0
+    invalid_values: ChangeDetails = []  # track invalid values for whole batch
     for row in input_data:
         record = SheetImport.objects.get(id=row["id"])
-        has_changes = False
+        record_changes: ChangeDetails = []  # changes to non-m2m fields for each record
+        many_to_many_changes: ChangeDetails = []  # changes to m2m need special handling
         for field, value in row.items():
             # Guard against changes to IDs or UUIDs
             if field.lower() in ["id", "pk", "uuid"]:
@@ -107,11 +117,12 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                             **{f"{field}__istartswith": value}
                         )
                     if current_value != update:
-                        has_changes = True
-                        setattr(record, field, update)
-                        print(
-                            f"Record {row['id']} updated: "
-                            f"{field} changed from {current_value} to {update}"
+                        record_changes.append(
+                            {
+                                "field": field,
+                                "from": current_value,
+                                "to": update,
+                            }
                         )
 
                 # Else if the field is a ManyToManyField,
@@ -127,16 +138,43 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                         )
                     # Only apply update if there is one and it's not already in the m2m relationship
                     if update and update not in current_related_objects:
-                        has_changes = True
-                        # Need to use `getattr().add()` here rather than `setattr()`,
-                        # since we're adding an object to a many-to-many relationship,
-                        # rather than setting a single foreign key as we do above.
-                        # `add()` immediately saves the change to the database though,
-                        # so we need an additional `dry_run` check.
-                        if not dry_run:
-                            getattr(record, field).add(update)
-                        print(
-                            f"Record {row['id']} updated: " f"added {update} to {field}"
+                        # Since we're adding an object to a many-to-many relationship,
+                        # rather than setting a single foreign key as we do above,
+                        # track these changes separately,
+                        # and apply them later after all changes to record are collected.
+                        many_to_many_changes.append(
+                            {
+                                "field": field,
+                                "update": update,
+                            }
+                        )
+
+                # Else if the field is a DateField,
+                # try parsing the value as a date,
+                # and collect invalid dates for later reporting.
+                elif isinstance(field_object, DateField):
+                    current_value = getattr(record, field)
+                    if value == "":
+                        update = None
+                    else:
+                        try:
+                            update = pd.to_datetime(value).date()
+                        except ValueError:
+                            invalid_values.append(
+                                {
+                                    "record_id": row["id"],
+                                    "field": field,
+                                    "value": value,
+                                }
+                            )
+                            continue  # don't apply change if date is invalid
+                    if current_value != update:
+                        record_changes.append(
+                            {
+                                "field": field,
+                                "from": current_value,
+                                "to": update,
+                            }
                         )
 
                 # Otherwise, just set the value directly
@@ -144,13 +182,15 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                     # Replace any empty strings in `file_name` with "NO FILE NAME"
                     if field == "file_name" and value == "":
                         value = "NO FILE NAME"
-                    current_value = getattr(record, field)
+                    # Coerce current database value to string for comparison
+                    current_value = str(getattr(record, field))
                     if current_value != value:
-                        has_changes = True
-                        setattr(record, field, value)
-                        print(
-                            f"Record {row['id']} updated: "
-                            f"{field} changed from {current_value} to {value}"
+                        record_changes.append(
+                            {
+                                "field": field,
+                                "from": current_value,
+                                "to": value,
+                            }
                         )
             except ObjectDoesNotExist as e:
                 # Handler expects a ValueError
@@ -158,13 +198,46 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                     f"Error applying value {value} to field {field} on record {row['id']}: {e}"
                 )
 
-        # Compare the original record to the updated record
-        if not has_changes:
-            print(f"No changes were made to record {row['id']}")
+        # Continue if no changes made to current record
+        if not record_changes and not many_to_many_changes:
+            print(f"No changes made to record {row['id']}")
             continue
+        # Save changes to record if not a dry run
         if not dry_run:
+            # Apply record changes that can be set via `setattr()`...
+            for change in record_changes:
+                setattr(record, change["field"], change["to"])
+            # then apply many-to-many changes,
+            # which require use of `.add()` rather than `.setattr()`.
+            # Note that `.add()` saves changes immediately.
+            for change in many_to_many_changes:
+                getattr(record, change["field"]).add(change["update"])
+            # Now save record changes to the database.
             record.save()
+        # Report on changes made to each record
+        for change in record_changes:
+            print(
+                f"Record {row['id']} updated: "
+                f"{change['field']} changed "
+                f"from {change['from'] if change['from'] else '""'} "
+                f"to {change['to'] if change['to'] else '""'}"
+            )
+        for change in many_to_many_changes:
+            print(
+                f"Record {row['id']} updated: "
+                f"{change['update']} added to {change['field']}"
+            )
         records_updated += 1
+
+    # Report on invalid values here so as not to prevent other valid changes from being applied
+    if invalid_values:
+        report_lines = [
+            f"Record {invalid_value['record_id']} {invalid_value['field']} {invalid_value['value']}"
+            for invalid_value in invalid_values
+        ]
+        raise ValueError(
+            "Invalid values found in input data:\n" + "\n".join(report_lines)
+        )
 
     if records_updated == 0:
         raise ValueError("All inputs match existing records; no updates to apply.")
