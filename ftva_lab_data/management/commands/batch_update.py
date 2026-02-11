@@ -6,6 +6,7 @@ from ftva_lab_data.models import SheetImport
 from django.db.models import ForeignKey, ManyToManyField, DateField
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from typing import TypeAlias, Any
 
 
 def load_input_data(input_file: str | InMemoryUploadedFile) -> list[list[dict]]:
@@ -81,12 +82,14 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
     :raises ValueError: If a related object does not exist in the database,
     or if no updates were made to any records.
     """
+    ChangeDetails: TypeAlias = list[dict[str, Any]]
+
     records_updated = 0
-    invalid_dates = []
+    invalid_values: ChangeDetails = []  # track invalid values for whole batch
     for row in input_data:
         record = SheetImport.objects.get(id=row["id"])
-        record_changes = []
-        many_to_many_changes = []
+        record_changes: ChangeDetails = []  # changes to non-m2m fields for each record
+        many_to_many_changes: ChangeDetails = []  # changes to m2m need special handling
         for field, value in row.items():
             # Guard against changes to IDs or UUIDs
             if field.lower() in ["id", "pk", "uuid"]:
@@ -157,7 +160,7 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                         try:
                             update = pd.to_datetime(value).date()
                         except ValueError:
-                            invalid_dates.append(
+                            invalid_values.append(
                                 {
                                     "record_id": row["id"],
                                     "field": field,
@@ -211,7 +214,7 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
                 getattr(record, change["field"]).add(change["update"])
             # Now save record changes to the database.
             record.save()
-
+        # Report on changes made to each record
         for change in record_changes:
             print(
                 f"Record {row['id']} updated: "
@@ -226,14 +229,14 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
             )
         records_updated += 1
 
-    # Report on invalid dates here so as not to prevent other valid changes from being applied
-    if invalid_dates:
+    # Report on invalid values here so as not to prevent other valid changes from being applied
+    if invalid_values:
         report_lines = [
-            f"Record {invalid_date['record_id']} {invalid_date['field']} {invalid_date['value']}"
-            for invalid_date in invalid_dates
+            f"Record {invalid_value['record_id']} {invalid_value['field']} {invalid_value['value']}"
+            for invalid_value in invalid_values
         ]
         raise ValueError(
-            "Some date values could not be applied:\n" + "\n".join(report_lines)
+            "Invalid values found in input data:\n" + "\n".join(report_lines)
         )
 
     if records_updated == 0:
