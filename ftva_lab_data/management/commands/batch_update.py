@@ -8,6 +8,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from typing import TypeAlias, Any
 
+ChangeDetails: TypeAlias = list[dict[str, Any]]
+
 
 def load_input_data(input_file: str | InMemoryUploadedFile) -> list[list[dict]]:
     """Load input data from the input file into a list of sheets,
@@ -82,8 +84,6 @@ def batch_update(input_data: list[dict], dry_run: bool) -> int:
     :raises ValueError: If a related object does not exist in the database,
     or if no updates were made to any records.
     """
-    ChangeDetails: TypeAlias = list[dict[str, Any]]
-
     records_updated = 0
     invalid_values: ChangeDetails = []  # track invalid values for whole batch
     for row in input_data:
