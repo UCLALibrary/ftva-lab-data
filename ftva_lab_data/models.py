@@ -163,6 +163,13 @@ class SheetImport(models.Model):
         blank=True,
         related_name="sheet_imports",
     )
+    relationships = models.ManyToManyField(
+        "self",
+        blank=True,
+        symmetrical=False,
+        related_name="related_to",
+        through="Relationship",
+    )
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
@@ -173,7 +180,7 @@ class SheetImport(models.Model):
 
     @property
     def carrier_a_with_location(self) -> str:
-        return (
+        return str(
             f"{self.carrier_a} ({self.carrier_a_location})"
             if self.carrier_a_location
             else self.carrier_a
@@ -181,7 +188,7 @@ class SheetImport(models.Model):
 
     @property
     def carrier_b_with_location(self) -> str:
-        return (
+        return str(
             f"{self.carrier_b} ({self.carrier_b_location})"
             if self.carrier_b_location
             else self.carrier_b
@@ -192,6 +199,50 @@ class SheetImport(models.Model):
             ("assign_user", "Can assign user to SheetImport"),
             ("batch_update", "Can apply batch updates to SheetImport"),
         ]
+
+
+class RelationshipType(models.Model):
+    """Represents the type of relationship between two SheetImport objects."""
+
+    name = models.CharField(max_length=50, unique=True)
+    inverse = models.OneToOneField(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="inverse_of",
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Relationship(models.Model):
+    """Represents relationships between SheetImport objects.
+    Relationship types should be created in the RelationshipType model."""
+
+    source = models.ForeignKey(
+        SheetImport,
+        on_delete=models.CASCADE,
+        related_name="outgoing_relationships",
+    )
+    target = models.ForeignKey(
+        SheetImport,
+        on_delete=models.CASCADE,
+        related_name="incoming_relationships",
+    )
+
+    relationship_type = models.ForeignKey(
+        "RelationshipType",
+        on_delete=models.CASCADE,
+        related_name="relationships",
+    )
+
+    class Meta:
+        unique_together = ["source", "target", "relationship_type"]
+
+    def __str__(self):
+        return f"{self.parent} {self.relationship_type} {self.child}"
 
 
 class ItemStatus(models.Model):
