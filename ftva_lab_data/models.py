@@ -238,11 +238,39 @@ class Relationship(models.Model):
         related_name="relationships",
     )
 
+    def save(self, *args, **kwargs):
+        """When a Relationship is created, ensure inverse relationships are created."""
+        # First, save the primary source -> target relationship
+        super().save(*args, **kwargs)
+        # Then, if there's an inverse RelationshipType,
+        # ensure a corresponding inverse Relationship is created
+        inverse_type = self.relationship_type.inverse
+        if inverse_type:
+            Relationship.objects.get_or_create(
+                source=self.target,
+                target=self.source,
+                relationship_type=inverse_type,
+            )
+
+    def delete(self, *args, **kwargs):
+        """When a Relationship is deleted, ensure inverse relationships are deleted."""
+        # Work backwards: first delete the inverse relationship, then the primary relationship
+        # This returns the correct type signature for delete() method.
+        inverse_type = self.relationship_type.inverse
+        if inverse_type:
+            Relationship.objects.filter(
+                source=self.target,
+                target=self.source,
+                relationship_type=inverse_type,
+            ).delete()
+
+        return super().delete(*args, **kwargs)
+
     class Meta:
         unique_together = ["source", "target", "relationship_type"]
 
     def __str__(self):
-        return f"{self.parent} {self.relationship_type} {self.child}"
+        return f"{self.source} {self.relationship_type} {self.target}"
 
 
 class ItemStatus(models.Model):
