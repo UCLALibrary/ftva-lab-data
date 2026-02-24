@@ -29,6 +29,8 @@ from ftva_lab_data.models import (
     FileType,
     MediaType,
     NoIngestReason,
+    Relationship,
+    RelationshipType,
 )
 from ftva_lab_data.management.commands.import_status_and_inventory_numbers import (
     parse_status_info,
@@ -1513,3 +1515,71 @@ class GetAllRecordsTestCase(TestCase):
             record.id for record in SheetImport.objects.all().order_by("id")[0:100]
         ]
         self.assertEqual(result_ids, expected_ids)
+
+
+class RelationshipTestCase(TestCase):
+    """Tests for the Relationship model."""
+
+    fixtures = ["sample_data.json", "groups_and_permissions.json"]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = Client()
+
+        cls.authorized_user = User.objects.create_user(
+            username="authorized", password="testpassword"
+        )
+        editors_group = Group.objects.get(name="editors")
+        cls.authorized_user.groups.add(editors_group)
+        # Set up test objects
+        cls.test_object_a = SheetImport.objects.create(file_name="test_object_a")
+        cls.test_object_b = SheetImport.objects.create(file_name="test_object_b")
+        # Set up test relationship types
+        cls.test_relationship_type_a = RelationshipType.objects.create(name="hasPart")
+        cls.test_relationship_type_b = RelationshipType.objects.create(name="isPartOf")
+        cls.test_relationship_type_a.inverse = cls.test_relationship_type_b
+        cls.test_relationship_type_b.inverse = cls.test_relationship_type_a
+        cls.test_relationship_type_a.save()
+        cls.test_relationship_type_b.save()
+
+    def test_create_relationship_sets_inverse(self):
+        """Test that creating a `Relationship` sets inverse `RelationshipType`
+        objects automatically.
+        """
+        # Creating a relationship between the test objects
+        # with `relationship_type` set to `test_relationship_type_a`...
+        relationship = Relationship.objects.create(
+            source=self.test_object_a,
+            target=self.test_object_b,
+            relationship_type=self.test_relationship_type_a,
+        )
+        # ...should automatically create an inverse relationship...
+        inverse_relationship = Relationship.objects.filter(
+            source=self.test_object_b,
+            target=self.test_object_a,
+            relationship_type=self.test_relationship_type_b,
+        ).exists()
+        self.assertTrue(inverse_relationship)
+
+        # ...and should automatically set `inverse_of` to `test_relationship_type_b`
+        self.assertEqual(
+            relationship.relationship_type.inverse, self.test_relationship_type_b
+        )
+
+    def test_delete_relationship_deletes_inverse(self):
+        """Test that deleting a `Relationship` deletes the inverse `Relationship`."""
+        # Creating a relationship between the test objects...
+        relationship = Relationship.objects.create(
+            source=self.test_object_a,
+            target=self.test_object_b,
+            relationship_type=self.test_relationship_type_a,
+        )
+        # ...then deleting the relationship...
+        relationship.delete()
+        # ...should also delete the inverse relationship
+        inverse_relationship = Relationship.objects.filter(
+            source=self.test_object_b,
+            target=self.test_object_a,
+            relationship_type=self.test_relationship_type_b,
+        ).exists()
+        self.assertFalse(inverse_relationship)
