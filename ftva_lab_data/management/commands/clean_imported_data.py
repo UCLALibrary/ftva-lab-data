@@ -1,7 +1,7 @@
 import re
 from django.core.management.base import BaseCommand
 from ftva_lab_data.models import SheetImport, ItemStatus
-from django.db.models import Q
+from django.db.models import Q, CharField
 
 
 def _is_header_record(record: SheetImport) -> bool:
@@ -44,19 +44,7 @@ def _get_combined_field_data(record: SheetImport) -> str:
         [
             getattr(record, field.name)
             for field in record._meta.get_fields()
-            if field.name
-            not in (
-                "id",
-                "assigned_user",
-                "status",
-                "date_of_ingest",
-                "uuid",
-                "asset_type",
-                "file_type",
-                "media_type",
-                "no_ingest_reason",
-                "audio_class",
-            )
+            if isinstance(field, CharField)
         ]
     )
     # Remove any leading/trailing spaces and return the result.
