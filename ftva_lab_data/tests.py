@@ -1520,17 +1520,8 @@ class GetAllRecordsTestCase(TestCase):
 class RelationshipTestCase(TestCase):
     """Tests for the Relationship model."""
 
-    fixtures = ["sample_data.json", "groups_and_permissions.json"]
-
     @classmethod
     def setUpTestData(cls):
-        cls.client = Client()
-
-        cls.authorized_user = User.objects.create_user(
-            username="authorized", password="testpassword"
-        )
-        editors_group = Group.objects.get(name="editors")
-        cls.authorized_user.groups.add(editors_group)
         # Set up test objects
         cls.test_object_a = SheetImport.objects.create(file_name="test_object_a")
         cls.test_object_b = SheetImport.objects.create(file_name="test_object_b")
