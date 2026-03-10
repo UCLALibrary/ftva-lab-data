@@ -197,8 +197,21 @@ class SheetImport(models.Model):
 class RelationshipType(models.Model):
     """Represents the type of relationship between two SheetImport objects."""
 
-    type = models.CharField(max_length=50, unique=True)
-    reverse_type = models.CharField(max_length=50, unique=True)
+    type = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text=(
+            "Main label (i.e. predicate) for the relationship. "
+            "E.g. `ObjectA hasPart ObjectB`."
+        ),
+    )
+    reverse_type = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text=(
+            "Reverse label for the relationship. " "E.g. `ObjectB isPartOf ObjectA`."
+        ),
+    )
 
     def __str__(self):
         return f"{self.type}/{self.reverse_type}"
@@ -222,17 +235,25 @@ class Relationship(models.Model):
         "RelationshipType",
         on_delete=models.CASCADE,
         related_name="relationships",
+        help_text=(
+            "Type of relationship between the source and target objects, "
+            "given as a pair of semantically inverse labels. E.g. 'hasPart/isPartOf'."
+        ),
     )
 
     class Meta:
         unique_together = ["source", "target", "relationship_type"]
 
     def __str__(self):
-        return f"{self.source} {self.relationship_type} {self.target}"
+        return f"Record {self.source.id} {self.relationship_type.type} Record {self.target.id}"
 
     @property
     def reverse_relationship(self):
-        return f"{self.target} {self.relationship_type.reverse_type} {self.source}"
+        return (
+            f"Record {self.target.id} "
+            f"{self.relationship_type.reverse_type} "
+            f"Record {self.source.id}"
+        )
 
 
 class ItemStatus(models.Model):

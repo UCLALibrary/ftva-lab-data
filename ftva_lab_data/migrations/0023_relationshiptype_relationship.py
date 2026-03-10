@@ -23,8 +23,28 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("type", models.CharField(max_length=50, unique=True)),
-                ("reverse_type", models.CharField(max_length=50, unique=True)),
+                (
+                    "type",
+                    models.CharField(
+                        max_length=50,
+                        unique=True,
+                        help_text=(
+                            "Main label (i.e. predicate) for the relationship. "
+                            "E.g. `ObjectA hasPart ObjectB`."
+                        ),
+                    ),
+                ),
+                (
+                    "reverse_type",
+                    models.CharField(
+                        max_length=50,
+                        unique=True,
+                        help_text=(
+                            "Reverse label for the relationship. "
+                            "E.g. `ObjectB isPartOf ObjectA`."
+                        ),
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
@@ -61,6 +81,11 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="relationships",
                         to="ftva_lab_data.relationshiptype",
+                        help_text=(
+                            "Type of relationship between the source and target objects, "
+                            "given as a pair of semantically inverse labels. "
+                            "E.g. 'hasPart/isPartOf'."
+                        ),
                     ),
                 ),
             ],

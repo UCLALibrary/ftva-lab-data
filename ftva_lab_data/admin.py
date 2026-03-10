@@ -64,3 +64,4 @@ class RelationshipTypeAdmin(admin.ModelAdmin):
 class RelationshipAdmin(admin.ModelAdmin):
     list_display = ("source", "target", "relationship_type")
     search_fields = ("__str__",)
+    autocomplete_fields = ("source", "target")
