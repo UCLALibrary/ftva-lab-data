@@ -9,7 +9,7 @@ class FileType(models.Model):
     file_type = models.CharField(max_length=10, unique=True)
 
     def __str__(self):
-        return self.file_type
+        return str(self.file_type)
 
     class Meta:
         verbose_name_plural = "File types"
@@ -21,7 +21,7 @@ class AssetType(models.Model):
     asset_type = models.CharField(max_length=25, unique=True)
 
     def __str__(self):
-        return self.asset_type
+        return str(self.asset_type)
 
     class Meta:
         verbose_name_plural = "Asset types"
@@ -33,7 +33,7 @@ class NoIngestReason(models.Model):
     no_ingest_reason = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.no_ingest_reason
+        return str(self.no_ingest_reason)
 
     class Meta:
         verbose_name_plural = "No ingest reasons"
@@ -45,7 +45,7 @@ class MediaType(models.Model):
     media_type = models.CharField(max_length=10, unique=True)
 
     def __str__(self):
-        return self.media_type
+        return str(self.media_type)
 
     class Meta:
         verbose_name_plural = "Media types"
@@ -163,13 +163,6 @@ class SheetImport(models.Model):
         blank=True,
         related_name="sheet_imports",
     )
-    relationships = models.ManyToManyField(
-        "self",
-        blank=True,
-        symmetrical=False,
-        related_name="related_to",
-        through="Relationship",
-    )
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
@@ -204,17 +197,11 @@ class SheetImport(models.Model):
 class RelationshipType(models.Model):
     """Represents the type of relationship between two SheetImport objects."""
 
-    name = models.CharField(max_length=50, unique=True)
-    inverse = models.OneToOneField(
-        "self",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="inverse_of",
-    )
+    type = models.CharField(max_length=50, unique=True)
+    reverse_type = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.type}/{self.reverse_type}"
 
 
 class Relationship(models.Model):
@@ -231,46 +218,21 @@ class Relationship(models.Model):
         on_delete=models.CASCADE,
         related_name="incoming_relationships",
     )
-
     relationship_type = models.ForeignKey(
         "RelationshipType",
         on_delete=models.CASCADE,
         related_name="relationships",
     )
 
-    def save(self, *args, **kwargs):
-        """When a Relationship is created, ensure inverse relationships are created."""
-        # First, save the primary source -> target relationship
-        super().save(*args, **kwargs)
-        # Then, if there's an inverse RelationshipType,
-        # ensure a corresponding inverse Relationship is created
-        inverse_type = self.relationship_type.inverse
-        if inverse_type:
-            Relationship.objects.get_or_create(
-                source=self.target,
-                target=self.source,
-                relationship_type=inverse_type,
-            )
-
-    def delete(self, *args, **kwargs):
-        """When a Relationship is deleted, ensure inverse relationships are deleted."""
-        # Work backwards: first delete the inverse relationship, then the primary relationship
-        # This returns the correct type signature for delete() method.
-        inverse_type = self.relationship_type.inverse
-        if inverse_type:
-            Relationship.objects.filter(
-                source=self.target,
-                target=self.source,
-                relationship_type=inverse_type,
-            ).delete()
-
-        return super().delete(*args, **kwargs)
-
     class Meta:
         unique_together = ["source", "target", "relationship_type"]
 
     def __str__(self):
         return f"{self.source} {self.relationship_type} {self.target}"
+
+    @property
+    def reverse_relationship(self):
+        return f"{self.target} {self.relationship_type.reverse_type} {self.source}"
 
 
 class ItemStatus(models.Model):
@@ -279,7 +241,7 @@ class ItemStatus(models.Model):
     status = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.status
+        return str(self.status)
 
     class Meta:
         verbose_name_plural = "Item statuses"
@@ -291,7 +253,7 @@ class AudioClass(models.Model):
     audio_class = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.audio_class
+        return str(self.audio_class)
 
     class Meta:
         verbose_name_plural = "Audio classes"
