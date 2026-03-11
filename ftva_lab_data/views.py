@@ -615,10 +615,16 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
     if bib_records_count <= 1 and fm_records_count == 1:
         if bib_records_count == 1:
             metadata = get_mams_metadata(
-                django_record_data, fm_records[0], bib_records[0]
+                digital_data_record=django_record_data,
+                filemaker_record=fm_records[0],
+                bib_record=bib_records[0],
             )
         else:
-            metadata = get_mams_metadata(django_record_data, fm_records[0], None)
+            metadata = get_mams_metadata(
+                digital_data_record=django_record_data,
+                filemaker_record=fm_records[0],
+                bib_record=None,
+            )
         # Format the metadata as JSON for display in the template
         metadata_json = json.dumps(metadata, indent=2)
         return render(
