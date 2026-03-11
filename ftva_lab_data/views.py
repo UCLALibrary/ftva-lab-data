@@ -610,11 +610,15 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
     fm_records = fm_client.search_by_inventory_number(inventory_number)
     fm_records_count = len(fm_records)
 
-    # If Alma and FM records are unique, generate JSON metadata
-    if bib_records_count == 1 and fm_records_count == 1:
-        metadata = get_mams_metadata(
-            filtered_bib_records[0], fm_records[0], django_record_data
-        )
+    # If we have exactly one FM record and no more than one Alma record,
+    # generate metadata.
+    if bib_records_count <= 1 and fm_records_count == 1:
+        if bib_records_count == 1:
+            metadata = get_mams_metadata(
+                django_record_data, fm_records[0], bib_records[0]
+            )
+        else:
+            metadata = get_mams_metadata(django_record_data, fm_records[0], None)
         # Format the metadata as JSON for display in the template
         metadata_json = json.dumps(metadata, indent=2)
         return render(
