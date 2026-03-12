@@ -1,0 +1,10 @@
+[
+    {
+        "model": "ftva_lab_data.relationshiptype",
+        "pk": 1,
+        "fields": {
+            "type": "hasTrack",
+            "reverse_type": "isTrackOf"
+        }
+    }
+]

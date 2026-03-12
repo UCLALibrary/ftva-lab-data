@@ -8,6 +8,8 @@ from .models import (
     MediaType,
     NoIngestReason,
     AudioClass,
+    Relationship,
+    RelationshipType,
 )
 
 
@@ -50,3 +52,16 @@ class NoIngestReasonAdmin(admin.ModelAdmin):
 class AudioClassAdmin(admin.ModelAdmin):
     list_display = ("audio_class",)
     search_fields = ("audio_class",)
+
+
+@admin.register(RelationshipType)
+class RelationshipTypeAdmin(admin.ModelAdmin):
+    list_display = ("type", "reverse_type")
+    search_fields = ("__str__",)
+
+
+@admin.register(Relationship)
+class RelationshipAdmin(admin.ModelAdmin):
+    list_display = ("source", "target", "relationship_type")
+    search_fields = ("__str__",)
+    autocomplete_fields = ("source", "target")

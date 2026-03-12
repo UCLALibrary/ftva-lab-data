@@ -29,6 +29,8 @@ from ftva_lab_data.models import (
     FileType,
     MediaType,
     NoIngestReason,
+    Relationship,
+    RelationshipType,
 )
 from ftva_lab_data.management.commands.import_status_and_inventory_numbers import (
     parse_status_info,
@@ -1513,3 +1515,42 @@ class GetAllRecordsTestCase(TestCase):
             record.id for record in SheetImport.objects.all().order_by("id")[0:100]
         ]
         self.assertEqual(result_ids, expected_ids)
+
+
+class RelationshipTestCase(TestCase):
+    """Tests for the Relationship model."""
+
+    @classmethod
+    def setUpTestData(cls):
+        # Set up test objects
+        cls.test_object_a = SheetImport.objects.create(file_name="test_object_a")
+        cls.test_object_b = SheetImport.objects.create(file_name="test_object_b")
+        # Set up test relationship type
+        cls.test_relationship_type = RelationshipType.objects.create(
+            type="hasPart", reverse_type="isPartOf"
+        )
+
+    def test_create_relationship(self):
+        """Test that creating a `Relationship` allows
+        relationship information to be retrieved in both directions."""
+        # Create a relationship between the test objects
+        relationship = Relationship.objects.create(
+            source=self.test_object_a,
+            target=self.test_object_b,
+            relationship_type=self.test_relationship_type,
+        )
+
+        # Check that string representations of relationship are as expected
+        self.assertEqual(
+            str(relationship),
+            f"Record {self.test_object_a.id} hasPart Record {self.test_object_b.id}",
+        )
+        self.assertEqual(
+            relationship.reverse_relationship,
+            f"Record {self.test_object_b.id} isPartOf Record {self.test_object_a.id}",
+        )
+
+        # Check that relationship is visible on Object A under `outgoing_relationships`
+        self.assertTrue(relationship in self.test_object_a.outgoing_relationships.all())
+        # Check that relationship is visible on Object B under `incoming_relationships`
+        self.assertTrue(relationship in self.test_object_b.incoming_relationships.all())
