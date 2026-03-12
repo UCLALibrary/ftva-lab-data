@@ -163,6 +163,7 @@ class SheetImport(models.Model):
         blank=True,
         related_name="sheet_imports",
     )
+    batch_number = models.CharField(max_length=10, blank=True)
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
