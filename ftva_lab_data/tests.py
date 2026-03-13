@@ -47,7 +47,7 @@ from ftva_lab_data.views_utils import (
     process_full_alma_data,
     transform_record_to_dict,
 )
-from ftva_lab_data.table_config import COLUMNS
+from ftva_lab_data.table_config import COLUMNS, SEARCH_ONLY_FIELDS
 from ftva_lab_data.management.commands.extract_inventory_numbers import (
     compile_regex,
     build_inventory_number_string,
@@ -577,6 +577,7 @@ class SearchTestCase(TestCase):
             inventory_number="Inv_No",
             carrier_a="ABC123",
             carrier_a_location="VAULT-01",
+            batch_number="BN1",
         )
 
         # Basic item with a user assigned
@@ -599,8 +600,10 @@ class SearchTestCase(TestCase):
         )
         cls.item_with_status.status.add(status)
 
-        # List of all fields used for searching
-        cls.search_fields = [field for field, _ in COLUMNS]
+        # List of all fields used for searching, including search-only fields
+        cls.search_fields = [field for field, _ in COLUMNS] + [
+            field for field, _ in SEARCH_ONLY_FIELDS
+        ]
 
     def test_search_is_case_insensitive(self):
         items = get_search_result_items(
@@ -706,6 +709,39 @@ class SearchTestCase(TestCase):
             search_fields=["id"],
         )
         self.assertEqual(items.count(), 0)
+
+    def test_search_finds_batch_number(self):
+        items = get_search_result_items(
+            search="BN1",
+            search_fields=["batch_number"],
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.first(), self.item_basic)
+
+    def test_search_finds_uuid(self):
+        valid_search_strings = [
+            # UUID search should be case-insensitive exact match.
+            # Django handles casting search string to UUID.
+            str(self.item_basic.uuid),
+            str(self.item_basic.uuid).upper(),
+        ]
+        invalid_search_strings = [str(self.item_basic.uuid) + "foobar"]
+
+        for search_string in valid_search_strings:
+            with self.subTest(search_string=search_string):
+                items = get_search_result_items(
+                    search=search_string,
+                    search_fields=["uuid"],
+                )
+                self.assertEqual(items.count(), 1)
+                self.assertEqual(items.first(), self.item_basic)
+        for search_string in invalid_search_strings:
+            with self.subTest(search_string=search_string):
+                items = get_search_result_items(
+                    search=search_string,
+                    search_fields=["uuid"],
+                )
+                self.assertEqual(items.count(), 0)
 
 
 class ItemStatusTestCase(TestCase):
