@@ -325,9 +325,9 @@ def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
     """
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
-    search_fields = (
-        [search_column] if search_column else [field for field, _ in COLUMNS]
-    )
+    display_fields = [field for field, _ in COLUMNS]
+    searchable_fields = display_fields + [field for field, _ in SEARCH_ONLY_FIELDS]
+    search_fields = [search_column] if search_column else searchable_fields
 
     rows = get_search_result_items(search, search_fields)
 
