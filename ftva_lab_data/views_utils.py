@@ -217,6 +217,11 @@ def get_search_result_items(search: str, search_fields: list[str]) -> QuerySet:
                     # treat it like 0 (finding nothing), with no errors.
                     num_search = 0
                 query |= Q(id=num_search)
+        elif field == "uuid":
+            # UUID: treat this as an exact (case-insensitive) match.
+            # Django will handle casting the string search term to UUID.
+            if search:
+                query |= Q(uuid__iexact=search)
         else:
             query |= Q(**{f"{field}__icontains": search})
     # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.

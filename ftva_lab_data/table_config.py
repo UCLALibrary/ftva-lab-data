@@ -14,3 +14,9 @@ COLUMNS = [
     ("assigned_user_full_name", "Assigned user"),
     ("id", "Record ID"),
 ]
+
+# Additional fields that should be searchable but are not displayed
+# as columns in the main results table.
+SEARCH_ONLY_FIELDS = [
+    ("uuid", "UUID"),
+]
