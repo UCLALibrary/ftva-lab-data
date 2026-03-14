@@ -20,7 +20,7 @@ import json
 
 from .forms import ItemForm, BatchUpdateForm
 from .models import SheetImport
-from .table_config import COLUMNS
+from .table_config import COLUMNS, SEARCH_ONLY_FIELDS
 from .views_utils import (
     get_airtable_url,
     get_item_display_dicts,
@@ -187,6 +187,7 @@ def search_results(request: HttpRequest) -> HttpResponse:
     # need to be returned individually here to sync with input element values.
     search_results_context = {
         "columns": COLUMNS,
+        "search_only_fields": SEARCH_ONLY_FIELDS,
         "users": users,
         "search": search,
         "search_column": search_column,
@@ -214,9 +215,11 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     items_per_page = request.GET.get("items_per_page")
 
     display_fields = [field for field, _ in COLUMNS]
+    # Combine fields intended for display on table with fields intended for search but not display
+    searchable_fields = display_fields + [field for field, _ in SEARCH_ONLY_FIELDS]
     # If there's a specific search column, use it;
-    # otherwise, search in all display fields.
-    search_fields = [search_column] if search_column else display_fields
+    # otherwise, search in all searchable fields.
+    search_fields = [search_column] if search_column else searchable_fields
 
     items = get_search_result_items(search, search_fields)
 
@@ -322,9 +325,9 @@ def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
     """
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
-    search_fields = (
-        [search_column] if search_column else [field for field, _ in COLUMNS]
-    )
+    display_fields = [field for field, _ in COLUMNS]
+    searchable_fields = display_fields + [field for field, _ in SEARCH_ONLY_FIELDS]
+    search_fields = [search_column] if search_column else searchable_fields
 
     rows = get_search_result_items(search, search_fields)
 

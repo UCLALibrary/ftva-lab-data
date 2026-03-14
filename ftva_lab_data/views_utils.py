@@ -81,6 +81,7 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     }
     inventory_info = {
         "Inventory Number": item.inventory_number,
+        "Batch Number": item.batch_number,
         "UUID": item.uuid,
         "Date of Ingest": item.date_of_ingest,
         "No Ingest Reason": item.no_ingest_reason,
@@ -146,6 +147,7 @@ def get_add_edit_item_fields(form: ItemForm) -> dict[str, list[str]]:
     """
     basic_fields = [
         "status",
+        "batch_number",
         "hard_drive_name",
         "carrier_a",
         "carrier_a_location",
@@ -215,6 +217,11 @@ def get_search_result_items(search: str, search_fields: list[str]) -> QuerySet:
                     # treat it like 0 (finding nothing), with no errors.
                     num_search = 0
                 query |= Q(id=num_search)
+        elif field == "uuid":
+            # UUID: treat this as an exact (case-insensitive) match.
+            # Django will handle casting the string search term to UUID.
+            if search:
+                query |= Q(uuid__iexact=search)
         else:
             query |= Q(**{f"{field}__icontains": search})
     # Finally, apply the query, using distinct() to remove dups possible with multiple statuses.
@@ -322,7 +329,7 @@ def basic_auth_required(view_function: Any) -> Any:
     def _wrapped_view(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         # Assume request is unauthorized, until proven otherwise.
         # If so, prompt for login via HTTP basic auth.
-        unauthorized_response = HttpResponse("Unauthorized", status=401)
+        unauthorized_response = HttpResponse(b"Unauthorized", status=401)
         unauthorized_response["WWW-Authenticate"] = 'Basic realm="API"'
 
         # Start checking for proper authorization.
@@ -334,7 +341,7 @@ def basic_auth_required(view_function: Any) -> Any:
                 auth_decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
                 username, password = auth_decoded.split(":", 1)
             except binascii.Error:
-                return HttpResponse("Invalid basic auth header", status=400)
+                return HttpResponse(b"Invalid basic auth header", status=400)
             # Authenticate using Django's authenticate function
             user = authenticate(request, username=username, password=password)
             if user is not None and user.is_active:
