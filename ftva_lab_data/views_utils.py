@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 from .models import SheetImport
 from .forms import ItemForm
 from fmrest.record import Record
+from .table_config import COLUMNS, SEARCH_ONLY_FIELDS
 
 
 # Recursive implementation adapted from:
@@ -505,3 +506,21 @@ def get_airtable_url(donor_code: str) -> str:
         f"{settings.AIRTABLE_URL}"  # base URL
         f"?{urlencode(query_parameters)}"  # query parameters
     )
+
+
+def get_search_fields() -> list[str]:
+    """Return a list of field names for searching in the search results table.
+
+    :return: A list of field names.
+    """
+    # Combine fields intended for display on table with fields intended for search but not display.
+    # Fields can be configured in `table_config.py`.
+    return [field for field, _ in COLUMNS] + [field for field, _ in SEARCH_ONLY_FIELDS]
+
+
+def get_display_fields() -> list[str]:
+    """Return a list of field names only intended as columns in the search results table.
+
+    :return: A list of field names.
+    """
+    return [field for field, _ in COLUMNS]
