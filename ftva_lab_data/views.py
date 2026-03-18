@@ -20,7 +20,7 @@ import json
 
 from .forms import ItemForm, BatchUpdateForm
 from .models import SheetImport
-from .table_config import COLUMNS
+from .table_config import COLUMNS, SEARCH_ONLY_FIELDS
 from .views_utils import (
     get_airtable_url,
     get_item_display_dicts,
@@ -35,6 +35,8 @@ from .views_utils import (
     get_specific_filemaker_fields,
     transform_filemaker_field_name,
     transform_record_to_dict,
+    get_search_fields,
+    get_display_fields,
 )
 from .management.commands.batch_update import (
     load_input_data,
@@ -187,6 +189,7 @@ def search_results(request: HttpRequest) -> HttpResponse:
     # need to be returned individually here to sync with input element values.
     search_results_context = {
         "columns": COLUMNS,
+        "search_only_fields": SEARCH_ONLY_FIELDS,
         "users": users,
         "search": search,
         "search_column": search_column,
@@ -213,10 +216,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     page = request.GET.get("page", 1)
     items_per_page = request.GET.get("items_per_page")
 
-    display_fields = [field for field, _ in COLUMNS]
-    # If there's a specific search column, use it;
-    # otherwise, search in all display fields.
-    search_fields = [search_column] if search_column else display_fields
+    search_fields = [search_column] if search_column else get_search_fields()
 
     items = get_search_result_items(search, search_fields)
 
@@ -248,7 +248,7 @@ def render_search_results_table(request: HttpRequest) -> HttpResponse:
     # Construct of list of dicts to use as table rows instead of QuerySets
     # allowing row[field] to be accessed, rather than specifying each field literal.
     rows = get_search_result_data(
-        item_list=page_obj.object_list, display_fields=display_fields
+        item_list=page_obj.object_list, display_fields=get_display_fields()
     )
 
     search_results_table_context = {
@@ -322,9 +322,8 @@ def export_search_results(request: HttpRequest) -> StreamingHttpResponse:
     """
     search = request.GET.get("search", "")
     search_column = request.GET.get("search_column", "")
-    search_fields = (
-        [search_column] if search_column else [field for field, _ in COLUMNS]
-    )
+
+    search_fields = [search_column] if search_column else get_search_fields()
 
     rows = get_search_result_items(search, search_fields)
 

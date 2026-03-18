@@ -9,6 +9,7 @@ class ItemForm(forms.ModelForm):
         fields = [
             "status",
             "notes",
+            "batch_number",
             "hard_drive_name",
             "carrier_a",
             "carrier_a_location",

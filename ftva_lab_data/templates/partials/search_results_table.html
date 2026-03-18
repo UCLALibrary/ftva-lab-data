@@ -1,46 +1,21 @@
 {% comment %}The `show_auxiliary_controls` attribute controls whether or not
-to render <div> elements for controls on either side of the main pagination controls.
+to render div elements for controls on either side of the main pagination controls.
 See comment on partial as well.
 {% endcomment %}
 {% include "partials/pagination_controls.html" with show_auxiliary_controls=True %}
 
 <table class="table table-hover" style="table-layout: fixed;">
-    <colgroup>
-        <!--Hard drive-->
-        <col style="width: 10%;">
-        <!--Carrier A-->
-        <col style="width: 10%;">
-        <!--Carrier B-->
-        <col style="width: 10%;">
-        <!--File folder-->
-        <col style="width: 10%;">
-        <!--Sub-folder-->
-        <col style="width: 10%;">
-        <!--Filename-->
-        <col style="width: 10%;">
-        <!--Source inv no.-->
-        <col style="width: 10%;">
-        <!--Status-->
-        <col style="width: 11%;">
-        <!--Assigned user-->
-        <col style="width: 9%;">
-        <!--View link and Record ID-->
-        <col style="width: 5%;">
-        <!--Checkbox for assigning-->
-        <col style="width: 5%;">
-    </colgroup>
     <thead>
         <tr>
             {% for _, label in columns %}
                 {% if label == "Record ID" %}
-                    <th></th>
+                    <th style="width: 5%;"></th>
                 {% else %}
                     <th>{{ label }}</th>
                 {% endif %}
             {% endfor %}
-            <th class ="text-center">
-                Assign
-                <div class="form-check justify-content-center m-0" style="display: flex;" title="Select all items on this page">
+            <th style="width: 5%;">
+                <div class="form-check justify-content-center m-0 d-flex" title="Select all items on this page">
                     <input type="checkbox" class="form-check-input checkbox-bold" id="select-all-checkbox">
                 </div>
             </th>
@@ -62,7 +37,7 @@ See comment on partial as well.
                             href="{% url 'view_item' row.id %}?{{ url_parameters }}">
                             View</a> 
                             <br>
-                            <span class="text-muted small">ID: {{ value }}</span>
+                            <span class="text-muted text-nowrap small">ID: {{ value }}</span>
                         </div>
                     {% else %}
                         {{ value }}
@@ -70,7 +45,7 @@ See comment on partial as well.
                 </td>         
             {% endfor %}                    
             <td class="align-top">
-                <div class="form-check justify-content-center m-0" style="display: flex;">
+                <div class="form-check justify-content-center m-0 d-flex">
                     <input type="checkbox" class="form-check-input row-checkbox checkbox-bold" name="selected_ids" value="{{ row.id }}">
                 </div>
             </td>
