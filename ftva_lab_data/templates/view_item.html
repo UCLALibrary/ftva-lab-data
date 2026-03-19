@@ -68,7 +68,7 @@
 
     <div class="row">
         <h2 class="fs-4">Basic Fields</h2>
-        <div class="col-4">
+        <div class="col-4 d-flex flex-column gap-3">
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Storage Information </h5>
@@ -79,6 +79,26 @@
                     {% endfor %}
                 </div>
             </div>
+            <!-- Relationships -->
+            {% if relationships.outgoing_relationships or relationships.incoming_relationships %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Relationships</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">Type</dt>
+                        <dt class="col-sm-6">ID</dt>
+                        {% for relationship in relationships.outgoing_relationships %}
+                            <dd class="col-sm-6">{{ relationship.relationship_type }}</dd>
+                            <dd class="col-sm-6"><a href="{% url 'view_item' relationship.id %}">Record {{ relationship.id }}</a></dd>
+                        {% endfor %}
+                        {% for relationship in relationships.incoming_relationships %}
+                            <dd class="col-sm-6">{{ relationship.relationship_type }}</dd>
+                            <dd class="col-sm-6"><a href="{% url 'view_item' relationship.id %}">Record {{ relationship.id }}</a></dd>
+                        {% endfor %}
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <div class="col-4">
