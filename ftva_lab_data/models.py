@@ -9,7 +9,7 @@ class FileType(models.Model):
     file_type = models.CharField(max_length=10, unique=True)
 
     def __str__(self):
-        return self.file_type
+        return str(self.file_type)
 
     class Meta:
         verbose_name_plural = "File types"
@@ -21,7 +21,7 @@ class AssetType(models.Model):
     asset_type = models.CharField(max_length=25, unique=True)
 
     def __str__(self):
-        return self.asset_type
+        return str(self.asset_type)
 
     class Meta:
         verbose_name_plural = "Asset types"
@@ -33,7 +33,7 @@ class NoIngestReason(models.Model):
     no_ingest_reason = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.no_ingest_reason
+        return str(self.no_ingest_reason)
 
     class Meta:
         verbose_name_plural = "No ingest reasons"
@@ -45,7 +45,7 @@ class MediaType(models.Model):
     media_type = models.CharField(max_length=10, unique=True)
 
     def __str__(self):
-        return self.media_type
+        return str(self.media_type)
 
     class Meta:
         verbose_name_plural = "Media types"
@@ -163,6 +163,7 @@ class SheetImport(models.Model):
         blank=True,
         related_name="sheet_imports",
     )
+    batch_number = models.CharField(max_length=10, blank=True)
 
     def __str__(self):
         return f"id: {self.id} --- file: {self.file_name} --- title: {self.title}"
@@ -173,7 +174,7 @@ class SheetImport(models.Model):
 
     @property
     def carrier_a_with_location(self) -> str:
-        return (
+        return str(
             f"{self.carrier_a} ({self.carrier_a_location})"
             if self.carrier_a_location
             else self.carrier_a
@@ -181,7 +182,7 @@ class SheetImport(models.Model):
 
     @property
     def carrier_b_with_location(self) -> str:
-        return (
+        return str(
             f"{self.carrier_b} ({self.carrier_b_location})"
             if self.carrier_b_location
             else self.carrier_b
@@ -194,13 +195,75 @@ class SheetImport(models.Model):
         ]
 
 
+class RelationshipType(models.Model):
+    """Represents the type of relationship between two SheetImport objects."""
+
+    type = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text=(
+            "Main label (i.e. predicate) for the relationship. "
+            "E.g. `ObjectA hasPart ObjectB`."
+        ),
+    )
+    reverse_type = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text=(
+            "Reverse label for the relationship. " "E.g. `ObjectB isPartOf ObjectA`."
+        ),
+    )
+
+    def __str__(self):
+        return f"{self.type}/{self.reverse_type}"
+
+
+class Relationship(models.Model):
+    """Represents relationships between SheetImport objects.
+    Relationship types should be created in the RelationshipType model."""
+
+    source = models.ForeignKey(
+        SheetImport,
+        on_delete=models.CASCADE,
+        related_name="outgoing_relationships",
+    )
+    target = models.ForeignKey(
+        SheetImport,
+        on_delete=models.CASCADE,
+        related_name="incoming_relationships",
+    )
+    relationship_type = models.ForeignKey(
+        "RelationshipType",
+        on_delete=models.CASCADE,
+        related_name="relationships",
+        help_text=(
+            "Type of relationship between the source and target objects, "
+            "given as a pair of semantically inverse labels. E.g. 'hasPart/isPartOf'."
+        ),
+    )
+
+    class Meta:
+        unique_together = ["source", "target", "relationship_type"]
+
+    def __str__(self):
+        return f"Record {self.source.id} {self.relationship_type.type} Record {self.target.id}"
+
+    @property
+    def reverse_relationship(self):
+        return (
+            f"Record {self.target.id} "
+            f"{self.relationship_type.reverse_type} "
+            f"Record {self.source.id}"
+        )
+
+
 class ItemStatus(models.Model):
     """Represents the status of an item in the SheetImport model."""
 
     status = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.status
+        return str(self.status)
 
     class Meta:
         verbose_name_plural = "Item statuses"
@@ -212,7 +275,7 @@ class AudioClass(models.Model):
     audio_class = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return self.audio_class
+        return str(self.audio_class)
 
     class Meta:
         verbose_name_plural = "Audio classes"

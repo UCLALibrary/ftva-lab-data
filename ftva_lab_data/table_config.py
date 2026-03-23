@@ -9,7 +9,14 @@ COLUMNS = [
     ("sub_folder_name", "Sub-folder"),
     ("file_name", "Filename"),
     ("inventory_number", "Inventory number"),
+    ("batch_number", "Batch number"),
     ("status", "Status"),
     ("assigned_user_full_name", "Assigned user"),
     ("id", "Record ID"),
+]
+
+# Additional fields that should be searchable but are not displayed
+# as columns in the main results table.
+SEARCH_ONLY_FIELDS = [
+    ("uuid", "UUID"),
 ]

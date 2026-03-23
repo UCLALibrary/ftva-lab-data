@@ -29,6 +29,8 @@ from ftva_lab_data.models import (
     FileType,
     MediaType,
     NoIngestReason,
+    Relationship,
+    RelationshipType,
 )
 from ftva_lab_data.management.commands.import_status_and_inventory_numbers import (
     parse_status_info,
@@ -45,7 +47,7 @@ from ftva_lab_data.views_utils import (
     process_full_alma_data,
     transform_record_to_dict,
 )
-from ftva_lab_data.table_config import COLUMNS
+from ftva_lab_data.table_config import COLUMNS, SEARCH_ONLY_FIELDS
 from ftva_lab_data.management.commands.extract_inventory_numbers import (
     compile_regex,
     build_inventory_number_string,
@@ -575,6 +577,7 @@ class SearchTestCase(TestCase):
             inventory_number="Inv_No",
             carrier_a="ABC123",
             carrier_a_location="VAULT-01",
+            batch_number="BN1",
         )
 
         # Basic item with a user assigned
@@ -597,8 +600,10 @@ class SearchTestCase(TestCase):
         )
         cls.item_with_status.status.add(status)
 
-        # List of all fields used for searching
-        cls.search_fields = [field for field, _ in COLUMNS]
+        # List of all fields used for searching, including search-only fields
+        cls.search_fields = [field for field, _ in COLUMNS] + [
+            field for field, _ in SEARCH_ONLY_FIELDS
+        ]
 
     def test_search_is_case_insensitive(self):
         items = get_search_result_items(
@@ -704,6 +709,39 @@ class SearchTestCase(TestCase):
             search_fields=["id"],
         )
         self.assertEqual(items.count(), 0)
+
+    def test_search_finds_batch_number(self):
+        items = get_search_result_items(
+            search="BN1",
+            search_fields=["batch_number"],
+        )
+        self.assertEqual(items.count(), 1)
+        self.assertEqual(items.first(), self.item_basic)
+
+    def test_search_finds_uuid(self):
+        valid_search_strings = [
+            # UUID search should be case-insensitive exact match.
+            # Django handles casting search string to UUID.
+            str(self.item_basic.uuid),
+            str(self.item_basic.uuid).upper(),
+        ]
+        invalid_search_strings = [str(self.item_basic.uuid) + "foobar"]
+
+        for search_string in valid_search_strings:
+            with self.subTest(search_string=search_string):
+                items = get_search_result_items(
+                    search=search_string,
+                    search_fields=["uuid"],
+                )
+                self.assertEqual(items.count(), 1)
+                self.assertEqual(items.first(), self.item_basic)
+        for search_string in invalid_search_strings:
+            with self.subTest(search_string=search_string):
+                items = get_search_result_items(
+                    search=search_string,
+                    search_fields=["uuid"],
+                )
+                self.assertEqual(items.count(), 0)
 
 
 class ItemStatusTestCase(TestCase):
@@ -1513,3 +1551,42 @@ class GetAllRecordsTestCase(TestCase):
             record.id for record in SheetImport.objects.all().order_by("id")[0:100]
         ]
         self.assertEqual(result_ids, expected_ids)
+
+
+class RelationshipTestCase(TestCase):
+    """Tests for the Relationship model."""
+
+    @classmethod
+    def setUpTestData(cls):
+        # Set up test objects
+        cls.test_object_a = SheetImport.objects.create(file_name="test_object_a")
+        cls.test_object_b = SheetImport.objects.create(file_name="test_object_b")
+        # Set up test relationship type
+        cls.test_relationship_type = RelationshipType.objects.create(
+            type="hasPart", reverse_type="isPartOf"
+        )
+
+    def test_create_relationship(self):
+        """Test that creating a `Relationship` allows
+        relationship information to be retrieved in both directions."""
+        # Create a relationship between the test objects
+        relationship = Relationship.objects.create(
+            source=self.test_object_a,
+            target=self.test_object_b,
+            relationship_type=self.test_relationship_type,
+        )
+
+        # Check that string representations of relationship are as expected
+        self.assertEqual(
+            str(relationship),
+            f"Record {self.test_object_a.id} hasPart Record {self.test_object_b.id}",
+        )
+        self.assertEqual(
+            relationship.reverse_relationship,
+            f"Record {self.test_object_b.id} isPartOf Record {self.test_object_a.id}",
+        )
+
+        # Check that relationship is visible on Object A under `outgoing_relationships`
+        self.assertTrue(relationship in self.test_object_a.outgoing_relationships.all())
+        # Check that relationship is visible on Object B under `incoming_relationships`
+        self.assertTrue(relationship in self.test_object_b.incoming_relationships.all())
