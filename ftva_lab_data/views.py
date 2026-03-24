@@ -616,7 +616,7 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
             metadata = get_mams_metadata(
                 digital_data_record=django_record_data,
                 filemaker_record=fm_records[0],
-                bib_record=bib_records[0],
+                bib_record=filtered_bib_records[0],
             )
         else:
             metadata = get_mams_metadata(
