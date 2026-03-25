@@ -97,6 +97,12 @@
                         {% endfor %}
                     </dl>
                 </div>
+                <div class="card-footer bg-transparent d-flex justify-content-end">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#relationship-modal"
+                        hx-get="{% url 'add_relationship' %}"
+                        hx-target="#relationship-modal-content" hx-trigger="click">Add Relationship
+                    </button>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -172,4 +178,23 @@ HTMX will swap `#metadata-modal-content` when the request completes.
     </div>
 </div>
 
+{% comment %} Add Relationship modal {% endcomment %}
+<div class="modal fade" id="relationship-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content" id="relationship-modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <div class="spinner-border"></div>
+                    <div>Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

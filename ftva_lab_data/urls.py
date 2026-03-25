@@ -36,4 +36,5 @@ urlpatterns = [
     ),
     path("carrier-suggestions/", views.carrier_suggestions, name="carrier_suggestions"),
     path("batch_update/", views.batch_update, name="batch_update"),
+    path("add_relationship/", views.add_relationship, name="add_relationship"),
 ]

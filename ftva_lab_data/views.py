@@ -846,3 +846,8 @@ def batch_update(request: HttpRequest) -> HttpResponse:
         if "batch_update_file_data" in request.session:
             del request.session["batch_update_file_data"]
     return render(request, "partials/batch_update_modal_content.html", {"form": form})
+
+
+@login_required
+def add_relationship(request: HttpRequest) -> HttpResponse:
+    return render(request, "partials/relationship_modal_content.html")
