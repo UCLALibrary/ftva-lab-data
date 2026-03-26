@@ -1593,7 +1593,7 @@ class RelationshipTestCase(TestCase):
 
 
 class AddRelationshipViewTestCase(TestCase):
-    """Tests for the `add_relationship` view."""
+    """Tests for the add/edit relationship view flow."""
 
     fixtures = ["groups_and_permissions.json"]
 
@@ -1602,38 +1602,58 @@ class AddRelationshipViewTestCase(TestCase):
         self.user = User.objects.create_user(
             username="authorized", password="testpassword"
         )
-        group = Group.objects.get(name="editors")
+        # Managing relationships restricted to super-editors group
+        group = Group.objects.get(name="super-editors")
         self.user.groups.add(group)
         self.client.login(username="authorized", password="testpassword")
 
         self.source_item = SheetImport.objects.create(file_name="source_item")
         self.target_item = SheetImport.objects.create(file_name="target_item")
-        self.other_source_item = SheetImport.objects.create(
-            file_name="other_source_item"
-        )
-        self.relationship_type = RelationshipType.objects.create(
+
+        self.relationship_type_a = RelationshipType.objects.create(
             type="hasPart", reverse_type="isPartOf"
         )
-        self.url = reverse("add_relationship", args=[self.source_item.id])
+        self.relationship_type_b = RelationshipType.objects.create(
+            type="isVersionOf", reverse_type="hasVersion"
+        )
+
+    def test_unauthorized_user_does_not_see_relationship_buttons(self):
+        # Create unauthorized user just for this test
+        credentials = {
+            "username": "unauthorized",
+            "password": "testpassword",
+        }
+        User.objects.create_user(**credentials)
+        self.client.login(**credentials)
+
+        url = reverse("view_item", args=[self.source_item.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Add Relationship")
+        self.assertNotContains(response, "Edit Relationship")
+        self.assertNotContains(response, "Delete Relationship")
 
     def test_valid_post_adds_to_relationships_card(self):
+        url = reverse("add_relationship", args=[self.source_item.id])
         response = self.client.post(
-            self.url,
+            url,
             {
-                "relationship_type": self.relationship_type.id,
+                "relationship_type": self.relationship_type_a.id,
                 "target": self.target_item.id,
             },
         )
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "hasPart")
         self.assertContains(response, f"Record {self.target_item.id}")
 
     def test_invalid_post_shows_modal_with_form_errors(self):
+        url = reverse("add_relationship", args=[self.source_item.id])
         response = self.client.post(
-            self.url,
+            url,
             {
-                "source": self.other_source_item.id,
-                "relationship_type": self.relationship_type.id,
+                "relationship_type": self.relationship_type_a.id,
                 # Invalid because no target is provided
             },
         )
@@ -1641,13 +1661,15 @@ class AddRelationshipViewTestCase(TestCase):
         self.assertContains(response, "This field is required.")
 
     def test_post_nonexistent_target_shows_validation_error(self):
+        url = reverse("add_relationship", args=[self.source_item.id])
         response = self.client.post(
-            self.url,
+            url,
             {
                 "target": 999999,
-                "relationship_type": self.relationship_type.id,
+                "relationship_type": self.relationship_type_a.id,
             },
         )
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Record does not exist.")
 
@@ -1655,14 +1677,67 @@ class AddRelationshipViewTestCase(TestCase):
         Relationship.objects.create(
             source=self.source_item,
             target=self.target_item,
-            relationship_type=self.relationship_type,
+            relationship_type=self.relationship_type_a,
         )
+
+        url = reverse("add_relationship", args=[self.source_item.id])
         response = self.client.post(
-            self.url,
+            url,
             {
                 "target": self.target_item.id,
-                "relationship_type": self.relationship_type.id,
+                "relationship_type": self.relationship_type_a.id,
             },
         )
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "This relationship already exists.")
+
+    def test_edit_get_renders_modal(self):
+        relationship = Relationship.objects.create(
+            source=self.source_item,
+            target=self.target_item,
+            relationship_type=self.relationship_type_a,
+        )
+
+        url = reverse("edit_relationship", args=[self.source_item.id, relationship.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Edit Relationship")
+        self.assertContains(response, "Save changes")
+
+    def test_edit_post_updates_relationship(self):
+        relationship = Relationship.objects.create(
+            source=self.source_item,
+            target=self.target_item,
+            relationship_type=self.relationship_type_a,  # start with type A
+        )
+
+        url = reverse("edit_relationship", args=[self.source_item.id, relationship.id])
+        response = self.client.post(
+            url,
+            {
+                "relationship_type": self.relationship_type_b.id,  # change to type B
+                "target": self.target_item.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.relationship_type_b.type)
+        self.assertContains(response, f"Record {self.target_item.id}")
+
+    def test_delete_post_removes_relationship(self):
+        relationship = Relationship.objects.create(
+            source=self.source_item,
+            target=self.target_item,
+            relationship_type=self.relationship_type_a,
+        )
+
+        url = reverse(
+            "delete_relationship", args=[self.source_item.id, relationship.id]
+        )
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Relationship.objects.filter(id=relationship.id).exists())
+        self.assertContains(response, "No relationships found.")
