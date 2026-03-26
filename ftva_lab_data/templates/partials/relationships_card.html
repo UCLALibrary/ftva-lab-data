@@ -2,25 +2,54 @@
     <div class="card-body">
         <h5 class="card-title">Relationships</h5>
         {% if relationships.outgoing_relationships or relationships.incoming_relationships %}
-        <dl class="row mb-0">
-            <dt class="col-sm-6">Type</dt>
-            <dt class="col-sm-6">ID</dt>
-            {% for relationship in relationships.outgoing_relationships %}
-            <dd class="col-sm-6">{{ relationship.relationship_type }}</dd>
-            <dd class="col-sm-6"><a href="{% url 'view_item' relationship.id %}">Record {{ relationship.id }}</a></dd>
-            {% endfor %}
-            {% for relationship in relationships.incoming_relationships %}
-            <dd class="col-sm-6">{{ relationship.relationship_type }}</dd>
-            <dd class="col-sm-6"><a href="{% url 'view_item' relationship.id %}">Record {{ relationship.id }}</a></dd>
-            {% endfor %}
-        </dl>
+        <div class="row fw-semibold small mb-2">
+            {% if perms.ftva_lab_data.change_sheetimport %}
+            <div class="col-4">Type</div>
+            <div class="col-4">ID</div>
+            <div class="col-4">Actions</div>
+            {% else %}
+            <div class="col-6">Type</div>
+            <div class="col-6">ID</div>
+            {% endif %}
+        </div>
+
+        {% for relationship in relationships.outgoing_relationships|add:relationships.incoming_relationships %}
+        <div class="row mb-2">
+            {% if perms.ftva_lab_data.change_sheetimport %}
+            <div class="col-4">{{ relationship.relationship_type }}</div>
+            <div class="col-4"><a href="{% url 'view_item' relationship.related_record_id %}">Record {{ relationship.related_record_id }}</a></div>
+            <div class="col-4">
+                <button class="btn btn-outline-secondary btn-xs" type="button" data-bs-toggle="modal"
+                    data-bs-target="#relationship-modal"
+                    hx-get="{% url 'edit_relationship' header_info.id relationship.relationship_id %}"
+                    hx-target="#relationship-modal-content" hx-trigger="click">
+                    Edit
+                </button>
+                <button
+                    class="btn btn-outline-danger btn-xs"
+                    type="button"
+                    hx-post="{% url 'delete_relationship' header_info.id relationship.relationship_id %}"
+                    hx-target="#relationships-card"
+                    hx-confirm="Delete relationship Record {{ header_info.id }} {{ relationship.relationship_type }} Record {{ relationship.related_record_id }}?"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                    Delete
+                </button>
+            </div>
+            {% else %}
+            <div class="col-6">{{ relationship.relationship_type }}</div>
+            <div class="col-6"><a href="{% url 'view_item' relationship.related_record_id %}">Record {{ relationship.related_record_id }}</a></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
         {% else %}
         <p class="card-text text-muted mb-0">No relationships found.</p>
         {% endif %}
     </div>
+
     {% if perms.ftva_lab_data.change_sheetimport %}
     <div class="card-footer bg-transparent d-flex justify-content-end">
-        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#relationship-modal"
+        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#relationship-modal"
             hx-get="{% url 'add_relationship' header_info.id %}" hx-target="#relationship-modal-content"
             hx-trigger="click">Add Relationship
         </button>

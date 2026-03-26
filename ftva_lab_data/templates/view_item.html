@@ -159,7 +159,8 @@ Listens for `relationship-added` event
 to hide the modal after relationship is added.
 {% endcomment %}
 <div class="modal fade" id="relationship-modal" tabindex="-1"
-    hx-on:relationship-added="bootstrap.Modal.getInstance(this)?.hide()">
+    hx-on:relationship-added="bootstrap.Modal.getInstance(this)?.hide()"
+    hx-on:relationship-updated="bootstrap.Modal.getInstance(this)?.hide()">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
         <div class="modal-content" id="relationship-modal-content">
             <div class="modal-header">

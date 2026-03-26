@@ -24,3 +24,9 @@ while HTMX requests are in flight*/
 .htmx-request.loading-indicator {
   display: inline-block;
 }
+
+.btn-xs {
+  --bs-btn-padding-y: .125rem;
+  --bs-btn-padding-x: .5rem;
+  --bs-btn-font-size: .75rem;
+}

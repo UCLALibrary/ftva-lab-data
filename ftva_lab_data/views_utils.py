@@ -133,14 +133,16 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
     relationships = {
         "outgoing_relationships": [
             {
-                "id": relationship.target.id,
+                "relationship_id": relationship.id,
+                "related_record_id": relationship.target.id,
                 "relationship_type": relationship.relationship_type.type,
             }
             for relationship in item.outgoing_relationships.order_by("target__id").all()
         ],
         "incoming_relationships": [
             {
-                "id": relationship.source.id,
+                "relationship_id": relationship.id,
+                "related_record_id": relationship.source.id,
                 "relationship_type": relationship.relationship_type.reverse_type,
             }
             for relationship in item.incoming_relationships.order_by("source__id").all()
