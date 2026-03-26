@@ -850,7 +850,7 @@ def batch_update(request: HttpRequest) -> HttpResponse:
 
 @login_required
 @permission_required(
-    "ftva_lab_data.change_sheetimport",
+    "ftva_lab_data.manage_relationships",
     raise_exception=True,
 )
 def add_edit_relationship(
@@ -1000,7 +1000,7 @@ def add_edit_relationship(
 
 @login_required
 @permission_required(
-    "ftva_lab_data.change_sheetimport",
+    "ftva_lab_data.manage_relationships",
     raise_exception=True,
 )
 def delete_relationship(

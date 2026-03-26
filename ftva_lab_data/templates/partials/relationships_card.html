@@ -3,7 +3,7 @@
         <h5 class="card-title">Relationships</h5>
         {% if relationships.outgoing_relationships or relationships.incoming_relationships %}
         <div class="row fw-semibold small mb-2">
-            {% if perms.ftva_lab_data.change_sheetimport %}
+            {% if perms.ftva_lab_data.manage_relationships %}
             <div class="col-4">Type</div>
             <div class="col-4">ID</div>
             <div class="col-4">Actions</div>
@@ -15,7 +15,7 @@
 
         {% for relationship in relationships.outgoing_relationships|add:relationships.incoming_relationships %}
         <div class="row mb-2">
-            {% if perms.ftva_lab_data.change_sheetimport %}
+            {% if perms.ftva_lab_data.manage_relationships %}
             <div class="col-4">{{ relationship.relationship_type }}</div>
             <div class="col-4"><a href="{% url 'view_item' relationship.related_record_id %}">Record {{ relationship.related_record_id }}</a></div>
             <div class="col-4">
@@ -47,7 +47,7 @@
         {% endif %}
     </div>
 
-    {% if perms.ftva_lab_data.change_sheetimport %}
+    {% if perms.ftva_lab_data.manage_relationships %}
     <div class="card-footer bg-transparent d-flex justify-content-end">
         <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#relationship-modal"
             hx-get="{% url 'add_relationship' header_info.id %}" hx-target="#relationship-modal-content"
