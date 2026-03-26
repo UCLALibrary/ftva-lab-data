@@ -369,6 +369,11 @@
           "batch_update",
           "ftva_lab_data",
           "sheetimport"
+        ],
+        [
+          "manage_relationships",
+          "ftva_lab_data",
+          "relationship"
         ]
       ]
     }
