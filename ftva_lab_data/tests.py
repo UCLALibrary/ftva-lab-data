@@ -1590,3 +1590,79 @@ class RelationshipTestCase(TestCase):
         self.assertTrue(relationship in self.test_object_a.outgoing_relationships.all())
         # Check that relationship is visible on Object B under `incoming_relationships`
         self.assertTrue(relationship in self.test_object_b.incoming_relationships.all())
+
+
+class AddRelationshipViewTestCase(TestCase):
+    """Tests for the `add_relationship` view."""
+
+    fixtures = ["groups_and_permissions.json"]
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="authorized", password="testpassword"
+        )
+        group = Group.objects.get(name="editors")
+        self.user.groups.add(group)
+        self.client.login(username="authorized", password="testpassword")
+
+        self.source_item = SheetImport.objects.create(file_name="source_item")
+        self.target_item = SheetImport.objects.create(file_name="target_item")
+        self.other_source_item = SheetImport.objects.create(
+            file_name="other_source_item"
+        )
+        self.relationship_type = RelationshipType.objects.create(
+            type="hasPart", reverse_type="isPartOf"
+        )
+        self.url = reverse("add_relationship", args=[self.source_item.id])
+
+    def test_valid_post_adds_to_relationships_card(self):
+        response = self.client.post(
+            self.url,
+            {
+                "relationship_type": self.relationship_type.id,
+                "target": self.target_item.id,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "hasPart")
+        self.assertContains(response, f"Record {self.target_item.id}")
+
+    def test_invalid_post_shows_modal_with_form_errors(self):
+        response = self.client.post(
+            self.url,
+            {
+                "source": self.other_source_item.id,
+                "relationship_type": self.relationship_type.id,
+                # Invalid because no target is provided
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This field is required.")
+
+    def test_post_nonexistent_target_shows_validation_error(self):
+        response = self.client.post(
+            self.url,
+            {
+                "target": 999999,
+                "relationship_type": self.relationship_type.id,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Record does not exist.")
+
+    def test_post_existing_relationship_shows_validation_error(self):
+        Relationship.objects.create(
+            source=self.source_item,
+            target=self.target_item,
+            relationship_type=self.relationship_type,
+        )
+        response = self.client.post(
+            self.url,
+            {
+                "target": self.target_item.id,
+                "relationship_type": self.relationship_type.id,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This relationship already exists.")

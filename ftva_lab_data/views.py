@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db import IntegrityError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
@@ -869,11 +868,6 @@ def add_relationship(request: HttpRequest, item_id: int) -> HttpResponse:
         if form.is_valid():
             try:
                 target_item = SheetImport.objects.get(id=form.cleaned_data["target"])
-                Relationship.objects.create(
-                    source=item,
-                    target=target_item,
-                    relationship_type=form.cleaned_data["relationship_type"],
-                )
             # Handle if target record does not exist
             except SheetImport.DoesNotExist:
                 form.add_error("target", "Record does not exist.")
@@ -882,28 +876,35 @@ def add_relationship(request: HttpRequest, item_id: int) -> HttpResponse:
                     "partials/relationship_modal_content.html",
                     {"form": form, "item": item},
                 )
-            # Handle if relationship already exists
-            except IntegrityError:
-                form.add_error(
-                    "target",
-                    "This relationship already exists.",
-                )
-            # Otherwise, refresh relationships card and return it
-            else:
-                item.refresh_from_db()
-                display = get_item_display_dicts(item)
-                context = {
-                    "relationships": display["relationships"],
-                    "header_info": display["header_info"],
-                }
-                response = render(
+            # Create relationship if it doesn't exist, otherwise show error
+            _, created = Relationship.objects.get_or_create(
+                source=item,
+                target=target_item,
+                relationship_type=form.cleaned_data["relationship_type"],
+            )
+            if not created:
+                form.add_error("target", "This relationship already exists.")
+                return render(
                     request,
-                    "partials/relationships_card.html",
-                    context,
+                    "partials/relationship_modal_content.html",
+                    {"form": form, "item": item},
                 )
-                # Used to hide the modal after relationship is added
-                response["HX-Trigger"] = "relationship-added"
-                return response
+
+            # Refresh relationships card and return it after a successful add.
+            item.refresh_from_db()
+            display = get_item_display_dicts(item)
+            context = {
+                "relationships": display["relationships"],
+                "header_info": display["header_info"],
+            }
+            response = render(
+                request,
+                "partials/relationships_card.html",
+                context,
+            )
+            # Used to hide the modal after relationship is added
+            response["HX-Trigger"] = "relationship-added"
+            return response
         # Render error messages on modal
         return render(
             request,
