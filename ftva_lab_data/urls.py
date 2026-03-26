@@ -7,6 +7,11 @@ urlpatterns = [
     path("add_item/", views.add_item, name="add_item"),
     path("edit_item/<int:item_id>/", views.edit_item, name="edit_item"),
     path("view_item/<int:item_id>/", views.view_item, name="view_item"),
+    path(
+        "view_item/<int:item_id>/add_relationship/",
+        views.add_relationship,
+        name="add_relationship",
+    ),
     path("assign/", views.assign_to_user, name="assign_to_user"),
     path(
         "export_search_results/",
@@ -36,5 +41,4 @@ urlpatterns = [
     ),
     path("carrier-suggestions/", views.carrier_suggestions, name="carrier_suggestions"),
     path("batch_update/", views.batch_update, name="batch_update"),
-    path("add_relationship/", views.add_relationship, name="add_relationship"),
 ]

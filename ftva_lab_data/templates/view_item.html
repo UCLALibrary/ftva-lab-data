@@ -79,32 +79,7 @@
                     {% endfor %}
                 </div>
             </div>
-            <!-- Relationships -->
-            {% if relationships.outgoing_relationships or relationships.incoming_relationships %}
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Relationships</h5>
-                    <dl class="row mb-0">
-                        <dt class="col-sm-6">Type</dt>
-                        <dt class="col-sm-6">ID</dt>
-                        {% for relationship in relationships.outgoing_relationships %}
-                            <dd class="col-sm-6">{{ relationship.relationship_type }}</dd>
-                            <dd class="col-sm-6"><a href="{% url 'view_item' relationship.id %}">Record {{ relationship.id }}</a></dd>
-                        {% endfor %}
-                        {% for relationship in relationships.incoming_relationships %}
-                            <dd class="col-sm-6">{{ relationship.relationship_type }}</dd>
-                            <dd class="col-sm-6"><a href="{% url 'view_item' relationship.id %}">Record {{ relationship.id }}</a></dd>
-                        {% endfor %}
-                    </dl>
-                </div>
-                <div class="card-footer bg-transparent d-flex justify-content-end">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#relationship-modal"
-                        hx-get="{% url 'add_relationship' %}"
-                        hx-target="#relationship-modal-content" hx-trigger="click">Add Relationship
-                    </button>
-                </div>
-            </div>
-            {% endif %}
+            {% include "partials/relationships_card.html" %}
         </div>
 
         <div class="col-4">
@@ -178,8 +153,13 @@ HTMX will swap `#metadata-modal-content` when the request completes.
     </div>
 </div>
 
-{% comment %} Add Relationship modal {% endcomment %}
-<div class="modal fade" id="relationship-modal" tabindex="-1">
+{% comment %}
+Add Relationship modal.
+Listens for `relationship-added` event
+to hide the modal after relationship is added.
+{% endcomment %}
+<div class="modal fade" id="relationship-modal" tabindex="-1"
+    hx-on:relationship-added="bootstrap.Modal.getInstance(this)?.hide()">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
         <div class="modal-content" id="relationship-modal-content">
             <div class="modal-header">

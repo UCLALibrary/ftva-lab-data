@@ -6,11 +6,19 @@
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
     </div>
-    <div class="modal-body">
-        {% comment %} TODO: Add form for adding a relationship {% endcomment %}
-        <p>Add Relationship</p>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-    </div>
+    <form method="post" hx-post="{% url 'add_relationship' item.id %}"
+        hx-target="#relationship-modal-content" hx-swap="innerHTML">
+        {% csrf_token %}
+        <div class="modal-body">
+            <div class="mb-3">
+                <label for="sourceDisplay" class="form-label">This record</label>
+                <input type="text" readonly class="form-control-plaintext" id="sourceDisplay" value="{{ item }}" />
+            </div>
+            {% bootstrap_form form %}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Add relationship</button>
+        </div>
+    </form>
 </div>

@@ -2,9 +2,10 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db import IntegrityError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from simple_history.utils import bulk_update_with_history
@@ -18,8 +19,8 @@ import pandas as pd
 import io
 import json
 
-from .forms import ItemForm, BatchUpdateForm
-from .models import SheetImport
+from .forms import ItemForm, BatchUpdateForm, RelationshipForm
+from .models import SheetImport, Relationship
 from .table_config import COLUMNS, SEARCH_ONLY_FIELDS
 from .views_utils import (
     get_airtable_url,
@@ -849,5 +850,70 @@ def batch_update(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
-def add_relationship(request: HttpRequest) -> HttpResponse:
-    return render(request, "partials/relationship_modal_content.html")
+@permission_required(
+    "ftva_lab_data.change_sheetimport",
+    raise_exception=True,
+)
+def add_relationship(request: HttpRequest, item_id: int) -> HttpResponse:
+    """Add relationship between two SheetImport objects,
+    or render the add-relationship modal on GET requests.
+
+    :param request: The HTTP request object.
+    :param item_id: The ID of the source record.
+    :return: Rendered add-relationship modal on GET,
+        or updated relationships card with new relationship on successful POST.
+    """
+    item = get_object_or_404(SheetImport, id=item_id)
+    if request.method == "POST":
+        form = RelationshipForm(request.POST)
+        if form.is_valid():
+            try:
+                target_item = SheetImport.objects.get(id=form.cleaned_data["target"])
+                Relationship.objects.create(
+                    source=item,
+                    target=target_item,
+                    relationship_type=form.cleaned_data["relationship_type"],
+                )
+            # Handle if target record does not exist
+            except SheetImport.DoesNotExist:
+                form.add_error("target", "Record does not exist.")
+                return render(
+                    request,
+                    "partials/relationship_modal_content.html",
+                    {"form": form, "item": item},
+                )
+            # Handle if relationship already exists
+            except IntegrityError:
+                form.add_error(
+                    "target",
+                    "This relationship already exists.",
+                )
+            # Otherwise, refresh relationships card and return it
+            else:
+                item.refresh_from_db()
+                display = get_item_display_dicts(item)
+                context = {
+                    "relationships": display["relationships"],
+                    "header_info": display["header_info"],
+                }
+                response = render(
+                    request,
+                    "partials/relationships_card.html",
+                    context,
+                )
+                # Used to hide the modal after relationship is added
+                response["HX-Trigger"] = "relationship-added"
+                return response
+        # Render error messages on modal
+        return render(
+            request,
+            "partials/relationship_modal_content.html",
+            {"form": form, "item": item},
+        )
+    # Render empty form on GET requests
+    form = RelationshipForm()
+    return render(
+        request,
+        "partials/relationship_modal_content.html",
+        {"form": form, "item": item},
+    )
