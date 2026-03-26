@@ -85,10 +85,19 @@ class ItemForm(forms.ModelForm):
         }
 
 
+class OutgoingRelationshipChoiceField(forms.ModelChoiceField):
+    """Custom choice field to display only outgoing relationship types."""
+
+    def label_from_instance(self, obj):
+        return obj.type
+
+
 class RelationshipForm(forms.Form):
     """Form used to add relationships between records in the add-relationship modal."""
 
-    relationship_type = forms.ModelChoiceField(queryset=RelationshipType.objects.all())
+    relationship_type = OutgoingRelationshipChoiceField(
+        queryset=RelationshipType.objects.all()
+    )
     target = forms.IntegerField(
         label="Related record ID",
         min_value=1,
@@ -98,12 +107,6 @@ class RelationshipForm(forms.Form):
             }
         ),
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Set select options to `type`,
-        # rather than default `type/reverseType` representation
-        self.fields["relationship_type"].label_from_instance = lambda obj: obj.type
 
 
 class BatchUpdateForm(forms.Form):
