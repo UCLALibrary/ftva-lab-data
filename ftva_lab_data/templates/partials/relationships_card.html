@@ -19,21 +19,23 @@
             <div class="col-4">{{ relationship.relationship_type }}</div>
             <div class="col-4"><a href="{% url 'view_item' relationship.related_record_id %}">Record {{ relationship.related_record_id }}</a></div>
             <div class="col-4">
-                <button class="btn btn-outline-secondary btn-xs" type="button" data-bs-toggle="modal"
-                    data-bs-target="#relationship-modal"
-                    hx-get="{% url 'edit_relationship' header_info.id relationship.relationship_id %}"
-                    hx-target="#relationship-modal-content" hx-trigger="click">
-                    Edit
-                </button>
-                <button
-                    class="btn btn-outline-danger btn-xs"
-                    type="button"
-                    hx-post="{% url 'delete_relationship' header_info.id relationship.relationship_id %}"
-                    hx-target="#relationships-card"
-                    hx-confirm="Delete relationship Record {{ header_info.id }} {{ relationship.relationship_type }} Record {{ relationship.related_record_id }}?"
-                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                    Delete
-                </button>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button class="btn btn-outline-secondary btn-xs" type="button" data-bs-toggle="modal"
+                        data-bs-target="#relationship-modal"
+                        hx-get="{% url 'edit_relationship' header_info.id relationship.relationship_id %}"
+                        hx-target="#relationship-modal-content" hx-trigger="click">
+                        Edit
+                    </button>
+                    <button
+                        class="btn btn-outline-danger btn-xs"
+                        type="button"
+                        hx-post="{% url 'delete_relationship' header_info.id relationship.relationship_id %}"
+                        hx-target="#relationships-card"
+                        hx-confirm="Delete relationship Record {{ header_info.id }} {{ relationship.relationship_type }} Record {{ relationship.related_record_id }}?"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                        Delete
+                    </button>
+                </div>
             </div>
             {% else %}
             <div class="col-6">{{ relationship.relationship_type }}</div>
