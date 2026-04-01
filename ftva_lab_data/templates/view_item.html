@@ -68,7 +68,7 @@
 
     <div class="row">
         <h2 class="fs-4">Basic Fields</h2>
-        <div class="col-4">
+        <div class="col-4 d-flex flex-column gap-3">
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Storage Information </h5>
@@ -79,6 +79,7 @@
                     {% endfor %}
                 </div>
             </div>
+            {% include "partials/relationships_card.html" %}
         </div>
 
         <div class="col-4">
@@ -152,4 +153,29 @@ HTMX will swap `#metadata-modal-content` when the request completes.
     </div>
 </div>
 
+{% comment %}
+Add Relationship modal.
+Listens for `relationship-added` event
+to hide the modal after relationship is added.
+{% endcomment %}
+<div class="modal fade" id="relationship-modal" tabindex="-1"
+    hx-on:relationship-added="bootstrap.Modal.getInstance(this)?.hide()"
+    hx-on:relationship-updated="bootstrap.Modal.getInstance(this)?.hide()">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content" id="relationship-modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <div class="spinner-border"></div>
+                    <div>Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

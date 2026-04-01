@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from simple_history.utils import bulk_update_with_history
@@ -18,8 +18,8 @@ import pandas as pd
 import io
 import json
 
-from .forms import ItemForm, BatchUpdateForm
-from .models import SheetImport
+from .forms import ItemForm, BatchUpdateForm, RelationshipForm
+from .models import SheetImport, Relationship
 from .table_config import COLUMNS, SEARCH_ONLY_FIELDS
 from .views_utils import (
     get_airtable_url,
@@ -846,3 +846,186 @@ def batch_update(request: HttpRequest) -> HttpResponse:
         if "batch_update_file_data" in request.session:
             del request.session["batch_update_file_data"]
     return render(request, "partials/batch_update_modal_content.html", {"form": form})
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.manage_relationships",
+    raise_exception=True,
+)
+def add_edit_relationship(
+    request: HttpRequest, item_id: int, relationship_id: int | None = None
+) -> HttpResponse:
+    """Add or edit a relationship for a given item.
+
+    :param request: The HTTP request object.
+    :param item_id: The ID of the item for which to add or edit a relationship.
+    :param relationship_id: The ID of the relationship to edit, if any.
+    :return: Rendered template for adding or editing a relationship.
+    """
+    # First of all, get item being viewed in current `view_item` context
+    item = get_object_or_404(SheetImport, id=item_id)
+    relationship = None
+    initial_data = {}
+    is_edit: bool = relationship_id is not None
+    # Default to adding outgoing relationship
+    is_outgoing: bool = True
+
+    if is_edit:
+        relationship = get_object_or_404(Relationship, id=relationship_id)
+        # If relationship's source is the current item, it's outgoing; otherwise it's incoming
+        is_outgoing = relationship.source_id == item.id
+        # Set initial data for form, including relationship type and target ID
+        initial_data = {
+            "relationship_type": relationship.relationship_type_id,
+            # If relationship is incoming, target needs to be reversed for form display
+            "target": relationship.target_id if is_outgoing else relationship.source_id,
+        }
+
+    form = RelationshipForm(request.POST or None, initial=initial_data)
+
+    # Set what options are displayed in the relationship type select field:
+    # `RelationshipType.type` for outgoing relationships;
+    # `RelationshipType.reverse_type` for incoming relationships.
+    form.fields["relationship_type"].label_from_instance = (
+        (lambda obj: obj.type) if is_outgoing else (lambda obj: obj.reverse_type)
+    )
+
+    if request.method == "POST":
+        if form.is_valid():
+            try:
+                related_item = SheetImport.objects.get(id=form.cleaned_data["target"])
+            except SheetImport.DoesNotExist:
+                form.add_error("target", "Record does not exist.")
+                return render(
+                    request,
+                    "partials/relationship_modal_content.html",
+                    {
+                        "form": form,
+                        "item": item,
+                        "is_edit": is_edit,
+                        "relationship": relationship,
+                    },
+                )
+
+            relationship_type = form.cleaned_data["relationship_type"]
+            # Set source and target based on whether relationship is outgoing or incoming
+            source_item = item if is_outgoing else related_item
+            target_item = related_item if is_outgoing else item
+
+            # Edit branch
+            if is_edit and relationship is not None:
+                # Prevent editing a relationship to one that already exists
+                duplicate_exists = (
+                    Relationship.objects.filter(
+                        source=source_item,
+                        target=target_item,
+                        relationship_type=relationship_type,
+                    )
+                    # Exclude the current relationship so check doesn't always flag duplicate
+                    .exclude(id=relationship.id).exists()
+                )
+                if duplicate_exists:
+                    form.add_error("target", "This relationship already exists.")
+                    return render(
+                        request,
+                        "partials/relationship_modal_content.html",
+                        {
+                            "form": form,
+                            "item": item,
+                            "is_edit": is_edit,
+                            "relationship": relationship,
+                        },
+                    )
+                # Proceed with updating the relationship
+                relationship.source = source_item
+                relationship.target = target_item
+                relationship.relationship_type = relationship_type
+                relationship.save(
+                    update_fields=["source", "target", "relationship_type"]
+                )
+            # Add branch
+            else:
+                _, created = Relationship.objects.get_or_create(
+                    source=source_item,
+                    target=target_item,
+                    relationship_type=relationship_type,
+                )
+                # Avoid creating relationships that already exist
+                if not created:
+                    form.add_error("target", "This relationship already exists.")
+                    return render(
+                        request,
+                        "partials/relationship_modal_content.html",
+                        {
+                            "form": form,
+                            "item": item,
+                            "is_edit": is_edit,
+                            "relationship": relationship,
+                        },
+                    )
+
+            # Refresh relationships card and return it for HTMX swap
+            item.refresh_from_db()
+            display = get_item_display_dicts(item)
+            context = {
+                "relationships": display["relationships"],
+                "header_info": display["header_info"],
+            }
+            response = render(request, "partials/relationships_card.html", context)
+            # These HTMX triggers hide modal after a relationship is added or updated
+            response["HX-Trigger"] = (
+                "relationship-updated" if is_edit else "relationship-added"
+            )
+            return response
+        # If form is not valid, render the form with errors
+        return render(
+            request,
+            "partials/relationship_modal_content.html",
+            {
+                "form": form,
+                "item": item,
+                "is_edit": is_edit,
+                "relationship": relationship,
+            },
+        )
+
+    # If GET request, render pre-configured form
+    return render(
+        request,
+        "partials/relationship_modal_content.html",
+        {"form": form, "item": item, "is_edit": is_edit, "relationship": relationship},
+    )
+
+
+@login_required
+@permission_required(
+    "ftva_lab_data.manage_relationships",
+    raise_exception=True,
+)
+def delete_relationship(
+    request: HttpRequest, item_id: int, relationship_id: int
+) -> HttpResponse:
+    """Delete an existing relationship and return refreshed card.
+
+    :param request: The HTTP request object.
+    :param item_id: The ID of the item with the relationship to delete.
+    :param relationship_id: The ID of the relationship to delete.
+    :return: Rendered template for deleting a relationship.
+    """
+    item = get_object_or_404(SheetImport, id=item_id)
+    relationship = get_object_or_404(Relationship, id=relationship_id)
+
+    relationship.delete()
+
+    item.refresh_from_db()
+    display = get_item_display_dicts(item)
+    context = {
+        "relationships": display["relationships"],
+        "header_info": display["header_info"],
+    }
+    return render(
+        request,
+        "partials/relationships_card.html",
+        context,
+    )

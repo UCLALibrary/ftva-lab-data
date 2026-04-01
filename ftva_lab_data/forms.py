@@ -1,6 +1,6 @@
 from django import forms
 from django.core.validators import FileExtensionValidator
-from .models import SheetImport
+from .models import SheetImport, RelationshipType
 
 
 class ItemForm(forms.ModelForm):
@@ -83,6 +83,21 @@ class ItemForm(forms.ModelForm):
                 attrs={"type": "date", "class": "form-control"}
             ),
         }
+
+
+class RelationshipForm(forms.Form):
+    """Form used to add relationships between records in the add-relationship modal."""
+
+    relationship_type = forms.ModelChoiceField(queryset=RelationshipType.objects.all())
+    target = forms.IntegerField(
+        label="Related record ID",
+        min_value=1,
+        widget=forms.NumberInput(
+            attrs={
+                "placeholder": "Enter record ID",
+            }
+        ),
+    )
 
 
 class BatchUpdateForm(forms.Form):

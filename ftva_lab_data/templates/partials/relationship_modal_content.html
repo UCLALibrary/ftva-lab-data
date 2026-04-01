@@ -1,0 +1,32 @@
+{% load django_bootstrap5 %}
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">
+            {% if is_edit %}Edit Relationship{% else %}Add Relationship{% endif %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <form method="post"
+        hx-post="{% if is_edit %}{% url 'edit_relationship' item.id relationship.id %}{% else %}{% url 'add_relationship' item.id %}{% endif %}"
+        hx-target="#relationship-modal-content" hx-swap="innerHTML">
+        {% csrf_token %}
+        <div class="modal-body">
+            {% comment %}
+            Source is presumed to be the current record on the `view_item` page,
+            so it's not actually included in the `RelationshipForm` rendered here.
+            We display it for reference, but it's not editable. Hence the HTML field outside the Bootstrap form.
+            {% endcomment %}
+            <div class="mb-3">
+                <label for="sourceDisplay" class="form-label">This record</label>
+                <input type="text" readonly class="form-control-plaintext" id="sourceDisplay" value="{{ item }}" />
+            </div>
+            {% bootstrap_form form %}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">
+                {% if is_edit %}Save changes{% else %}Add relationship{% endif %}
+            </button>
+        </div>
+    </form>
+</div>

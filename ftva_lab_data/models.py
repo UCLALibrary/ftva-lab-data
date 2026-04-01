@@ -244,6 +244,12 @@ class Relationship(models.Model):
 
     class Meta:
         unique_together = ["source", "target", "relationship_type"]
+        permissions = [
+            (
+                "manage_relationships",
+                "Can manage relationships",
+            ),
+        ]
 
     def __str__(self):
         return f"Record {self.source.id} {self.relationship_type.type} Record {self.target.id}"

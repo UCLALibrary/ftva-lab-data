@@ -7,6 +7,21 @@ urlpatterns = [
     path("add_item/", views.add_item, name="add_item"),
     path("edit_item/<int:item_id>/", views.edit_item, name="edit_item"),
     path("view_item/<int:item_id>/", views.view_item, name="view_item"),
+    path(
+        "view_item/<int:item_id>/add_relationship/",
+        views.add_edit_relationship,
+        name="add_relationship",
+    ),
+    path(
+        "view_item/<int:item_id>/edit_relationship/<int:relationship_id>/",
+        views.add_edit_relationship,
+        name="edit_relationship",
+    ),  # shares a view with `add_relationship`, but separate path for clarity in templates
+    path(
+        "view_item/<int:item_id>/delete_relationship/<int:relationship_id>/",
+        views.delete_relationship,
+        name="delete_relationship",
+    ),
     path("assign/", views.assign_to_user, name="assign_to_user"),
     path(
         "export_search_results/",

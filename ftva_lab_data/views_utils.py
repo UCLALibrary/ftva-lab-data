@@ -130,12 +130,31 @@ def get_item_display_dicts(item: SheetImport) -> dict[str, Any]:
         "Date Job Completed": item.date_job_completed,
         "General Entry Cataloged By": item.general_entry_cataloged_by,
     }
+    relationships = {
+        "outgoing_relationships": [
+            {
+                "relationship_id": relationship.id,
+                "related_record_id": relationship.target.id,
+                "relationship_type": relationship.relationship_type.type,
+            }
+            for relationship in item.outgoing_relationships.order_by("target__id").all()
+        ],
+        "incoming_relationships": [
+            {
+                "relationship_id": relationship.id,
+                "related_record_id": relationship.source.id,
+                "relationship_type": relationship.relationship_type.reverse_type,
+            }
+            for relationship in item.incoming_relationships.order_by("source__id").all()
+        ],
+    }
     return {
         "header_info": header_info,
         "storage_info": storage_info,
         "file_info": file_info,
         "inventory_info": inventory_info,
         "advanced_info": advanced_info,
+        "relationships": relationships,
     }
 
 
