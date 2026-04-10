@@ -12,15 +12,16 @@
         {% csrf_token %}
         <div class="modal-body">
             {% comment %}
-            Source is presumed to be the current record on the `view_item` page,
-            so it's not actually included in the `RelationshipForm` rendered here.
-            We display it for reference, but it's not editable. Hence the HTML field outside the Bootstrap form.
+            The current record is rendered for reference as a read-only input field.
+            Whether it is set as source or target depends on the relationship type selected,
+            with direction determined by the prefix on the relationship type choice.
             {% endcomment %}
             <div class="mb-3">
                 <label for="sourceDisplay" class="form-label">This record</label>
                 <input type="text" readonly class="form-control-plaintext" id="sourceDisplay" value="{{ item }}" />
             </div>
-            {% bootstrap_form form %}
+            {% bootstrap_field form.relationship_type %}
+            {% bootstrap_field form.target %}
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
