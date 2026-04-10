@@ -1639,7 +1639,7 @@ class AddRelationshipViewTestCase(TestCase):
         response = self.client.post(
             url,
             {
-                "relationship_type": self.relationship_type_a.id,
+                "relationship_type": f"outgoing:{self.relationship_type_a.id}",
                 "target": self.target_item.id,
             },
         )
@@ -1653,7 +1653,7 @@ class AddRelationshipViewTestCase(TestCase):
         response = self.client.post(
             url,
             {
-                "relationship_type": self.relationship_type_a.id,
+                "relationship_type": f"outgoing:{self.relationship_type_a.id}",
                 # Invalid because no target is provided
             },
         )
@@ -1666,7 +1666,7 @@ class AddRelationshipViewTestCase(TestCase):
             url,
             {
                 "target": 999999,
-                "relationship_type": self.relationship_type_a.id,
+                "relationship_type": f"outgoing:{self.relationship_type_a.id}",
             },
         )
 
@@ -1685,7 +1685,7 @@ class AddRelationshipViewTestCase(TestCase):
             url,
             {
                 "target": self.target_item.id,
-                "relationship_type": self.relationship_type_a.id,
+                "relationship_type": f"outgoing:{self.relationship_type_a.id}",
             },
         )
 
@@ -1717,7 +1717,7 @@ class AddRelationshipViewTestCase(TestCase):
         response = self.client.post(
             url,
             {
-                "relationship_type": self.relationship_type_b.id,  # change to type B
+                "relationship_type": f"outgoing:{self.relationship_type_b.id}",  # change to type B
                 "target": self.target_item.id,
             },
         )
@@ -1741,3 +1741,25 @@ class AddRelationshipViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Relationship.objects.filter(id=relationship.id).exists())
         self.assertContains(response, "No relationships found.")
+
+    def test_post_incoming_choice_swaps_source_and_target(self):
+        url = reverse("add_relationship", args=[self.source_item.id])
+        response = self.client.post(
+            url,
+            {
+                # Selecting an Incoming (reverse_type) option
+                # should result in target being used as source on the relationship.
+                "relationship_type": f"incoming:{self.relationship_type_a.id}",
+                "target": self.target_item.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        relationship = Relationship.objects.get(
+            source=self.target_item,
+            target=self.source_item,
+            relationship_type=self.relationship_type_a,
+        )
+        # Assert target item is source on relationship, and vice versa
+        self.assertEqual(relationship.source_id, self.target_item.id)
+        self.assertEqual(relationship.target_id, self.source_item.id)
