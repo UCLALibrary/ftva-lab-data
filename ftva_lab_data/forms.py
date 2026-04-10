@@ -7,7 +7,16 @@ from .models import SheetImport, RelationshipType
 def _parse_relationship_type_choice(value: str) -> tuple[bool, int] | None:
     """Parse value of `relationship_type` field to determine direction of relationship.
 
-    :param value: Value of `relationship_type` field.
+    The information parsed from the value is used in the custom `clean` method
+    on the `RelationshipForm` to determine which `RelationshipType` object
+    should be used for the relationship at hand, and whether the relationship is
+    "outgoing" or "incoming". This direction is then used by the view to determine
+    whether the item currently in context should be
+    the source or target of the new or updated `Relationship` object.
+
+    :param value: Value of `relationship_type` field with prefix indicating direction,
+        e.g. "outgoing:123" to reference `RelationshipType` ID 123 in outgoing direction,
+        or "incoming:456" to reference `RelationshipType` ID 456 in incoming direction.
     :return: Tuple containing a boolean indicating whether the relationship is outgoing
         and the ID of the `RelationshipType` object, or `None` if the value is invalid.
     """
