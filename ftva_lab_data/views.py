@@ -868,29 +868,26 @@ def add_edit_relationship(
     relationship = None
     initial_data = {}
     is_edit: bool = relationship_id is not None
-    # Default to adding outgoing relationship
-    is_outgoing: bool = True
 
+    # Set initial data for form when editing an existing relationship
     if is_edit:
         relationship = get_object_or_404(Relationship, id=relationship_id)
         # If relationship's source is the current item, it's outgoing; otherwise it's incoming
         is_outgoing = relationship.source_id == item.id
-        # Set initial data for form, including relationship type and target ID
         initial_data = {
-            "relationship_type": relationship.relationship_type_id,
-            # If relationship is incoming, target needs to be reversed for form display
+            "relationship_type": (
+                f"outgoing:{relationship.relationship_type_id}"
+                if is_outgoing
+                else f"incoming:{relationship.relationship_type_id}"
+            ),
+            # Target needs to be reversed if relationship is incoming
             "target": relationship.target_id if is_outgoing else relationship.source_id,
         }
 
+    # Instantiate form with initial data
     form = RelationshipForm(request.POST or None, initial=initial_data)
 
-    # Set what options are displayed in the relationship type select field:
-    # `RelationshipType.type` for outgoing relationships;
-    # `RelationshipType.reverse_type` for incoming relationships.
-    form.fields["relationship_type"].label_from_instance = (
-        (lambda obj: obj.type) if is_outgoing else (lambda obj: obj.reverse_type)
-    )
-
+    # Handle POST request
     if request.method == "POST":
         if form.is_valid():
             try:
@@ -908,8 +905,11 @@ def add_edit_relationship(
                     },
                 )
 
+            # `relationship_type` and `is_outgoing`
+            # are determined using the form's custom `clean` method.
+            # See `forms.py` for more details.
             relationship_type = form.cleaned_data["relationship_type"]
-            # Set source and target based on whether relationship is outgoing or incoming
+            is_outgoing = form.cleaned_data["is_outgoing"]
             source_item = item if is_outgoing else related_item
             target_item = related_item if is_outgoing else item
 
@@ -990,7 +990,7 @@ def add_edit_relationship(
             },
         )
 
-    # If GET request, render pre-configured form
+    # Handle GET request
     return render(
         request,
         "partials/relationship_modal_content.html",

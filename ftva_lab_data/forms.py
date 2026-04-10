@@ -1,6 +1,20 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from .models import SheetImport, RelationshipType
+
+
+def _parse_relationship_type_choice(value: str) -> tuple[bool, int] | None:
+    """Parse value of `relationship_type` field to determine direction of relationship.
+
+    :param value: Value of `relationship_type` field.
+    :return: Tuple containing a boolean indicating whether the relationship is outgoing
+        and the ID of the `RelationshipType` object, or `None` if the value is invalid.
+    """
+    prefix, remainder = value.split(":", 1)
+    if prefix not in ("outgoing", "incoming") or not remainder.isdigit():
+        return None
+    return (prefix == "outgoing", int(remainder))
 
 
 class ItemForm(forms.ModelForm):
@@ -86,9 +100,13 @@ class ItemForm(forms.ModelForm):
 
 
 class RelationshipForm(forms.Form):
-    """Form used to add relationships between records in the add-relationship modal."""
+    """Form used to add or edit relationships between records in the relationship modal.
 
-    relationship_type = forms.ModelChoiceField(queryset=RelationshipType.objects.all())
+    The choices for the `relationship_type` field are set via a custom `__init__` method.
+    See below for more details.
+    """
+
+    relationship_type = forms.ChoiceField(label="Relationship type")
     target = forms.IntegerField(
         label="Related record ID",
         min_value=1,
@@ -98,6 +116,59 @@ class RelationshipForm(forms.Form):
             }
         ),
     )
+
+    def __init__(self, *args, **kwargs):
+        """Set the choices for the `relationship_type` field.
+
+        The choices are derived from the `RelationshipType` model,
+        with the `type` field for "outgoing" relationships
+        and the `reverse_type` field for "incoming" relationships.
+        """
+        super().__init__(*args, **kwargs)
+        outgoing: list[tuple[str, str]] = []
+        incoming: list[tuple[str, str]] = []
+        # Set the choices for the `relationship_type` field,
+        # with prefixes indicating the relationship direction they represent.
+        for relationship_type in RelationshipType.objects.order_by("id"):
+            outgoing.append(
+                (f"outgoing:{relationship_type.pk}", relationship_type.type)
+            )
+            incoming.append(
+                (f"incoming:{relationship_type.pk}", relationship_type.reverse_type)
+            )
+        # Set the choices with two option groups for the dropdown: "Outgoing" and "Incoming".
+        self.fields["relationship_type"].choices = [
+            ("Outgoing", outgoing),
+            ("Incoming", incoming),
+        ]
+        # Set initial relationship type to the first outgoing relationship type,
+        # if not already set by the caller.
+        if not self.is_bound and outgoing and not self.initial.get("relationship_type"):
+            self.initial["relationship_type"] = outgoing[0][0]
+
+    def clean(self):
+        """Use prefixes on the relationship type choices
+        to determine the direction of the relationship.
+        """
+        cleaned_data = super().clean()
+        choice = cleaned_data.get("relationship_type")
+        if choice in (None, ""):
+            return cleaned_data
+        parsed = _parse_relationship_type_choice(choice)
+        if parsed is None:
+            raise ValidationError(
+                {"relationship_type": ["Invalid relationship type selection."]}
+            )
+        is_outgoing, pk = parsed
+        try:
+            relationship_type = RelationshipType.objects.get(pk=pk)
+        except RelationshipType.DoesNotExist:
+            raise ValidationError(
+                {"relationship_type": ["Invalid relationship type selection."]}
+            )
+        cleaned_data["relationship_type"] = relationship_type
+        cleaned_data["is_outgoing"] = is_outgoing
+        return cleaned_data
 
 
 class BatchUpdateForm(forms.Form):
