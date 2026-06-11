@@ -1493,8 +1493,8 @@ class DropdownFieldsTestCase(TestCase):
                 self.assertNotIn(deleted_obj.pk, choices)
 
 
-class GetAllRecordsTestCase(TestCase):
-    """Tests for the get_all_records view."""
+class GetRecordsTestCase(TestCase):
+    """Tests for the get_records view."""
 
     fixtures = ["sample_data.json", "groups_and_permissions.json"]
 
@@ -1514,8 +1514,8 @@ class GetAllRecordsTestCase(TestCase):
         for i in range(200):
             SheetImport.objects.create(file_name=f"test_file_{i}")
 
-    def test_get_all_records_default(self):
-        url = reverse("get_all_records")
+    def test_get_records_default(self):
+        url = reverse("get_records")
         first_record = SheetImport.objects.order_by("id").first()
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -1525,10 +1525,10 @@ class GetAllRecordsTestCase(TestCase):
         # Should return 100 records by default
         self.assertEqual(len(response.json()["records"]), 100)
 
-    def test_get_all_records_with_offset_and_limit(self):
+    def test_get_records_with_offset_and_limit(self):
         offset = 50
         limit = 100
-        url = reverse("get_all_records")
+        url = reverse("get_records")
         test_record = (
             SheetImport.objects.all().order_by("id")[offset : offset + limit].first()
         )
@@ -1540,8 +1540,8 @@ class GetAllRecordsTestCase(TestCase):
         # Should return 100 records starting from the 51st record
         self.assertEqual(len(response.json()["records"]), 100)
 
-    def test_get_all_records_correct_order(self):
-        url = reverse("get_all_records")
+    def test_get_records_correct_order(self):
+        url = reverse("get_records")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -1551,6 +1551,27 @@ class GetAllRecordsTestCase(TestCase):
             record.id for record in SheetImport.objects.all().order_by("id")[0:100]
         ]
         self.assertEqual(result_ids, expected_ids)
+
+    def test_get_records_with_query(self):
+        url = reverse("get_records")
+        # Filter for record with `file_name=test_file_100`. There should be only one.
+        response = self.client.get(
+            url, {"query": "test_file_100", "fields": "file_name"}
+        )
+        self.assertEqual(response.status_code, 200)
+        # Should return 1 record
+        self.assertEqual(len(response.json()["records"]), 1)
+        self.assertEqual(response.json()["records"][0]["file_name"], "test_file_100")
+
+    def test_get_records_with_bad_query(self):
+        url = reverse("get_records")
+        response = self.client.get(url, {"query": "foobar", "fields": "baz_buz"})
+        self.assertContains(
+            response=response,
+            status_code=400,
+            text="Cannot resolve keyword 'baz_buz' into field.",
+            count=1,
+        )
 
 
 class RelationshipTestCase(TestCase):
