@@ -435,12 +435,20 @@ def get_records(request: HttpRequest) -> JsonResponse:
     # All params are optional. If none are provided, all records are returned.
     query: str = request.GET.get("query", "")
     fields_raw = request.GET.get("fields", "")
-    offset_raw = request.GET.get("offset")
+    offset_raw = request.GET.get("offset", 0)
     limit_raw = request.GET.get("limit", 100)
 
-    # Make sure offset and limit are integers, if provided
-    offset = int(offset_raw) if offset_raw else None
-    limit = int(limit_raw) if limit_raw else None
+    # If provided, make sure offset and limit are integers,
+    # reverting to defaults if they cannot be coerced to int
+    try:
+        offset, limit = int(offset_raw), int(limit_raw)
+    except ValueError:
+        offset, limit = 0, 100
+
+    # Handle negative values for offset or limit,
+    # reverting to defaults if either is negative
+    if offset < 0 or limit < 0:
+        offset, limit = 0, 100
 
     # Split fields into a list of strings if provided
     fields: list[str] = [f.strip() for f in fields_raw.split(",") if f.strip()]
@@ -450,15 +458,12 @@ def get_records(request: HttpRequest) -> JsonResponse:
     except FieldError as e:
         return JsonResponse({"error": str(e)}, status=400)
     total_records = queryset.count()
-    # Apply offset/limit pagination only if either is provided
-    if offset and limit:
-        records = queryset[offset : offset + limit]
-    elif offset:
-        records = queryset[offset:]
-    elif limit:
-        records = queryset[:limit]
-    else:
-        records = queryset
+    # Apply offset/limit pagination
+    # Because of defaults set above,
+    # we can safely assume offset and limit are non-negative integers,
+    # so this slice will always give us the desired result.
+    # E.g. offset=0, limit=100 -> [0 : 0 + 100] = [0:100]
+    records = queryset[offset : offset + limit]
 
     records_data = [transform_record_to_dict(record) for record in records]
     response_data = {

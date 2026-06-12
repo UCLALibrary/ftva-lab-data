@@ -32,7 +32,6 @@ urlpatterns = [
     path("logs/<int:line_count>", views.show_log, name="show_log"),
     path("release_notes/", views.release_notes, name="release_notes"),
     path("records/", views.get_records, name="get_records"),
-    # path("records/filtered/", views.get_filtered_records, name="get_filtered_records"),
     path("records/<int:record_id>", views.get_record, name="get_record"),
     path(
         "records/uuid/<str:uuid>", views.get_record_by_uuid, name="get_record_by_uuid"
