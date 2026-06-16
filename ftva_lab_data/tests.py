@@ -1547,15 +1547,15 @@ class GetRecordsTestCase(TestCase):
         base64_credentials = base64.b64encode(credentials.encode()).decode()
         http_auth_string = f"Basic {base64_credentials}"
         self.client = Client(HTTP_AUTHORIZATION=http_auth_string)
+        self.url = reverse("get_records")
 
         # Create 200 test records
         for i in range(200):
             SheetImport.objects.create(file_name=f"test_file_{i}")
 
     def test_get_records_default(self):
-        url = reverse("get_records")
         first_record = SheetImport.objects.order_by("id").first()
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
         # First result should be the first record from database
@@ -1593,8 +1593,7 @@ class GetRecordsTestCase(TestCase):
                     .first()
                 )
                 total_records = SheetImport.objects.count()
-                url = reverse("get_records")
-                response = self.client.get(url, {"offset": offset, "limit": limit})
+                response = self.client.get(self.url, {"offset": offset, "limit": limit})
                 self.assertEqual(response.status_code, 200)
 
                 # If offset > total number of records,
@@ -1620,8 +1619,7 @@ class GetRecordsTestCase(TestCase):
         for offset, limit in bad_test_cases:
             with self.subTest(offset=offset, limit=limit):
                 first_record = SheetImport.objects.order_by("id").first()
-                url = reverse("get_records")
-                response = self.client.get(url, {"offset": offset, "limit": limit})
+                response = self.client.get(self.url, {"offset": offset, "limit": limit})
                 self.assertEqual(response.status_code, 200)
                 # Should always return 100 records by default
                 self.assertEqual(len(response.json()["records"]), 100)
@@ -1629,8 +1627,7 @@ class GetRecordsTestCase(TestCase):
                 self.assertEqual(response.json()["records"][0]["id"], first_record.id)
 
     def test_get_records_correct_order(self):
-        url = reverse("get_records")
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
         # Should return records in ascending order by ID
@@ -1641,24 +1638,35 @@ class GetRecordsTestCase(TestCase):
         self.assertEqual(result_ids, expected_ids)
 
     def test_get_records_with_query(self):
-        url = reverse("get_records")
         # Filter for record with `file_name=test_file_100`. There should be only one.
         response = self.client.get(
-            url, {"query": "test_file_100", "fields": "file_name"}
+            self.url, {"query": "test_file_100", "fields": "file_name"}
         )
         self.assertEqual(response.status_code, 200)
         # Should return 1 record
         self.assertEqual(len(response.json()["records"]), 1)
         self.assertEqual(response.json()["records"][0]["file_name"], "test_file_100")
 
-    def test_get_records_with_bad_query(self):
-        url = reverse("get_records")
-        response = self.client.get(url, {"query": "foobar", "fields": "baz_buz"})
+    def test_get_records_with_bad_field(self):
+        # Bad field name values should result in a 400 error indicating field does not exist
+        response = self.client.get(self.url, {"query": "foobar", "fields": "baz_buz"})
         self.assertContains(
             response=response,
             status_code=400,
             text="Cannot resolve keyword 'baz_buz' into field.",
             count=1,
+        )
+
+    def test_get_records_with_bad_keys(self):
+        # Bad keys in query params should result in a 400 error indicating invalid query parameters
+        response = self.client.get(
+            self.url,
+            {"foo_bar": "baz_buz"},
+        )
+        self.assertContains(
+            response=response,
+            status_code=400,
+            text="Invalid query parameters. Valid keys are: ['query', 'fields', 'offset', 'limit']",
         )
 
 

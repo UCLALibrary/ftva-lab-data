@@ -432,6 +432,16 @@ def get_records(request: HttpRequest) -> JsonResponse:
     :param request: The HTTP request object.
     :return: JSON response containing records and total count.
     """
+    # Guard against unexpected keys in the query parameters,
+    # while allowing for expected keys to be missing
+    expected_keys = ["query", "fields", "offset", "limit"]
+    if any(key not in expected_keys for key in request.GET.keys()):
+        message = f"Invalid query parameters. Valid keys are: {expected_keys}"
+        return JsonResponse(
+            {"error": message},
+            status=400,
+        )
+
     # All params are optional. If none are provided, all records are returned.
     query: str = request.GET.get("query", "")
     fields_raw = request.GET.get("fields", "")
