@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
+from django.core.exceptions import FieldError
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.template.loader import render_to_string
@@ -418,21 +419,66 @@ def get_record_by_uuid(request: HttpRequest, uuid: str) -> JsonResponse:
 
 
 @basic_auth_required
-def get_all_records(request: HttpRequest) -> JsonResponse:
-    """Get all SheetImport records from the database,
-    serialized as JSON. Intended for API use.
+def get_records(request: HttpRequest) -> JsonResponse:
+    """Get SheetImport records from the database,
+    with optional filtering and pagination params for API use.
+
+    Query params:
+        query: string for searching/filtering (optional)
+        fields: comma-separated list of fields to search in (optional)
+        offset: starting record for pagination (optional, defaults to 0)
+        limit: number of results to return (optional, defaults to 100)
 
     :param request: The HTTP request object.
-    :return: JSON response containing records paginated by offset and limit.
+    :return: JSON response containing records and total count.
     """
-    # Offset and limit set via query parameters
-    offset = int(request.GET.get("offset", 0))
-    limit = int(request.GET.get("limit", 100))
-    records = SheetImport.objects.all().order_by("id")[offset : offset + limit]
+    # Guard against unexpected keys in the query parameters,
+    # while allowing for expected keys to be missing
+    expected_keys = ["query", "fields", "offset", "limit"]
+    if any(key not in expected_keys for key in request.GET.keys()):
+        message = f"Invalid query parameters. Valid keys are: {expected_keys}"
+        return JsonResponse(
+            {"error": message},
+            status=400,
+        )
+
+    # All params are optional. If none are provided, all records are returned.
+    query: str = request.GET.get("query", "")
+    fields_raw = request.GET.get("fields", "")
+    offset_raw = request.GET.get("offset", 0)
+    limit_raw = request.GET.get("limit", 100)
+
+    # If provided, make sure offset and limit are integers,
+    # reverting to defaults if they cannot be coerced to int
+    try:
+        offset, limit = int(offset_raw), int(limit_raw)
+    except ValueError:
+        offset, limit = 0, 100
+
+    # Handle negative values for offset or limit,
+    # reverting to defaults if either is negative
+    if offset < 0 or limit < 0:
+        offset, limit = 0, 100
+
+    # Split fields into a list of strings if provided
+    fields: list[str] = [f.strip() for f in fields_raw.split(",") if f.strip()]
+
+    try:
+        queryset = get_search_result_items(query, fields)
+    except FieldError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    total_records = queryset.count()
+    # Apply offset/limit pagination
+    # Because of defaults set above,
+    # we can safely assume offset and limit are non-negative integers,
+    # so this slice will always give us the desired result.
+    # E.g. offset=0, limit=100 -> [0 : 0 + 100] = [0:100]
+    records = queryset[offset : offset + limit]
+
     records_data = [transform_record_to_dict(record) for record in records]
     response_data = {
         "records": records_data,
-        "total_records": SheetImport.objects.count(),
+        "total_records": total_records,
     }
     return JsonResponse(response_data)
 

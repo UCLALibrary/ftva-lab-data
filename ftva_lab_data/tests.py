@@ -1133,16 +1133,27 @@ class ExtractInventoryNumbersTestCase(TestCase):
 class MetadataTestCase(TestCase):
     """Tests associated with MAMS ETL metadata, from the Django perspective."""
 
-    fixtures = ["dropdown_fields.json"]
+    fixtures = ["dropdown_fields.json", "relationship_types.json"]
 
     def setUp(self):
         # General data is not important. However, related objects like AudioClass
         # are not directly serializable into JSON. Nor is uuid, which is set
         # automatically on SheetImport creation.
-        self.item_for_metadata = SheetImport.objects.create(
-            file_name="Some file",
-            inventory_number="inv_no",
+        self.record_a = SheetImport.objects.create(
+            file_name="Some file A",
+            inventory_number="inv_no_1",
             audio_class=AudioClass.objects.get(pk=1),
+        )
+        self.record_b = SheetImport.objects.create(
+            file_name="Some file B",
+            inventory_number="inv_no_2",
+        )
+
+        # Create relationship between the items
+        Relationship.objects.create(
+            source=self.record_a,
+            target=self.record_b,
+            relationship_type=RelationshipType.objects.get(pk=1),
         )
 
     def test_django_data_is_serializable(self):
@@ -1150,7 +1161,7 @@ class MetadataTestCase(TestCase):
         # the SheetImport model but not handled correctly in transform_record_to_dict().
         # No need to test every possible field explicitly; the test item
         # created in setUp() has one example, AudioClass, which is enough.
-        django_data = transform_record_to_dict(self.item_for_metadata)
+        django_data = transform_record_to_dict(self.record_a)
 
         # If it's not serializable to JSON, this will raise a TypeError.
         # Here we're just confirming that the JSON conversion succeeds,
@@ -1160,7 +1171,7 @@ class MetadataTestCase(TestCase):
     def test_uuid_is_serializable(self):
         # This covers a specific case, UUID, which as a data type is not
         # serializable.
-        django_data = transform_record_to_dict(self.item_for_metadata)
+        django_data = transform_record_to_dict(self.record_a)
 
         # Make sure there's a UUID in the data, as a string, not a UUID().
         uuid = django_data.get("uuid")
@@ -1173,6 +1184,33 @@ class MetadataTestCase(TestCase):
         # Double-check that the troublesome data
         # ("uuid": "value unimportant") is in fact included.
         self.assertIn('"uuid":', json_data)
+
+    def test_relationships_are_serializable(self):
+        # `transform_record_to_dict()` should serialize
+        # Relationships involving two SheetImport objects,
+        # representing the relationships as two lists of dicts:
+        # `outgoing_relationships` and `incoming_relationships`
+        dict_a = transform_record_to_dict(self.record_a)
+        # Should be outgoing relationship: Record A hasTrack Record B
+        self.assertEqual(
+            dict_a["outgoing_relationships"][0]["target_uuid"], str(self.record_b.uuid)
+        )
+        self.assertEqual(
+            dict_a["outgoing_relationships"][0]["relationship_type"], "hasTrack"
+        )
+        # Should be no incoming relationships on Record A
+        self.assertEqual(dict_a["incoming_relationships"], [])
+
+        dict_b = transform_record_to_dict(self.record_b)
+        # Should be incoming relationship: Record B isTrackOf Record A
+        self.assertEqual(
+            dict_b["incoming_relationships"][0]["source_uuid"], str(self.record_a.uuid)
+        )
+        self.assertEqual(
+            dict_b["incoming_relationships"][0]["relationship_type"], "isTrackOf"
+        )
+        # Should be no outgoing relationships on Record B
+        self.assertEqual(dict_b["outgoing_relationships"], [])
 
 
 class SetHardDriveLocationTestCase(TestCase):
@@ -1493,8 +1531,8 @@ class DropdownFieldsTestCase(TestCase):
                 self.assertNotIn(deleted_obj.pk, choices)
 
 
-class GetAllRecordsTestCase(TestCase):
-    """Tests for the get_all_records view."""
+class GetRecordsTestCase(TestCase):
+    """Tests for the get_records view."""
 
     fixtures = ["sample_data.json", "groups_and_permissions.json"]
 
@@ -1509,15 +1547,15 @@ class GetAllRecordsTestCase(TestCase):
         base64_credentials = base64.b64encode(credentials.encode()).decode()
         http_auth_string = f"Basic {base64_credentials}"
         self.client = Client(HTTP_AUTHORIZATION=http_auth_string)
+        self.url = reverse("get_records")
 
         # Create 200 test records
         for i in range(200):
             SheetImport.objects.create(file_name=f"test_file_{i}")
 
-    def test_get_all_records_default(self):
-        url = reverse("get_all_records")
+    def test_get_records_default(self):
         first_record = SheetImport.objects.order_by("id").first()
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
         # First result should be the first record from database
@@ -1525,24 +1563,71 @@ class GetAllRecordsTestCase(TestCase):
         # Should return 100 records by default
         self.assertEqual(len(response.json()["records"]), 100)
 
-    def test_get_all_records_with_offset_and_limit(self):
-        offset = 50
-        limit = 100
-        url = reverse("get_all_records")
-        test_record = (
-            SheetImport.objects.all().order_by("id")[offset : offset + limit].first()
-        )
-        response = self.client.get(url, {"offset": offset, "limit": limit})
-        self.assertEqual(response.status_code, 200)
+    def test_get_records_with_offset_and_limit(self):
+        # Test cases are tuples of (offset, limit)
+        good_test_cases = [
+            (50, 100),
+            (42, 75),
+            # limit > total number of records should return remaining records
+            (100, 200),
+            # offset > total number of records should return empty list
+            (300, 100),
+        ]
 
-        # First result should be the 51st record from database
-        self.assertEqual(response.json()["records"][0]["id"], test_record.id)
-        # Should return 100 records starting from the 51st record
-        self.assertEqual(len(response.json()["records"]), 100)
+        bad_test_cases = [
+            # negative integers
+            (-1, 100),
+            (50, -1),
+            (-1, -1),
+            # non-integers
+            ("foo", "bar"),
+            (50.5, 100.1),
+        ]
 
-    def test_get_all_records_correct_order(self):
-        url = reverse("get_all_records")
-        response = self.client.get(url)
+        for offset, limit in good_test_cases:
+            with self.subTest(offset=offset, limit=limit):
+                # Get the first record from the database for the slice of records being tested
+                expected_first_record = (
+                    SheetImport.objects.all()
+                    .order_by("id")[offset : offset + limit]
+                    .first()
+                )
+                total_records = SheetImport.objects.count()
+                response = self.client.get(self.url, {"offset": offset, "limit": limit})
+                self.assertEqual(response.status_code, 200)
+
+                # If offset > total number of records,
+                # should return empty list
+                if offset > total_records:
+                    self.assertEqual(len(response.json()["records"]), 0)
+                # Else if offset + limit > total number of records,
+                # should return the remaining records
+                elif offset + limit > total_records:
+                    self.assertEqual(
+                        len(response.json()["records"]), total_records - offset
+                    )
+                else:
+                    self.assertEqual(len(response.json()["records"]), limit)
+
+                # If there are records, the first record
+                # should match that expected from the database
+                if response.json()["records"]:
+                    self.assertEqual(
+                        response.json()["records"][0]["id"], expected_first_record.id
+                    )
+
+        for offset, limit in bad_test_cases:
+            with self.subTest(offset=offset, limit=limit):
+                first_record = SheetImport.objects.order_by("id").first()
+                response = self.client.get(self.url, {"offset": offset, "limit": limit})
+                self.assertEqual(response.status_code, 200)
+                # Should always return 100 records by default
+                self.assertEqual(len(response.json()["records"]), 100)
+                # First record should be the first record from database
+                self.assertEqual(response.json()["records"][0]["id"], first_record.id)
+
+    def test_get_records_correct_order(self):
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
         # Should return records in ascending order by ID
@@ -1551,6 +1636,38 @@ class GetAllRecordsTestCase(TestCase):
             record.id for record in SheetImport.objects.all().order_by("id")[0:100]
         ]
         self.assertEqual(result_ids, expected_ids)
+
+    def test_get_records_with_query(self):
+        # Filter for record with `file_name=test_file_100`. There should be only one.
+        response = self.client.get(
+            self.url, {"query": "test_file_100", "fields": "file_name"}
+        )
+        self.assertEqual(response.status_code, 200)
+        # Should return 1 record
+        self.assertEqual(len(response.json()["records"]), 1)
+        self.assertEqual(response.json()["records"][0]["file_name"], "test_file_100")
+
+    def test_get_records_with_bad_field(self):
+        # Bad field name values should result in a 400 error indicating field does not exist
+        response = self.client.get(self.url, {"query": "foobar", "fields": "baz_buz"})
+        self.assertContains(
+            response=response,
+            status_code=400,
+            text="Cannot resolve keyword 'baz_buz' into field.",
+            count=1,
+        )
+
+    def test_get_records_with_bad_keys(self):
+        # Bad keys in query params should result in a 400 error indicating invalid query parameters
+        response = self.client.get(
+            self.url,
+            {"foo_bar": "baz_buz"},
+        )
+        self.assertContains(
+            response=response,
+            status_code=400,
+            text="Invalid query parameters. Valid keys are: ['query', 'fields', 'offset', 'limit']",
+        )
 
 
 class RelationshipTestCase(TestCase):

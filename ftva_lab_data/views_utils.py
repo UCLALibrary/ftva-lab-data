@@ -508,6 +508,26 @@ def transform_record_to_dict(record: SheetImport) -> dict:
         # or "" to avoid serializing None to "None"
         record_data[key] = str(record_data.get(key) or "")
 
+    # Add Relationships data
+    outgoing_relationships = record.outgoing_relationships.all()
+    incoming_relationships = record.incoming_relationships.all()
+    record_data["outgoing_relationships"] = [
+        {
+            "target_uuid": str(relationship.target.uuid),
+            # Outgoing should be `relationship_type.type`
+            "relationship_type": relationship.relationship_type.type,
+        }
+        for relationship in outgoing_relationships
+    ]
+    record_data["incoming_relationships"] = [
+        {
+            "source_uuid": str(relationship.source.uuid),
+            # Incoming should be `relationship_type.reverse_type`
+            "relationship_type": relationship.relationship_type.reverse_type,
+        }
+        for relationship in incoming_relationships
+    ]
+
     return record_data
 
 
