@@ -658,17 +658,18 @@ def generate_metadata_json(request: HttpRequest, record_id: int) -> HttpResponse
     # If we have exactly one FM record and no more than one Alma record,
     # generate metadata.
     if bib_records_count <= 1 and fm_records_count == 1:
-        if bib_records_count == 1:
+        try:
             metadata = get_mams_metadata(
                 digital_data_record=django_record_data,
                 filemaker_record=fm_records[0],
-                bib_record=filtered_bib_records[0],
+                bib_record=filtered_bib_records[0] if filtered_bib_records else None,
             )
-        else:
-            metadata = get_mams_metadata(
-                digital_data_record=django_record_data,
-                filemaker_record=fm_records[0],
-                bib_record=None,
+        except Exception as e:
+            message = f"Error generating metadata: {e}"
+            return render(
+                request,
+                "partials/metadata_modal_content.html",
+                {"message": message, "is_error": True},
             )
         # Format the metadata as JSON for display in the template
         metadata_json = json.dumps(metadata, indent=2)
